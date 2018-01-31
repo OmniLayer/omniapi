@@ -1,0 +1,16 @@
+uWSGI==2.0.15
+Flask==0.12.2
+pybitcointools==1.1.15
+bitcoin-python==0.3
+psycopg2==2.7.3.2
+requests==2.18.4
+simplejson==3.13.2
+redis==2.10.6
+pyotp==2.2.6
+pycrypto==2.6.1
+simplekv==0.11.7
+recaptcha-client==1.0.6
+pycoin==0.80
+ecdsa==0.13
+gevent==1.2.2
+Flask-SocketIO==2.9.3
