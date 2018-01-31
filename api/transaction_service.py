@@ -172,15 +172,28 @@ def gettxjson(hash_id):
       txJson = ROWS[0][-1]
     return txJson
 
-def getblocktxjson(block):
+def getblockhash(blocknumber):
     try:
-        block_ = int( block ) #check numeric
-        ROWS=dbSelect("select * from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txblocknumber=%s", [block_])
-    except ValueError:
+        block_ = int( blocknumber ) #check numeric
+        ROWS=dbSelect("select blockhash from blocks where blocknumber=%s", [block_])
+    except Exception as e:
         return {'error':'This endpoint only consumes valid input. Invalid block'}
 
     if len(ROWS) < 1:
-      return json.dumps([])
+      return "error: block not available."
+    else:
+      return ROWS[0][0]
+
+def getblocktxjson(block):
+    bhash=getblock(blocknumber)
+    if "error" in bhash:
+      return binfo
+
+    try:
+        block_ = int( block ) #check numeric
+        ROWS=dbSelect("select * from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txblocknumber=%s", [block_])
+    except Exception as e:
+        return {'error':'This endpoint only consumes valid input. Invalid block'}
 
     ret=[]
     for x in ROWS:
@@ -189,9 +202,8 @@ def getblocktxjson(block):
       except TypeError:
         txJson = x[-1]
       ret.append(txJson)
-      blockhash=txJson['blockhash']
 
-    return {"block":block_, "blockhash":blockhash, "transactions": ret}
+    return {"block":block_, "blockhash":bhash, "transactions": ret}
 
 def getaddrhist(address,direction='both'):
     try:
