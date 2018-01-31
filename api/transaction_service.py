@@ -185,9 +185,9 @@ def getblockhash(blocknumber):
       return ROWS[0][0]
 
 def getblocktxjson(block):
-    bhash=getblock(blocknumber)
+    bhash=getblockhash(block)
     if "error" in bhash:
-      return binfo
+      return bhash
 
     try:
         block_ = int( block ) #check numeric
