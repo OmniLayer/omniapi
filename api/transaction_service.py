@@ -156,6 +156,66 @@ def getcurrencyrecent():
     return Response(json.dumps(response), mimetype="application/json")
     #Input will be CURRENCY_PAGE ex. MSC_0001, SP50_4999, etc. up to 4 digits of pagination
 
+def gettxjson(hash_id):
+    try:
+        transaction_ = str(re.sub(r'\W+', '', hash_id.split('.')[0] ) ) #check alphanumeric
+    except ValueError:
+        return {'error':'This endpoint only consumes valid input. Invalid txid'}
+
+    ROWS=dbSelect("select * from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
+
+    if len(ROWS) < 1:
+      return json.dumps([])
+    try:
+      txJson = json.loads(ROWS[0][-1])
+    except TypeError:
+      txJson = ROWS[0][-1]
+    return txJson
+
+def getblocktxjson(block):
+    try:
+        block_ = int( block ) #check numeric
+        ROWS=dbSelect("select * from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txblocknumber=%s", [block_])
+    except ValueError:
+        return {'error':'This endpoint only consumes valid input. Invalid block'}
+
+    if len(ROWS) < 1:
+      return json.dumps([])
+
+    ret=[]
+    for x in ROWS:
+      try:
+        txJson = json.loads(x[-1])
+      except TypeError:
+        txJson = x[-1]
+      ret.append(txJson)
+      blockhash=txJson['blockhash']
+
+    return {"block":block_, "blockhash":blockhash, "transactions": ret}
+
+def getaddrhist(address,direction='both'):
+    try:
+        address_ = str(re.sub(r'\W+', '', address.split('.')[0] ) ) #check alphanumeric
+    except ValueError:
+        return {'error':'This endpoint only consumes valid input. Invalid address'}
+
+    query="select t.txhash from transactions t, addressesintxs atx where t.txdbserialnum = atx.txdbserialnum and t.protocol != 'Bitcoin' and atx.address='"+str(address_)+"'"
+    if direction=='send':
+      role='sender'
+      query+=" and atx.addressrole='sender'"
+    elif direction=='receive':
+      role="recipient"
+      query+=" and atx.addressrole='recipient'"
+    ROWS=dbSelect(query)
+
+    if len(ROWS) < 1:
+      return json.dumps([])
+
+    ret=[]
+    for x in ROWS:
+      ret.append(x[0])
+
+    return {role:address_,"transactions":ret}
 
 @app.route('/tx/<hash_id>')
 def gettransaction(hash_id):
