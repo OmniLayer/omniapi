@@ -43,7 +43,7 @@ do
         echo "Starting uwsgi daemon..."
         cd $APPDIR/api
         #if [[ "$OSTYPE" == "darwin"* ]]; then
-        uwsgi -s 127.0.0.1:1088 -p 8 -M --vhost --enable-threads --logto $APPDIR/apps.log &
+        uwsgi -s 127.0.0.1:1088 -p 8 -M --vhost --enable-threads --log-x-forwarded-for --logto $APPDIR/apps.log &
         #else
         #  uwsgi -s 127.0.0.1:1088 -p 8 -M --vhost --enable-threads --plugin $PYTHONBIN --logto $APPDIR/apps.log &
         #fi
