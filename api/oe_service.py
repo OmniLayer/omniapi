@@ -21,16 +21,16 @@ def requeststat_aspx():
 
     prop=args['prop']
     address=args['address']
-    if is_valid_bitcoin_address(address):
-      bal=balance_propid(address,prop)
+    #if is_valid_bitcoin_address(address):
       #jsonify encapsulates in a string, just return number
-      return bal
-    else:
-      return jsonify({"error":"invalid address"})
+    return balance_propid(address,prop)
+    #else:
+    #  return jsonify({"error":"invalid address"})
   elif stat=='gettx':
     if 'txid' not in args:
       return jsonify({"error":"invalid request, missing txid"})
-    return jsonify(gettxjson(args['txid']))
+    #weird formatting, to match legacy oe need to remove curly brackets
+    return json.dumps(gettxjson(args['txid']))[1:][:-1]
   elif stat=='getblocktx':
     if 'block' not in args:
       return jsonify({"error":"invalid request, missing block"})
@@ -52,18 +52,18 @@ def ask_aspx():
       return jsonify({"error":"invalid request"})
 
     address=args['address']
-    if is_valid_bitcoin_address(address):
-      return jsonify( getaddrhist(address,'receive'))
-    else:
-      return jsonify({"error":"invalid address"})
+    #if is_valid_bitcoin_address(address):
+    return jsonify( getaddrhist(address,'receive'))
+    #else:
+    #  return jsonify({"error":"invalid address"})
   elif api=="getsenderhistory":
     if 'address' not in args:
       return jsonify({"error":"invalid request"})
 
     address=args['address']
-    if is_valid_bitcoin_address(address):
-      return jsonify( getaddrhist(address,'send'))
-    else:
-      return jsonify({"error":"invalid address"})
+    #if is_valid_bitcoin_address(address):
+    return jsonify( getaddrhist(address,'send'))
+    #else:
+    #  return jsonify({"error":"invalid address"})
   else:
     return jsonify({"error":"unsupported call", "args": args })
