@@ -220,9 +220,6 @@ def getaddrhist(address,direction='both'):
       query+=" and atx.addressrole='recipient'"
     ROWS=dbSelect(query)
 
-    if len(ROWS) < 1:
-      return json.dumps([])
-
     ret=[]
     for x in ROWS:
       ret.append(x[0])
