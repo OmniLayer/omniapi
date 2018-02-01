@@ -42,6 +42,7 @@ def balance_propid(addr,pid):
          return from_satoshi(x['value'])
        else:
          return x['value']
+    return '0'
   except Exception as e:
     print "error getting bal for "+str(addr)+" "+str(e)
-    return 0
+    return '0'
