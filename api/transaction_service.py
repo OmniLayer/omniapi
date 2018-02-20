@@ -5,6 +5,7 @@ from flask import Flask, request, Response, jsonify, abort, json, make_response
 from msc_apps import *
 from decimal import Decimal
 from blockchain_utils import *
+from stats_service import raw_revision
 
 app = Flask(__name__)
 app.debug = True
@@ -129,32 +130,18 @@ def getaddress():
 
 @app.route('/general/')
 def getcurrencyrecent():
-    #try:
-    #    currency_ = str(re.sub(r'\W+', '', currency_page.split('.')[0] ) ) #check alphanumeric
-    #except ValueError:
-    #    abort(make_response('This endpoint only consumes valid input', 400))
-
-    #lookup_currency = { 'MSC' : '1', 'TMSC' : '2', 'OMNI': '1', 'T-OMNI': '2', 'BTC': '0' }
-
-    #c_symbol = currency_.split('_')[0]
-    #c_page = currency_.split('_')[1]
-
-    #if c_symbol[:2] == 'SP': c_id = c_symbol[2:]
-    #else: c_id = lookup_currency[ c_symbol ]
-
-    #Do we even need per-currency pagination?
-    ROWS=dbSelect("select * from transactions t, txjson txj where t.protocol != 'Bitcoin' and t.txdbserialnum = txj.txdbserialnum order by t.txblocknumber DESC limit 10;")
-
+    ROWS=dbSelect("select txdata from txjson txj where protocol != 'Bitcoin' order by txdbserialnum DESC limit 10;")
+    rev=raw_revision()
+    cblock=rev['last_block']
     response = []
     if len(ROWS) > 0:
-      for currencyrow in ROWS:
-        #res = requests.get('http://localhost/v1/transaction/tx/' + currencyrow[0] + '.json').json()[0]
-        res = json.loads(gettransaction(currencyrow[0]))[0]
+      for data in ROWS:
+        res = data[0]
+        res['confirmations'] = cblock - res['block']
         response.append(res)
 
-
     return Response(json.dumps(response), mimetype="application/json")
-    #Input will be CURRENCY_PAGE ex. MSC_0001, SP50_4999, etc. up to 4 digits of pagination
+
 
 def gettxjson(hash_id):
     try:

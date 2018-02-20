@@ -33,17 +33,17 @@ def status():
   return jsonify(merged_response)
 
 
-@app.route('/revision')
-def revision():
+def raw_revision():
   ROWS=dbSelect("select blocknumber, blocktime from blocks order by blocknumber desc limit 1")
-
   response = {
           'last_block': ROWS[0][0],
           'last_parsed': ROWS[0][1]
       }
+  return response
 
-  json_response = jsonify(response)
-  return json_response
+@app.route('/revision')
+def revision():
+  return jsonify(raw_revision())
 
 
 @app.route('/stats')
