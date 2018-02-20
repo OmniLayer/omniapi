@@ -128,8 +128,12 @@ def getaddress():
 
     return jsonify(response)
 
+@app.route('/general/')
+def getrecenttx():
+  return getrecenttxpages()
+
 @app.route('/general/<page>')
-def getcurrencyrecent(page=0):
+def getrecenttxpages(page=0):
     try:
       offset=int(page)*10
     except:
