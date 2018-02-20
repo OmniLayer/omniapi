@@ -157,14 +157,18 @@ def gettxjson(hash_id):
     except ValueError:
         return {'error':'This endpoint only consumes valid input. Invalid txid'}
 
-    ROWS=dbSelect("select * from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
+    ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
+    rev=raw_revision()
+    cblock=rev['last_block']
 
     if len(ROWS) < 1:
       return json.dumps([])
     try:
-      txJson = json.loads(ROWS[0][-1])
+      txJson = json.loads(ROWS[0][0])
     except TypeError:
-      txJson = ROWS[0][-1]
+      txJson = ROWS[0][0]
+
+    txJson['confirmations'] = cblock - res['block'] + 1
     return txJson
 
 def getblockhash(blocknumber):
@@ -223,6 +227,14 @@ def getaddrhist(address,direction='both'):
 
 @app.route('/tx/<hash_id>')
 def gettransaction(hash_id):
+    try:
+        transaction_ = str(re.sub(r'\W+', '', hash_id.split('.')[0] ) ) #check alphanumeric
+    except ValueError:
+        abort(make_response('This endpoint only consumes valid input', 400))
+
+    return jsonify(gettxjson(transaction_))
+
+def gettransaction_OLD(hash_id):
     try:
         transaction_ = str(re.sub(r'\W+', '', hash_id.split('.')[0] ) ) #check alphanumeric
     except ValueError:
@@ -390,7 +402,3 @@ def gettransaction(hash_id):
         ret['issuertokens'] = txJson['issuertokens']
 
     return json.dumps([ ret ] , sort_keys=True, indent=4) #only send back mapped schema
-
-@app.route('/general/<page_id>')
-def getmostrecent(page_id):
-    return 0
