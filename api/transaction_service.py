@@ -137,7 +137,7 @@ def getcurrencyrecent():
     if len(ROWS) > 0:
       for data in ROWS:
         res = data[0]
-        res['confirmations'] = cblock - res['block']
+        res['confirmations'] = cblock - res['block'] + 1
         response.append(res)
 
     return Response(json.dumps(response), mimetype="application/json")
