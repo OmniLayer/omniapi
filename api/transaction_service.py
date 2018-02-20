@@ -131,7 +131,7 @@ def getaddress():
 @app.route('/general/<page>')
 def getcurrencyrecent(page=0):
     try:
-      offset=int(page*10)
+      offset=int(page)*10
     except:
       offset=0
     ROWS=dbSelect("select txdata from txjson txj where protocol != 'Bitcoin' order by txdbserialnum DESC offset %s limit 10;",[offset])
