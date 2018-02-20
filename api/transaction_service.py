@@ -128,9 +128,13 @@ def getaddress():
 
     return jsonify(response)
 
-@app.route('/general/')
-def getcurrencyrecent():
-    ROWS=dbSelect("select txdata from txjson txj where protocol != 'Bitcoin' order by txdbserialnum DESC limit 10;")
+@app.route('/general/<page>')
+def getcurrencyrecent(page=0):
+    try:
+      offset=int(page*10)
+    except:
+      offset=0
+    ROWS=dbSelect("select txdata from txjson txj where protocol != 'Bitcoin' order by txdbserialnum DESC offset %s limit 10;",[offset])
     rev=raw_revision()
     cblock=rev['last_block']
     response = []
