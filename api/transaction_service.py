@@ -145,7 +145,10 @@ def getrecenttxpages(page=0):
     if len(ROWS) > 0:
       for data in ROWS:
         res = data[0]
-        res['confirmations'] = cblock - res['block'] + 1
+        try:
+          res['confirmations'] = cblock - res['block'] + 1
+        except:
+          pass
         response.append(res)
 
     return Response(json.dumps(response), mimetype="application/json")
@@ -168,7 +171,10 @@ def gettxjson(hash_id):
     except TypeError:
       txJson = ROWS[0][0]
 
-    txJson['confirmations'] = cblock - res['block'] + 1
+    try:
+      txJson['confirmations'] = cblock - txJson['block'] + 1
+    except:
+      pass
     return txJson
 
 def getblockhash(blocknumber):
