@@ -94,7 +94,25 @@ def estimatetxcost():
 
 
 @app.route('/address', methods=['POST'])
-def getaddress():
+def getaddresshist():
+    try:
+        address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
+    except ValueError:
+        abort(make_response('This endpoint only consumes valid input', 400))
+
+    try:
+      offset=int(request.form['page'])*50
+    except:
+      offset=0
+
+    ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 50 offset %s",(address,offset))
+
+    response = { 'address': address, 'transactions': ROWS }
+
+    return jsonify(response)
+
+
+def getaddress_OLD():
     try:
         address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
     except ValueError:
@@ -210,12 +228,18 @@ def getblocktxjson(block):
 
     return {"block":block_, "blockhash":bhash, "transactions": ret}
 
-def getaddrhist(address,direction='both'):
+def getaddrhist(address,direction='both',page=0):
     try:
         address_ = str(re.sub(r'\W+', '', address.split('.')[0] ) ) #check alphanumeric
     except ValueError:
         return {'error':'This endpoint only consumes valid input. Invalid address'}
 
+    try:
+      offset=int(page)*50
+    except:
+      offset=0
+
+    role='address'
     query="select t.txhash from transactions t, addressesintxs atx where t.txdbserialnum = atx.txdbserialnum and t.protocol != 'Bitcoin' and atx.address='"+str(address_)+"'"
     if direction=='send':
       role='sender'
@@ -223,6 +247,7 @@ def getaddrhist(address,direction='both'):
     elif direction=='receive':
       role="recipient"
       query+=" and atx.addressrole='recipient'"
+    query+=" order by t.txdbserialnum DESC offset " +str(offset)+ " limit 50"
     ROWS=dbSelect(query)
 
     ret=[]
