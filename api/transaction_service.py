@@ -146,6 +146,12 @@ def getaddress_OLD():
 
     return jsonify(response)
 
+def getpagecounttxjson():
+  #todo add caching
+  ROWS=dbSelect("select count(txdbserialnum) from txjson;")
+  return (int(ROWS[0][0])/limit)
+
+
 @app.route('/general/')
 def getrecenttx():
   return getrecenttxpages()
@@ -168,8 +174,9 @@ def getrecenttxpages(page=0):
         except:
           pass
         response.append(res)
-
-    return Response(json.dumps(response), mimetype="application/json")
+    pages=getpagecounttxjson()
+    #return Response(json.dumps(response), mimetype="application/json")
+    return jsonify({'pages':pages,'data':response})
 
 
 def gettxjson(hash_id):
