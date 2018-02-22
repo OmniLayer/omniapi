@@ -146,7 +146,7 @@ def getaddress_OLD():
 
     return jsonify(response)
 
-def getpagecounttxjson():
+def getpagecounttxjson(limit=10):
   #todo add caching
   ROWS=dbSelect("select count(txdbserialnum) from txjson;")
   return (int(ROWS[0][0])/limit)
