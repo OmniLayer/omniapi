@@ -109,7 +109,7 @@ def getaddresshist():
 
 def getaddresshistraw(address,page):
     offset=page*10
-    ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 50 offset %s",(address,offset))
+    ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
     pcount=getaddresstxcount(address)
     response = { 'address': address, 'transactions': ROWS , 'pages': pcount}
 
