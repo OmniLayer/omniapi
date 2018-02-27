@@ -101,15 +101,19 @@ def getaddresshist():
         abort(make_response('This endpoint only consumes valid input', 400))
 
     try:
-      offset=int(request.form['page'])*50
+      page=int(request.form['page'])
     except:
-      offset=0
+      page=0
+    return jsonify(getaddresshistraw(address,page))
 
+
+def getaddresshistraw(addr,page)
+    offset=page*10
     ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 50 offset %s",(address,offset))
+    pcount=getaddresstxcount(address)
+    response = { 'address': address, 'transactions': ROWS , 'pages': pcount}
 
-    response = { 'address': address, 'transactions': ROWS }
-
-    return jsonify(response)
+    return response
 
 
 def getaddress_OLD():
@@ -149,6 +153,10 @@ def getaddress_OLD():
 def getpagecounttxjson(limit=10):
   #todo add caching
   ROWS=dbSelect("select count(txdbserialnum) from txjson;")
+  return (int(ROWS[0][0])/limit)
+
+def getaddresstxcount(address,limit=10):
+  ROWS=dbSelect("select count(txdbserialnum) from addressesintxs where address=%s;",[address])
   return (int(ROWS[0][0])/limit)
 
 

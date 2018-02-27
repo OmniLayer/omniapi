@@ -25,6 +25,24 @@ def get_balance_response():
       return jsonify({"error":"This endpoint accepts single address lookups. For multiple addresses use the v2 endpoint"})
   return jsonify(balance_full(addrs_list))
 
+@app.route('/details/', methods=['POST'])
+def addressDetails():
+    try:
+        address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
+    except ValueError:
+        abort(make_response('This endpoint only consumes valid input', 400))
+
+    try:
+      page=int(request.form['page'])
+    except:
+      page=0
+
+    baldata=get_balancedata(addr)
+    txdata = getaddresshistraw(addr,page)
+
+    txdata['balance'] = baldata
+    return jsonify(txdata)
+
 def balance_full(addr):
   addr = re.sub(r'\W+', '', addr) #check alphanumeric
   #Use new balance function call
