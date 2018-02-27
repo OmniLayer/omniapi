@@ -5,6 +5,7 @@ import re
 from msc_apps import *
 from debug import *
 from balancehelper import *
+from transaction_service import getaddresshistraw
 from flask import Flask, request, Response, jsonify, abort, json, make_response
 
 app = Flask(__name__)
@@ -37,10 +38,10 @@ def addressDetails():
     except:
       page=0
 
-    baldata=get_balancedata(addr)
-    txdata = getaddresshistraw(addr,page)
+    baldata=get_balancedata(address)
+    txdata = getaddresshistraw(address,page)
 
-    txdata['balance'] = baldata
+    txdata['balance'] = baldata['balance']
     return jsonify(txdata)
 
 def balance_full(addr):
