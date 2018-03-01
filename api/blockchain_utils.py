@@ -1,6 +1,6 @@
 import simplejson
 import requests
-import decimal
+#import decimal
 import json, re
 from config import BTAPIKEY
 from rpcclient import gettxout

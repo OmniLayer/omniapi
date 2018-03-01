@@ -1,7 +1,7 @@
 from flask import Flask, abort, json, jsonify
-import hashlib
-import pybitcointools
-import decimal
+#import hashlib
+#import pybitcointools
+from decimal import Decimal
 from rpcclient import *
 
 app = Flask(__name__)
@@ -19,7 +19,7 @@ def getinputs(rawtx):
       if prevtx['result']['vout'][input['vout']]['scriptPubKey']['type'] not in ['pubkeyhash','scripthash']:
         #Valid MP tx's only have pubkeyhash and scripthash as inputs
         retval['invalid']=True
-      inputamount= int(decimal.Decimal(str( prevtx['result']['vout'][input['vout']]['value']))*decimal.Decimal(1e8))
+      inputamount= int(Decimal(str( prevtx['result']['vout'][input['vout']]['value']))*Decimal(1e8))
       for addr in prevtx['result']['vout'][input['vout']]['scriptPubKey']['addresses']:
         if addr in retval['inputs']:
           retval['inputs'][addr] += inputamount

@@ -1,10 +1,9 @@
-import urlparse
-import os, sys, re
+#import urlparse
+import re
 from flask import Flask, request, jsonify, abort, json, make_response
-from msc_apps import *
-import glob, json
-import requests
-from transaction_service import gettransaction
+from sqltools import *
+#import glob, json
+#import requests
 
 app = Flask(__name__)
 app.debug = True
@@ -15,13 +14,15 @@ def search():
       query = re.sub(r'\W+', '0', request.args.get('query') ) # strip and get query
   else:
       return jsonify({ 'status': 400, 'data': 'No query found in request' })
-  ROWS=dbSelect("select * from transactions t, txjson txj where t.txhash ~* \'" + str(query) + "\' and t.txdbserialnum=txj.txdbserialnum")
+  ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txhash ~* \'" + str(query) + "\' and t.txdbserialnum=txj.txdbserialnum")
 
   response = []
   if len(ROWS) > 0:
     for queryrow in ROWS:
-      #res = requests.get('http://localhost/v1/transaction/tx/' + queryrow[0] + '.json').json()[0]
-      res = json.loads(gettransaction(queryrow[0]))[0]
-      response.append(res)
+      try:
+        txJson = json.loads(ROWS[0][0])
+      except TypeError:
+        txJson = ROWS[0][0]
+      response.append(txJson)
 
   return jsonify({ 'status': 200, 'data': response })
