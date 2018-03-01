@@ -3,7 +3,7 @@ import glob
 import re
 from flask import Flask, request, jsonify, abort, json
 #import psycopg2, psycopg2.extras
-from msc_apps import *
+from common import *
 
 
 app = Flask(__name__)

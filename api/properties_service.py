@@ -2,7 +2,7 @@ import urlparse
 import os, sys, re
 import time
 from flask import Flask, request, jsonify, abort, json, make_response
-from msc_apps import *
+from common import *
 
 data_dir_root = os.environ.get('DATADIR')
 

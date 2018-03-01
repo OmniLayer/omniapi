@@ -1,7 +1,7 @@
 import urlparse
 import os, sys, tempfile, json
 import glob,time
-from msc_apps import *
+from common import *
 from decimal import *
 
 #data_dir_root = os.environ.get('DATADIR')

@@ -6,7 +6,7 @@ import json, re
 from threading import Thread
 from flask import Flask, render_template, session, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from msc_apps import *
+from common import *
 from balancehelper import *
 from omnidex import getOrderbook
 from values_service import getValueBook

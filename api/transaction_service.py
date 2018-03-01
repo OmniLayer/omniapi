@@ -2,7 +2,7 @@ import urlparse
 import os, sys, re
 import math
 from flask import Flask, request, Response, jsonify, abort, json, make_response
-from msc_apps import *
+from common import *
 from decimal import Decimal
 from blockchain_utils import *
 from stats_service import raw_revision

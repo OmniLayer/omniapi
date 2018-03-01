@@ -2,7 +2,7 @@ import urlparse
 import os, sys, re, random,pybitcointools, bitcoinrpc, math
 from decimal import Decimal
 from flask import Flask, request, jsonify, abort, json, make_response
-from msc_apps import *
+from common import *
 from blockchain_utils import *
 import config
 from omnitransaction import OmniTransaction

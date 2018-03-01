@@ -2,7 +2,7 @@ import os, sys, re, random
 import requests
 from decimal import Decimal
 from flask import Flask, request, jsonify, abort, json, make_response
-from msc_apps import *
+from common import *
 
 
 app = Flask(__name__)

@@ -1,7 +1,7 @@
 import urlparse
 import os, sys, re
 from flask import Flask, request, jsonify, abort, json, make_response, Response
-from msc_apps import *
+from common import *
 
 app = Flask(__name__)
 app.debug = True

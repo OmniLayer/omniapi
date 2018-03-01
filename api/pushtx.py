@@ -1,6 +1,6 @@
 import urlparse
 import os, sys,re
-from msc_apps import *
+from common import *
 from pending import *
 
 

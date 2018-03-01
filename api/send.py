@@ -1,7 +1,7 @@
 import urlparse
 import os, sys
 from blockchain_utils import *
-from msc_apps import *
+from common import *
 import random
 
 def send_form_response(response_dict):
