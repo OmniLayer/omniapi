@@ -14,15 +14,15 @@ def search():
       query = re.sub(r'\W+', '0', request.args.get('query') ) # strip and get query
   else:
       return jsonify({ 'status': 400, 'data': 'No query found in request' })
-  ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txhash ~* \'" + str(query) + "\' and t.txdbserialnum=txj.txdbserialnum")
+  ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txhash ~* \'" + str(query) + "\' and t.txdbserialnum=txj.txdbserialnum limit 10")
 
   response = []
   if len(ROWS) > 0:
     for queryrow in ROWS:
       try:
-        txJson = json.loads(ROWS[0][0])
+        txJson = json.loads(queryrow[0])
       except TypeError:
-        txJson = ROWS[0][0]
+        txJson = queryrow[0]
       response.append(txJson)
 
   return jsonify({ 'status': 200, 'data': response })
