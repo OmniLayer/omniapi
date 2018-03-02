@@ -9,7 +9,7 @@ app.debug = True
 
 
 @app.route('/<prop_id>')
-def getproperty(prop_id)
+def getproperty(prop_id):
   return jsonify(getpropertyraw(prop_id))
 
 def getpropertyraw(prop_id):
