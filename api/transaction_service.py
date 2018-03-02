@@ -172,7 +172,7 @@ def getpagecounttxjson(limit=10):
   ckey="info:tx:pcount"
   try:
     rc = lGet(ckey)
-    if rc is None:
+    if rc in ['None',None]:
       raise "not in cache"
     else:
       count=int(rc)
@@ -189,7 +189,7 @@ def getaddresstxcount(address,limit=10):
   ckey="info:addr:"+str(address)+":pcount"
   try:
     rc = lGet(ckey)
-    if rc is None:
+    if rc in ['None',None]:
       raise "not in cache"
     else:
       count=int(rc)
@@ -283,7 +283,7 @@ def getblockhash(blocknumber):
   ckey="info:blockhash:"+str(block_)
   try:
     bhash=lGet(ckey)
-    if bhash is None:
+    if bhash in ['None',None]:
       raise "not cached"
   except:
     ROWS=dbSelect("select blockhash from blocks where blocknumber=%s", [block_])
