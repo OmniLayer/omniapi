@@ -2,12 +2,49 @@ import urlparse
 import os, sys, re
 from flask import Flask, request, jsonify, abort, json, make_response, Response
 from common import *
+from cacher import *
 
 app = Flask(__name__)
 app.debug = True
 
+
 @app.route('/<prop_id>')
-def getproperty(prop_id):
+def getproperty(prop_id)
+  return jsonify(getpropertyraw(prop_id))
+
+def getpropertyraw(prop_id):
+  try:
+    property_ = int(re.sub(r'\D+', '', prop_id.split('.')[0] ) ) #check alphanumeric
+  except ValueError:
+    abort(make_response('This endpoint only consumes valid input', 400))
+
+  ckey="data:prop:"+str(prop_id)
+  try:
+    ret=json.loads(lGet(ckey))
+  except:
+    ROWS=dbSelect("select txj.txdata,sp.propertydata from txjson txj, smartproperties sp where sp.createtxdbserialnum = txj.txdbserialnum "
+                  "and sp.propertyid=%s",[property_])
+
+    try:
+      txJson=json.loads(ROWS[0][0])
+    except TypeError:
+      txJson=ROWS[0][0]
+
+    try:
+      txData=json.loads(ROWS[0][1])
+    except TypeError:
+      txData=ROWS[0][1]
+
+    ret = txJson.copy()
+    ret.update(txData)
+    #expire after 30 min
+    lSet(ckey,json.dumps(ret))
+    lExpire(ckey,1800)
+
+  return ret
+
+@app.route('/leg/<prop_id>')
+def getpropertyleg(prop_id):
     try:
         property_ = int(re.sub(r'\D+', '', prop_id.split('.')[0] ) ) #check alphanumeric
     except ValueError:

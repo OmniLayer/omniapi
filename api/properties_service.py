@@ -3,6 +3,8 @@ import os, sys, re
 import time
 from flask import Flask, request, jsonify, abort, json, make_response
 from common import *
+from property_service import getpropertyraw
+from cacher import *
 
 data_dir_root = os.environ.get('DATADIR')
 
@@ -57,7 +59,13 @@ def subcategories():
 
 @app.route('/list')
 def list():
+  return jsonify(rawlist())
 
+def rawlist():
+  ckey="info:proplist"
+  try:
+    response=json.loads(lGet(ckey))
+  except:
     ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
 
     data=[prop[0] for prop in ROWS]
@@ -66,69 +74,85 @@ def list():
                 'status' : 'OK',
                 'properties' : data
                 }
+    #cache property list for 30min
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,1800)
 
-    return jsonify(response)
+  return response
+
 
 @app.route('/listbyecosystem', methods=['POST'])
 def listByEcosystem():
-    try:
-        value = int(re.sub(r'\D+', '', request.form['ecosystem']))
-        valid_values = [1,2]
-        if value not in valid_values:
-            abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
+  try:
+      value = int(re.sub(r'\D+', '', request.form['ecosystem']))
+      valid_values = [1,2]
+      if value not in valid_values:
+          abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
 
-        ecosystem = "Production" if value == 1 else "Test"
-    except KeyError:
-        abort(make_response('No field \'ecosystem\' in request, request failed', 400))
-    except ValueError:
-        abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
+      ecosystem = "Production" if value == 1 else "Test"
+  except KeyError:
+      abort(make_response('No field \'ecosystem\' in request, request failed', 400))
+  except ValueError:
+      abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
 
+  pdata=[]
+  for prop in ROWS:
+    data=prop[0]
+    if value==2 and (data['propertyid']==2 or data['propertyid']>2147483650):
+      pdata.append(data)
+    elif value==1 and (data['propertyid']==1 or (data['propertyid']>2 and data['propertyid']<2147483648))
+      pdata.append(data)
 
-    ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' AND ecosystem=%s ORDER BY PropertyName,PropertyID", [ecosystem])
+  response = {
+              'status' : 'OK',
+              'properties' : pdata
+              }
 
-    data=[prop[0] for prop in ROWS]
-
-    response = {
-                'status' : 'OK',
-                'properties' : data
-                }
-
-    return jsonify(response)
+  return jsonify(response)
 
 @app.route('/listbyowner', methods=['POST'])
 def listbyowner():
-    # I can't believe flask can't parse properly arrays from the frontend, using values() as a hack.
-    try:
-        addresses = request.form.values()
-    except KeyError:
-        abort(make_response('No field \'issuer_addresses\' in request, request failed', 400))
+  # I can't believe flask can't parse properly arrays from the frontend, using values() as a hack.
+  try:
+      addresses = request.form.values()
+  except KeyError:
+      abort(make_response('No field \'issuer_addresses\' in request, request failed', 400))
 
-
+  ckey="data:property:owner:"+str(addresses)
+  try:
+    response=json.loads(lGet(ckey))
+  except:
     ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' AND issuer= ANY(%s) ORDER BY PropertyName,PropertyID", (addresses,))
-
     data = [data[0] for data in ROWS]
-
     response = {
                 'status' : 'OK',
                 'properties' : data
                 }
+    #cache 30 min
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,1800)
 
-    return jsonify(response)
+  return jsonify(response)
 
 @app.route('/listactivecrowdsales', methods=['POST'])
 def listcrowdsales():
-    try:
-        value = int(re.sub(r'\D+', '', request.form['ecosystem']))
-        valid_values = [1,2]
-        if value not in valid_values:
-            abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
+  try:
+      value = int(re.sub(r'\D+', '', request.form['ecosystem']))
+      valid_values = [1,2]
+      if value not in valid_values:
+          abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
 
-        ecosystem = "Production" if value == 1 else "Test" 
-    except KeyError:
-        abort(make_response('No field \'ecosystem\' in request, request failed', 400))
-    except ValueError:
-        abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
+      ecosystem = "Production" if value == 1 else "Test" 
+  except KeyError:
+      abort(make_response('No field \'ecosystem\' in request, request failed', 400))
+  except ValueError:
+      abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
 
+
+  ckey="data:property:crowdsale:"+str(value)
+  try:
+    response=json.loads(lGet(cket))
+  except:
     ROWS= dbSelect("select PropertyData from smartproperties where PropertyData::json->>'fixedissuance'='false' AND PropertyData::json->>'active'='true' AND ecosystem=%s ORDER BY PropertyName,PropertyID", [ecosystem])
     data=[row[0] for row in ROWS]
 
@@ -136,58 +160,66 @@ def listcrowdsales():
                 'status' : 'OK',
                 'crowdsales' : data
                 }
-
-    return jsonify(response)
+    #cache 10 min
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,600)
+  return jsonify(response)
 
 @app.route('/getdata/<int:property_id>')
 def getdata(property_id):
-    property=dbSelect("select PropertyData from smartproperties where PropertyID=%s and Protocol!='Fiat'",[property_id])[0]
-    return jsonify(property[0])
+    return jsonify(getpropertyraw(property_id))
 
 @app.route('/gethistory/<int:property_id>', methods=["POST"])
 def gethistory(property_id):
     try:
+        page = int(request.form['page'])
+        offset = page * 10
+    except KeyError:
+      try:
         start = int(request.form['start'])
-    except KeyError:
-        abort(make_response('No field \'start\' in request, request failed', 400))
+        offset = start * 10
+      except KeyError:
+        abort(make_response('No field \'page\' in request, request failed', 400))
+      except ValueError:
+        abort(make_response('Field \'page\' must be an integer, request failed', 400))
     except ValueError:
-        abort(make_response('Field \'start\' must be an integer, request failed', 400))
-
-    try:
-        count = int(request.form['count'])
-    except KeyError:
-        abort(make_response('No field \'count\' in request, request failed', 400))
-    except ValueError:
-        abort(make_response('Field \'count\' must be an integer, request failed', 400))
+        abort(make_response('Field \'page\' must be an integer, request failed', 400))
 
 
-    transactions_query = "select txjson.txdata as data from propertyhistory ph, txjson where ph.txdbserialnum =txjson.txdbserialnum and ph.propertyid=%s order by ph.txdbserialnum LIMIT %s OFFSET %s;"
+
+    transactions_query = "select txjson.txdata as data from propertyhistory ph, txjson where ph.txdbserialnum =txjson.txdbserialnum and ph.propertyid=%s order by ph.txdbserialnum LIMIT 10 OFFSET %s;"
     total_query = "select count(*) as total from propertyhistory where propertyid =%s group by propertyid"
 
+    ckey="data:property:history:count:"+str(property_id)
     try:
-        cache=HISTORY_COUNT_CACHE[str(property_id)]
-        if(time.time()-cache[1] > 6000000):
-            total=dbSelect(total_query,[property_id])[0][0]
-            HISTORY_COUNT_CACHE[str(property_id)] = (total, time.time())
-        else:
-            total=cache[0]
-    except KeyError:
-        total=dbSelect(total_query,[property_id])[0][0]
-        HISTORY_COUNT_CACHE[str(property_id)] = (total, time.time())
+      total=lGet(ckey)
+      if total is None:
+        raise "not cached"
+    except:
+      total=dbSelect(total_query,[property_id])[0][0]
+      lSet(ckey,total)
+      lExpire(ckey,600)
 
-
-    ROWS=dbSelect(transactions_query,(property_id,count,start))
-    transactions=[row[0] for row in ROWS]
+    ckey="data:property:history:txdata:"+str(property_id)+":"+str(page)
+    try:
+      transactions=json.loads(lGet(ckey))
+    except:
+      ROWS=dbSelect(transactions_query,(property_id,offset))
+      transactions=[row[0] for row in ROWS]
+      #cache 10 min
+      lSet(ckey,json.dumps(transactions))
+      lExpire(ckey,600)
 
     response = {
                 "total" : total,
+                "pages" : total/10,
                 "transactions" : transactions
                 }
     return jsonify(response)
 
 
-
-@app.route('/info', methods=['POST'])
+#deprecated/invalid source
+#@app.route('/info', methods=['POST'])
 def prinfo():
     try:
         property_ = request.form['property']

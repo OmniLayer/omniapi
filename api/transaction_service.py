@@ -6,6 +6,7 @@ from common import *
 from decimal import Decimal
 from blockchain_utils import *
 from stats_service import raw_revision
+from cacher import *
 
 app = Flask(__name__)
 app.debug = True
@@ -75,16 +76,25 @@ def getfees():
     return jsonify(getfeesRaw())
 
 def getfeesRaw():
+    ckey="info:fees"
     fee={}
-    ROWS=dbSelect("select value from settings where key='feeEstimates'")
-    print ROWS
-    if len(ROWS) > 0:
-      fee=json.loads(ROWS[0][0])
+    try:
+      #check cache first
+      fee=json.loads(lGet(ckey))
+    except:
+      ROWS=dbSelect("select value from settings where key='feeEstimates'")
+      print ROWS
+      if len(ROWS) > 0:
+        fee=json.loads(ROWS[0][0])
+      #cache result for 10 min
+      lSet(ckey,json.dumps(fee))
+      lExpire(ckey,600)
 
     fee['unit']='Satoshi/kB'
     return fee
 
-@app.route('/estimatetxcost', methods=['POST'])
+#not implimented yet
+#@app.route('/estimatetxcost', methods=['POST'])
 def estimatetxcost():
     try:
         address = str(re.sub(r'\W+', '', request.form['address'] ) ) #check alphanumeric
@@ -108,8 +118,16 @@ def getaddresshist():
 
 
 def getaddresshistraw(address,page):
-    offset=page*10
-    ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
+    ckey="data:addrhist:"+str(addr)+":"+str(page)
+    try:
+      #check cache
+      ROWS = json.loads(ckey)
+    except:
+      offset=page*10
+      ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
+      #set and cache data for 7 min
+      lSet(ckey,json.dumps(ROWS))
+      lExpire(ckey,420)
     pcount=getaddresstxcount(address)
     response = { 'address': address, 'transactions': ROWS , 'pages': pcount}
 
@@ -151,13 +169,37 @@ def getaddress_OLD():
     return jsonify(response)
 
 def getpagecounttxjson(limit=10):
-  #todo add caching
-  ROWS=dbSelect("select count(txdbserialnum) from txjson;")
-  return (int(ROWS[0][0])/limit)
+  ckey="info:tx:pcount"
+  try:
+    rc = lGet(ckey)
+    if rc is None:
+      raise "not in cache"
+    else:
+      count=int(rc)
+  except:
+    ROWS=dbSelect("select count(txdbserialnum) from txjson;")
+    count=int(ROWS[0][0])
+    #cache 10 min
+    lSet(ckey,count)
+    lExpire(ckey,600)
+
+  return (count/limit)
 
 def getaddresstxcount(address,limit=10):
-  ROWS=dbSelect("select count(txdbserialnum) from addressesintxs where address=%s;",[address])
-  return (int(ROWS[0][0])/limit)
+  ckey="info:addr:"+str(address)+":pcount"
+  try:
+    rc = lGet(ckey)
+    if rc is None:
+      raise "not in cache"
+    else:
+      count=int(rc)
+  except:
+    ROWS=dbSelect("select count(txdbserialnum) from addressesintxs where address=%s;",[address])
+    count=int(ROWS[0][0])
+    lSet(ckey,count)
+    lExpire(ckey,600)
+
+  return (count/limit)
 
 
 @app.route('/general/')
@@ -170,21 +212,32 @@ def getrecenttxpages(page=0):
       offset=int(page)*10
     except:
       offset=0
-    ROWS=dbSelect("select txdata from txjson txj where protocol != 'Bitcoin' order by txdbserialnum DESC offset %s limit 10;",[offset])
-    rev=raw_revision()
-    cblock=rev['last_block']
-    response = []
-    if len(ROWS) > 0:
-      for data in ROWS:
-        res = data[0]
-        try:
-          res['confirmations'] = cblock - res['block'] + 1
-        except:
-          pass
-        response.append(res)
-    pages=getpagecounttxjson()
-    #return Response(json.dumps(response), mimetype="application/json")
-    return jsonify({'pages':pages,'data':response})
+      page=0
+
+    ckey="data:tx:general:"+str(page)
+    try:
+      response=json.loads(lGet(ckey))
+    except:
+      ROWS=dbSelect("select txdata from txjson txj where protocol != 'Bitcoin' order by txdbserialnum DESC offset %s limit 10;",[offset])
+      rev=raw_revision()
+      cblock=rev['last_block']
+      data = []
+      if len(ROWS) > 0:
+        for d in ROWS:
+          res = d[0]
+          try:
+            res['confirmations'] = cblock - res['block'] + 1
+          except:
+            pass
+          data.append(res)
+      pages=getpagecounttxjson()
+      response={'pages':pages,'data':data}
+      #cache pages for 5 min
+      lSet(ckey,response)
+      lExpire(ckey,300)
+      
+
+    return jsonify(response)
 
 
 def gettxjson(hash_id):
@@ -193,16 +246,27 @@ def gettxjson(hash_id):
     except ValueError:
         return {'error':'This endpoint only consumes valid input. Invalid txid'}
 
-    ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
     rev=raw_revision()
     cblock=rev['last_block']
 
-    if len(ROWS) < 1:
-      return json.dumps([])
+    ckey="data:tx:"+str(transaction_)
     try:
-      txJson = json.loads(ROWS[0][0])
-    except TypeError:
-      txJson = ROWS[0][0]
+      txJson=lGet(json.loads(ckey))
+    except:
+      ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
+      if len(ROWS) < 1:
+        return json.dumps([])
+      try:
+        txJson = json.loads(ROWS[0][0])
+      except TypeError:
+        txJson = ROWS[0][0]
+      lSet(ckey,json.dumps(txJson))
+      try:
+        #check if tx is unconfirmed and expire cache after 5 min if it is
+        if txJson['confirmations'] == 0:
+          lExpire(ckey,300)
+      except:
+        lExpire(ckey,300)
 
     try:
       txJson['confirmations'] = cblock - txJson['block'] + 1
@@ -253,21 +317,28 @@ def getaddrhist(address,direction='both',page=0):
       offset=int(page)*50
     except:
       offset=0
+      page=0
 
-    role='address'
-    query="select t.txhash from transactions t, addressesintxs atx where t.txdbserialnum = atx.txdbserialnum and t.protocol != 'Bitcoin' and atx.address='"+str(address_)+"'"
-    if direction=='send':
-      role='sender'
-      query+=" and atx.addressrole='sender'"
-    elif direction=='receive':
-      role="recipient"
-      query+=" and atx.addressrole='recipient'"
-    query+=" order by t.txdbserialnum DESC offset " +str(offset)+ " limit 50"
-    ROWS=dbSelect(query)
+    ckey="data:oe:addrhist:"+str(address_)+":"+str(direction)
+    try:
+      ret=json.loads(lGet(ckey))
+    except:
+      role='address'
+      query="select t.txhash from transactions t, addressesintxs atx where t.txdbserialnum = atx.txdbserialnum and t.protocol != 'Bitcoin' and atx.address='"+str(address_)+"'"
+      if direction=='send':
+        role='sender'
+        query+=" and atx.addressrole='sender'"
+      elif direction=='receive':
+        role="recipient"
+        query+=" and atx.addressrole='recipient'"
+      query+=" order by t.txdbserialnum DESC offset " +str(offset)+ " limit 50"
+      ROWS=dbSelect(query)
 
-    ret=[]
-    for x in ROWS:
-      ret.append(x[0])
+      ret=[]
+      for x in ROWS:
+        ret.append(x[0])
+      lSet(ckey,json.dumps(ret))
+      lExpire(ckey,300)
 
     return {role:address_,"transactions":ret}
 

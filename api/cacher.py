@@ -2,12 +2,30 @@ import config
 import redis
 import json
 
+#remote server
 r = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
+#local server
+l = redis.StrictRedis()
 
 try:
   expTime=config.BTCBAL_CACHE
 except:
   expTime=600
+
+def lGet(key):
+  return l.get(key)
+
+def lSet(key,value):
+  return l.set(key,value)
+
+def lExpire(key,sec):
+  return l.expire(key,sec)
+
+def lDelete(key):
+  return l.delete(key)
+
+def lKeys(key):
+  return l.keys(key)
 
 def rGet(key):
   return r.get(key)
