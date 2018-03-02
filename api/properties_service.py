@@ -177,8 +177,8 @@ def gethistory(property_id):
         offset = page * 10
     except KeyError:
       try:
-        start = int(request.form['start'])
-        offset = start * 10
+        page = int(request.form['start'])
+        offset = page * 10
       except KeyError:
         abort(make_response('No field \'page\' in request, request failed', 400))
       except ValueError:
