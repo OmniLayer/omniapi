@@ -193,7 +193,7 @@ def gethistory(property_id):
 
     ckey="data:property:history:count:"+str(property_id)
     try:
-      total=lGet(ckey)
+      total=int(lGet(ckey))
       if total in ['None',None]:
         raise "not cached"
     except:
