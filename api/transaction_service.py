@@ -275,16 +275,25 @@ def gettxjson(hash_id):
     return txJson
 
 def getblockhash(blocknumber):
-    try:
-        block_ = int( blocknumber ) #check numeric
-        ROWS=dbSelect("select blockhash from blocks where blocknumber=%s", [block_])
-    except Exception as e:
-        return {'error':'This endpoint only consumes valid input. Invalid block'}
+  try:
+    block_ = int( blocknumber ) #check numeric
+  except Exception as e:
+    return {'error':'This endpoint only consumes valid input. Invalid block'}
 
+  ckey="info:blockhash:"+str(block_)
+  try:
+    bhash=lGet(ckey)
+  except:
+    ROWS=dbSelect("select blockhash from blocks where blocknumber=%s", [block_])
     if len(ROWS) < 1:
-      return "error: block not available."
+      bash="error: block not available."
     else:
-      return ROWS[0][0]
+      bhash=ROWS[0][0]
+    #cache for 1 min
+    lSet(ckey,bhash)
+    lExpire(ckey,60)
+
+  return bhash
 
 def getblocktxjson(block):
     bhash=getblockhash(block)
