@@ -40,7 +40,7 @@ def raw_revision():
     response = json.loads(lGet(ckey))
   except:
     ROWS=dbSelect("select blocknumber, blocktime from blocks order by blocknumber desc limit 1")
-    response = {'last_block': ROWS[0][0], 'last_parsed': ROWS[0][1]}
+    response = {'last_block': ROWS[0][0], 'last_parsed': str(ROWS[0][1])}
     #cache 5 min
     lSet(ckey,json.dumps(response))
     lExpire(ckey,300)
