@@ -283,6 +283,8 @@ def getblockhash(blocknumber):
   ckey="info:blockhash:"+str(block_)
   try:
     bhash=lGet(ckey)
+    if bhash is None:
+      raise "not cached"
   except:
     ROWS=dbSelect("select blockhash from blocks where blocknumber=%s", [block_])
     if len(ROWS) < 1:
