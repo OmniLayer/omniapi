@@ -95,8 +95,10 @@ def listByEcosystem():
   except ValueError:
       abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
 
+  properties = rawlist()['properties']
+
   pdata=[]
-  for prop in ROWS:
+  for prop in properties:
     data=prop[0]
     if value==2 and (data['propertyid']==2 or data['propertyid']>2147483650):
       pdata.append(data)
