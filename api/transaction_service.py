@@ -244,7 +244,7 @@ def getrecenttxpages(page=0):
             pass
           data.append(res)
       pages=getpagecounttxjson()
-      response={'pages':pages,'data':data}
+      response={'pages':pages,'transactions':data}
       #cache pages for 5 min
       lSet(ckey,response)
       lExpire(ckey,300)
