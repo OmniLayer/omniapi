@@ -5,13 +5,13 @@ from blockchain_utils import *
 def get_balancedata(address):
     addr = re.sub(r'\W+', '', address) #check alphanumeric
     ROWS=dbSelect("""select
-                       f1.propertyid, sp.propertytype, f1.balanceavailable, f1.pendingpos, f1.pendingneg
+                       f1.propertyid, sp.propertytype, f1.balanceavailable, f1.pendingpos, f1.pendingneg, f1.balancereserved
                      from
                        (select
                           COALESCE(s1.propertyid,s2.propertyid) as propertyid, COALESCE(s1.balanceavailable,0) as balanceavailable,
-                          COALESCE(s2.pendingpos,0) as pendingpos,COALESCE(s2.pendingneg,0) as pendingneg
+                          COALESCE(s2.pendingpos,0) as pendingpos,COALESCE(s2.pendingneg,0) as pendingneg, COALESCE(s1.balancereserved,0) as balancereserved
                         from
-                          (select propertyid,balanceavailable
+                          (select propertyid,balanceavailable,balancereserved
                            from addressbalances
                            where address=%s) s1
                         full join
@@ -44,6 +44,7 @@ def get_balancedata(address):
         res = { 'symbol' : sym_t, 'divisible' : divi, 'id' : cID }
         res['pendingpos'] = str(long(balrow[3]))
         res['pendingneg'] = str(long(balrow[4]))
+        res['reserved'] = str(long(balrow[5]))
         if cID == '0':
           #get btc balance from bc api's
           if err != None or out == '':
@@ -112,13 +113,13 @@ def get_bulkbalancedata(addresses):
     for address in addresses:
       addr = re.sub(r'\W+', '', address) #check alphanumeric
       ROWS=dbSelect("""select
-                       f1.propertyid, sp.propertytype, f1.balanceavailable, f1.pendingpos, f1.pendingneg
+                       f1.propertyid, sp.propertytype, f1.balanceavailable, f1.pendingpos, f1.pendingneg, f1.balancereserved
                      from
                        (select
                           COALESCE(s1.propertyid,s2.propertyid) as propertyid, COALESCE(s1.balanceavailable,0) as balanceavailable,
-                          COALESCE(s2.pendingpos,0) as pendingpos,COALESCE(s2.pendingneg,0) as pendingneg
+                          COALESCE(s2.pendingpos,0) as pendingpos,COALESCE(s2.pendingneg,0) as pendingneg, COALESCE(s1.balancereserved,0) as balancereserved
                         from
-                          (select propertyid,balanceavailable
+                          (select propertyid,balanceavailable,balancereserved
                            from addressbalances
                            where address=%s) s1
                         full join

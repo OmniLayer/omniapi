@@ -103,6 +103,19 @@ def estimatetxcost():
         abort(make_response('This endpoint only consumes valid input', 400))
 
 
+@app.route('/address/<page>', methods=['POST'])
+def getaddresshistpage(page=0):
+    try:
+        address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
+    except ValueError:
+        abort(make_response('This endpoint only consumes valid input', 400))
+    try:
+      page=int(page)
+    except:
+      page=0
+    return jsonify(getaddresshistraw(address,page))
+
+
 @app.route('/address', methods=['POST'])
 def getaddresshist():
     try:
