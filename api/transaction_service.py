@@ -134,15 +134,16 @@ def getaddresshistraw(address,page):
     ckey="data:addrhist:"+str(address)+":"+str(page)
     try:
       #check cache
-      ROWS = json.loads(ckey)
+      txlist = json.loads(ckey)
     except:
       offset=page*10
       ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
       #set and cache data for 7 min
-      lSet(ckey,json.dumps(ROWS))
+      txlist=ROWS[0]
+      lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
     pcount=getaddresstxcount(address)
-    response = { 'address': address, 'transactions': ROWS , 'pages': pcount}
+    response = { 'address': address, 'transactions': txlist , 'pages': pcount}
 
     return response
 
