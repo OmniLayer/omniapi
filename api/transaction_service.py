@@ -118,7 +118,7 @@ def getaddresshist():
 
 
 def getaddresshistraw(address,page):
-    ckey="data:addrhist:"+str(addr)+":"+str(page)
+    ckey="data:addrhist:"+str(address)+":"+str(page)
     try:
       #check cache
       ROWS = json.loads(ckey)
@@ -288,7 +288,7 @@ def getblockhash(blocknumber):
   except:
     ROWS=dbSelect("select blockhash from blocks where blocknumber=%s", [block_])
     if len(ROWS) < 1:
-      bash="error: block not available."
+      bhash="error: block not available."
     else:
       bhash=ROWS[0][0]
     #cache for 1 min
@@ -338,21 +338,21 @@ def getaddrhist(address,direction='both',page=0):
       offset=0
       page=0
 
+    query="select t.txhash from transactions t, addressesintxs atx where t.txdbserialnum = atx.txdbserialnum and t.protocol != 'Bitcoin' and atx.address='"+str(address_)+"'"
+    query+=" order by t.txdbserialnum DESC offset " +str(offset)+ " limit 50"
+    role='address'
+    if direction=='send':
+      role='sender'
+      query+=" and atx.addressrole='sender'"
+    elif direction=='receive':
+      role="recipient"
+      query+=" and atx.addressrole='recipient'"
+
     ckey="data:oe:addrhist:"+str(address_)+":"+str(direction)
     try:
       ret=json.loads(lGet(ckey))
     except:
-      role='address'
-      query="select t.txhash from transactions t, addressesintxs atx where t.txdbserialnum = atx.txdbserialnum and t.protocol != 'Bitcoin' and atx.address='"+str(address_)+"'"
-      if direction=='send':
-        role='sender'
-        query+=" and atx.addressrole='sender'"
-      elif direction=='receive':
-        role="recipient"
-        query+=" and atx.addressrole='recipient'"
-      query+=" order by t.txdbserialnum DESC offset " +str(offset)+ " limit 50"
       ROWS=dbSelect(query)
-
       ret=[]
       for x in ROWS:
         ret.append(x[0])
