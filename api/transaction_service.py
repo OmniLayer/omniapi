@@ -353,7 +353,6 @@ def getaddrhist(address,direction='both',page=0):
       page=0
 
     query="select t.txhash from transactions t, addressesintxs atx where t.txdbserialnum = atx.txdbserialnum and t.protocol != 'Bitcoin' and atx.address='"+str(address_)+"'"
-    query+=" order by t.txdbserialnum DESC offset " +str(offset)+ " limit 50"
     role='address'
     if direction=='send':
       role='sender'
@@ -361,6 +360,7 @@ def getaddrhist(address,direction='both',page=0):
     elif direction=='receive':
       role="recipient"
       query+=" and atx.addressrole='recipient'"
+    query+=" order by t.txdbserialnum DESC offset " +str(offset)+ " limit 50"
 
     ckey="data:oe:addrhist:"+str(address_)+":"+str(direction)
     try:
