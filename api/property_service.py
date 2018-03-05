@@ -22,21 +22,30 @@ def getpropertyraw(prop_id):
   try:
     ret=json.loads(lGet(ckey))
   except:
-    ROWS=dbSelect("select txj.txdata,sp.propertydata from txjson txj, smartproperties sp where sp.createtxdbserialnum = txj.txdbserialnum "
-                  "and sp.propertyid=%s",[property_])
+    if property_ in [0,1,2]:
+      ROWS=dbSelect("select propertydata from smartproperties sp where (protocol='Bitcoin' or protocol='Omni') and sp.propertyid=%s",[property_])
 
-    try:
-      txJson=json.loads(ROWS[0][0])
-    except TypeError:
-      txJson=ROWS[0][0]
+      try:
+        ret=json.loads(ROWS[0][0])
+      except TypeError:
+        ret=ROWS[0][0]
+    else:
+      ROWS=dbSelect("select txj.txdata,sp.propertydata from txjson txj, smartproperties sp where sp.createtxdbserialnum = txj.txdbserialnum "
+                    "and sp.propertyid=%s",[property_])
 
-    try:
-      txData=json.loads(ROWS[0][1])
-    except TypeError:
-      txData=ROWS[0][1]
+      try:
+        txJson=json.loads(ROWS[0][0])
+      except TypeError:
+        txJson=ROWS[0][0]
 
-    ret = txJson.copy()
-    ret.update(txData)
+      try:
+        txData=json.loads(ROWS[0][1])
+      except TypeError:
+        txData=ROWS[0][1]
+
+      ret = txJson.copy()
+      ret.update(txData)
+
     #expire after 30 min
     lSet(ckey,json.dumps(ret))
     lExpire(ckey,1800)
