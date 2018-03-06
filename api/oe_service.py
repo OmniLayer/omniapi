@@ -78,22 +78,21 @@ def ask_aspx():
     if 'txid' not in args:
       return jsonify({"error":"invalid request, missing txid"})
     #weird formatting, to match legacy oe need to remove curly brackets
-    return gettxjson(args['txid'])['valid']
+    return json.dumps(gettxjson(args['txid'])['valid'])[1:][:-1]
 
   #gettxblock	txid	Requests the block number for a given transaction ID
   elif api=="gettxblock":
     if 'txid' not in args:
       return jsonify({"error":"invalid request, missing txid"})
     #weird formatting, to match legacy oe need to remove curly brackets
-    return gettxjson(args['txid'])['block']
+    return json.dumps(gettxjson(args['txid'])['block'])[1:][:-1]
 
   #gettxconfirmations	txid	Requests the number of confirmations for a given transaction ID
   elif api=="gettxconfirmations":
     if 'txid' not in args:
       return jsonify({"error":"invalid request, missing txid"})
     #weird formatting, to match legacy oe need to remove curly brackets
-    return gettxjson(args['txid'])['confirmations']
-
+    return json.dumps(gettxjson(args['txid'])['confirmations'])[1:][:-1]
 
   #getblocktx	block	Requests the transaction details for all Omni Layer transactions in a given block
   elif api=="getblocktx":
@@ -103,7 +102,7 @@ def ask_aspx():
 
   #getlastblockprocessed	-	Requests the last block processed by OmniExplorer.info
   elif api=="getlastblockprocessed":
-    return raw_revision()['last_block']
+    return json.dumps(raw_revision()['last_block'])[1:][:-1]
 
 #gethistory	address	Requests the historical transactions for a given address
 
