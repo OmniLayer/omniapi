@@ -250,9 +250,16 @@ def getrecenttxpages(page=0):
       lSet(ckey,response)
       lExpire(ckey,300)
       
+    cachetxs(response)
 
     return jsonify(response)
 
+
+def cachetxs(txlist):
+    for tx in txlist:
+      ckey="data:tx:"+str(tx['txid'])
+      lSet(ckey,tx)
+      lExpire(ckey,300)
 
 def gettxjson(hash_id):
     try:
