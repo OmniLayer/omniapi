@@ -29,6 +29,10 @@ def getCurrentPrice(currency=None):
   #cleanse our input name
   pattern=re.compile('[\W_]+')
   input=pattern.sub('', currency.split('.')[0]).upper()
+
+  return jsonify(getCurrentPriceRaw(input))
+
+def getCurrentPriceRaw(input):
   currency=None
 
   if input[:2].upper() == "SP":
@@ -69,7 +73,7 @@ def getCurrentPrice(currency=None):
     pid2=2
 
   else:
-    return jsonify({ 'price': 0, 'symbol': input })
+    return { 'price': 0, 'symbol': input }
 
 
   ROWS=dbSelect("select rate1for2 from exchangerates where protocol1=%s and propertyid1=%s and "
@@ -92,8 +96,7 @@ def getCurrentPrice(currency=None):
                    'currency': currency
                  }
 
-  json_response = jsonify(response)
-  return json_response
+  return response
 
 
 def getPropertyid(abv,protocol):

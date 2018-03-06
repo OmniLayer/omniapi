@@ -95,6 +95,9 @@ def listByEcosystem():
   except ValueError:
       abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
 
+  return jsonify(rawecolist(value))
+
+def rawecolist(value):
   properties = rawlist()['properties']
 
   pdata=[]
@@ -109,7 +112,7 @@ def listByEcosystem():
               'properties' : pdata
               }
 
-  return jsonify(response)
+  return response
 
 @app.route('/listbyowner', methods=['POST'])
 def listbyowner():
