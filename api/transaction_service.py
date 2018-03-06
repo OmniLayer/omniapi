@@ -250,7 +250,7 @@ def getrecenttxpages(page=0):
       lSet(ckey,response)
       lExpire(ckey,300)
       
-    cachetxs(response)
+    cachetxs(data)
 
     return jsonify(response)
 
