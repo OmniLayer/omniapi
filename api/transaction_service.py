@@ -243,6 +243,9 @@ def getrecenttxpages(page=0):
             res['confirmations'] = cblock - res['block'] + 1
           except:
             pass
+          #if cblock hasn't caught up make sure we don't return negative weirdness
+          if res['confirmations'] < 0:
+            res['confirmations'] = 0
           data.append(res)
       pages=getpagecounttxjson()
       response={'pages':pages,'transactions':data}
@@ -259,7 +262,12 @@ def cachetxs(txlist):
     for tx in txlist:
       ckey="data:tx:"+str(tx['txid'])
       lSet(ckey,tx)
-      lExpire(ckey,300)
+      try:
+        #check if tx is unconfirmed and expire cache after 5 min if it is
+        if txJson['confirmations'] == 0:
+          lExpire(ckey,300)
+      except:
+        lExpire(ckey,300)
 
 def gettxjson(hash_id):
     try:
@@ -293,6 +301,11 @@ def gettxjson(hash_id):
       txJson['confirmations'] = cblock - txJson['block'] + 1
     except:
       pass
+
+    #if cblock hasn't caught up make sure we don't return negative weirdness
+    if txJson['confirmations'] < 0:
+      txJson['confirmations'] = 0
+
     return txJson
 
 def getblockhash(blocknumber):
