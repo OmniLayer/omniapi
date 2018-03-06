@@ -2,6 +2,7 @@ from flask import Flask, request, Response, jsonify, abort, json, make_response
 from bitcoin_tools import *
 from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
+from propertyservice import getpropertyraw
 
 app = Flask(__name__)
 app.debug = True
@@ -65,5 +66,15 @@ def ask_aspx():
     return jsonify( getaddrhist(address,'send'))
     #else:
     #  return jsonify({"error":"invalid address"})
+  elif api=="getpropertytotaltokens":
+    try:
+      if 'prop' not in args:
+        raise "missing arg"
+      pid=args['prop']
+      raw=getpropertyraw(pid)
+      return raw['totaltokens']
+    except Exception, e:
+      print "getpropertytotaltokens error: "+str(e)
+      return jsonify({"error":"invalid request"})
   else:
     return jsonify({"error":"unsupported call", "args": args })
