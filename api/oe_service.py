@@ -85,7 +85,7 @@ def ask_aspx():
     if 'txid' not in args:
       return jsonify({"error":"invalid request, missing txid"})
     #weird formatting, to match legacy oe need to remove curly brackets
-    return json.dumps(gettxjson(args['txid'])['block'])[1:][:-1]
+    return gettxjson(args['txid'])['block'])
 
   #gettxconfirmations	txid	Requests the number of confirmations for a given transaction ID
   elif api=="gettxconfirmations":
