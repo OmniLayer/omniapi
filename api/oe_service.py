@@ -2,7 +2,7 @@ from flask import Flask, request, Response, jsonify, abort, json, make_response
 from bitcoin_tools import *
 from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
-from propertyservice import getpropertyraw
+from property_service import getpropertyraw
 
 app = Flask(__name__)
 app.debug = True
