@@ -9,7 +9,8 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
-from flask import Flask, request, jsonify, abort, json
+#from flask import Flask, request, jsonify, abort, json
+from flask_rate_limit import *
 from simplekv.fs import FilesystemStore
 from uuid import UUID
 from email.MIMEMultipart import MIMEMultipart
@@ -41,7 +42,6 @@ else:
 
 app = Flask(__name__)
 app.debug = True
-
 
 @app.route('/challenge')
 def challenge():

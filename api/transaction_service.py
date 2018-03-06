@@ -1,7 +1,8 @@
 import urlparse
 import os, sys, re
 import math
-from flask import Flask, request, Response, jsonify, abort, json, make_response
+#from flask import Flask, request, Response, jsonify, abort, json, make_response
+from flask_rate_limit import *
 from common import *
 from decimal import Decimal
 from blockchain_utils import *
@@ -139,7 +140,7 @@ def getaddresshistraw(address,page):
       offset=page*10
       ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
       #set and cache data for 7 min
-      txlist=ROWS[0]
+      txlist=ROWS
       lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
     pcount=getaddresstxcount(address)
