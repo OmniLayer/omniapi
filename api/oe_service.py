@@ -102,7 +102,7 @@ def ask_aspx():
     return jsonify(getblocktxjson(args['block']))
 
   #getlastblockprocessed	-	Requests the last block processed by OmniExplorer.info
-  elif api=="getlastblockprocessed"
+  elif api=="getlastblockprocessed":
     return raw_revision()['last_block']
 
 #gethistory	address	Requests the historical transactions for a given address
