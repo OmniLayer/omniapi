@@ -85,7 +85,7 @@ def ask_aspx():
     if 'txid' not in args:
       return jsonify({"error":"invalid request, missing txid"})
     #weird formatting, to match legacy oe need to remove curly brackets
-    return gettxjson(args['txid'])['block'])
+    return json.dumps(gettxjson(args['txid'])['block'])
 
   #gettxconfirmations	txid	Requests the number of confirmations for a given transaction ID
   elif api=="gettxconfirmations":
@@ -102,7 +102,7 @@ def ask_aspx():
 
   #getlastblockprocessed	-	Requests the last block processed by OmniExplorer.info
   elif api=="getlastblockprocessed":
-    return json.dumps(raw_revision()['last_block'])[1:][:-1]
+    return json.dumps(raw_revision()['last_block'])
 
 #gethistory	address	Requests the historical transactions for a given address
 
@@ -147,7 +147,7 @@ def ask_aspx():
         raise "missing arg"
       pid=args['prop']
       raw=getpropertyraw(pid)
-      return raw['divisible']
+      return json.dumps(raw['divisible'])
     except Exception, e:
       print "getpropertydivisibility error: "+str(e)
       return jsonify({"error":"invalid request"})
