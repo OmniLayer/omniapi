@@ -51,7 +51,7 @@ def ask_aspx():
   api=args['api']
 
   #getbalance	prop, address	Requests the available balance for a given property ID and address
-  if api=="getbalance"
+  if api=="getbalance":
     if 'prop' not in args or 'address' not in args:
       return jsonify({"error":"invalid request"})
 
