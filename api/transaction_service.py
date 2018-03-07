@@ -298,11 +298,6 @@ def gettxjson(hash_id):
         txJson = json.loads(ROWS[0][0])
       except TypeError:
         txJson = ROWS[0][0]
-      try:
-        if type_int not in txJson and txJson['type']=="DEx Purchase":
-          txJson['type_int']=-22
-      except:
-        pass
 
       lSet(ckey,json.dumps(txJson))
       try:
@@ -312,6 +307,11 @@ def gettxjson(hash_id):
       except:
         lExpire(ckey,300)
 
+    try:
+      if 'type_int' not in txJson and txJson['type']=="DEx Purchase":
+        txJson['type_int']=-22
+    except:
+      pass
     try:
       txJson['confirmations'] = cblock - txJson['block'] + 1
     except:
