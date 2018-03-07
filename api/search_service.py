@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/', methods=['GET'])
+@ratelimit(limit=15, per=60)
 def search():
   if 'query' in request.args:
       query = re.sub(r'\W+', '0', request.args.get('query') ) # strip and get query

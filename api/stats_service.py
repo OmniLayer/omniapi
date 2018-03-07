@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/status')
+@ratelimit(limit=20, per=60)
 def status():
   rev=revision().get_data()
   #print rev
@@ -44,17 +45,19 @@ def raw_revision():
   except:
     ROWS=dbSelect("select blocknumber, blocktime from blocks order by blocknumber desc limit 1")
     response = {'last_block': ROWS[0][0], 'last_parsed': str(ROWS[0][1])}
-    #cache 5 min
+    #cache 1 min
     lSet(ckey,json.dumps(response))
-    lExpire(ckey,300)
+    lExpire(ckey,60)
   return response
 
 @app.route('/revision')
+@ratelimit(limit=20, per=60)
 def revision():
   return jsonify(raw_revision())
 
 
 @app.route('/stats')
+@ratelimit(limit=20, per=60)
 def stats():
   ckey="info:stats:stats"
   try:
@@ -82,6 +85,7 @@ def stats():
 
 
 @app.route('/commits')
+@ratelimit(limit=20, per=60)
 def commits():
   ckey="info:stats:commits"
   try:

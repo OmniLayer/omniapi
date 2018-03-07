@@ -10,8 +10,9 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/requeststat.aspx', methods=['get'])
+@ratelimit(limit=30, per=60)
 def requeststat_aspx():
-  print request.args
+  #print request.args
   args=request.args
   if 'stat' not in args:
     return jsonify({"error":"invalid request"})
@@ -43,6 +44,7 @@ def requeststat_aspx():
 
 
 @app.route('/ask.aspx', methods=['get'])
+@ratelimit(limit=30, per=60)
 def ask_aspx():
   print request.args
   args=request.args

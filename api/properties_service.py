@@ -15,6 +15,7 @@ app.debug = True
 HISTORY_COUNT_CACHE = {}
 
 @app.route('/categories', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def categories():
     categories_file = data_dir_root + "/www/categories.json"
     with open(categories_file, 'r') as f:
@@ -33,6 +34,7 @@ def categories():
     return jsonify(response)
 
 @app.route('/subcategories', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def subcategories():
     try:
         category = request.form['category']
@@ -59,6 +61,7 @@ def subcategories():
     return jsonify(response)
 
 @app.route('/list')
+@ratelimit(limit=20, per=60)
 def list():
   return jsonify(rawlist())
 
@@ -83,6 +86,7 @@ def rawlist():
 
 
 @app.route('/listbyecosystem', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def listByEcosystem():
   try:
       value = int(re.sub(r'\D+', '', request.form['ecosystem']))
@@ -116,6 +120,7 @@ def rawecolist(value):
   return response
 
 @app.route('/listbyowner', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def listbyowner():
   # I can't believe flask can't parse properly arrays from the frontend, using values() as a hack.
   try:
@@ -140,6 +145,7 @@ def listbyowner():
   return jsonify(response)
 
 @app.route('/listactivecrowdsales', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def listcrowdsales():
   try:
       value = int(re.sub(r'\D+', '', request.form['ecosystem']))
@@ -171,10 +177,12 @@ def listcrowdsales():
   return jsonify(response)
 
 @app.route('/getdata/<int:property_id>')
+@ratelimit(limit=20, per=60)
 def getdata(property_id):
     return jsonify(getpropertyraw(property_id))
 
 @app.route('/gethistory/<int:property_id>', methods=["POST"])
+@ratelimit(limit=20, per=60)
 def gethistory(property_id):
     try:
         page = int(request.form['page'])

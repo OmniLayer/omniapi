@@ -23,6 +23,7 @@ class RateLimit(object):
     def __init__(self, key_prefix, limit, per, send_x_headers):
         self.reset = (int(time.time()) // per) * per + per
         self.key = key_prefix + str(self.reset)
+        self.key_prefix = key_prefix
         self.limit = limit
         self.per = per
         self.send_x_headers = send_x_headers
@@ -38,7 +39,10 @@ def get_view_rate_limit():
     return getattr(g, '_view_rate_limit', None)
 
 def on_over_limit(limit):
-    return 'You hit the rate limit', 400
+    akey='triggered/'+limit.key_prefix+time.strftime("%Y-%m-%d", time.gmtime())
+    redis.incr(akey)
+    print 'Rate Limit Reached: '+str(limit.key)
+    return 'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit-10)+' every '+str(limit.per)+'s.', 400
 
 def ratelimit(limit, per=300, send_x_headers=True,
               over_limit=on_over_limit,

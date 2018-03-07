@@ -19,6 +19,7 @@ testnet=False
 exodus_address=mainnet_exodus_address
 
 @app.route('/<int:tx_type>', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def generate_tx(tx_type):
 
     #update this to support more transactions

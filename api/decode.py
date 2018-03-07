@@ -9,6 +9,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/<rawhex>', methods=['GET','POST'])
+@ratelimit(limit=15, per=60)
 def decode_handler(rawhex):
   return jsonify(decode(rawhex))
 

@@ -22,6 +22,7 @@ def getValueBook():
   return ROWS
 
 @app.route('/<currency>')
+@ratelimit(limit=30, per=60)
 def getCurrentPrice(currency=None):
 
   if currency == None:
@@ -108,6 +109,7 @@ def getPropertyid(abv,protocol):
     return ROWS[0][0]
 
 @app.route('/currencylist')
+@ratelimit(limit=30, per=60)
 def currencylist():
   ROWS=dbSelect("select distinct propertyname,issuer from smartproperties sp , exchangerates ex "
                 "where sp.protocol=ex.protocol1 and sp.protocol='Fiat' and ex.rate1for2 !=0 order by issuer")
@@ -120,6 +122,7 @@ def currencylist():
 
 #TODO COnversion
 @app.route('/history/<currency>')
+@ratelimit(limit=30, per=60)
 def history(currency=None):
 
   if currency == None:

@@ -13,6 +13,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/estimatefee/<addr>', methods=['GET','POST'])
+@ratelimit(limit=20, per=60)
 def estimatefees(addr):
     try:
       address = str(re.sub(r'\W+', '', addr ) ) #check alphanumeric
@@ -140,7 +141,9 @@ def getaddresshistraw(address,page):
       offset=page*10
       ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
       #set and cache data for 7 min
-      txlist=ROWS
+      txlist=[]
+      for r in ROWS:
+        txlist.append(r[0])
       lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
     pcount=getaddresstxcount(address)

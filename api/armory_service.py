@@ -12,6 +12,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/getunsigned', methods=['POST'])
+@ratelimit(limit=15, per=60)
 def generate_unsigned():
     unsigned_hex = request.form['unsigned_hex']
     pubkey = request.form['pubkey']
@@ -80,6 +81,7 @@ def generate_unsigned():
     return jsonify({'armoryUnsigned':unsigned_tx_ascii})
 
 @app.route('/getrawtransaction', methods=['POST'])
+@ratelimit(limit=15, per=60)
 def get_raw():
   """Converts a signed tx from armory's offline format to a raw hex tx that bitcoind can broadcast/use"""
 

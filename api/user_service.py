@@ -44,6 +44,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/challenge')
+@ratelimit(limit=30, per=60)
 def challenge():
   validate_uuid = UUID(request.args.get('uuid'))
   uuid = str(validate_uuid)
@@ -80,6 +81,7 @@ def challenge():
 
 
 @app.route('/create', methods=['POST'])
+@ratelimit(limit=30, per=60)
 def create():
   validate_uuid = UUID(request.form['uuid'])
   uuid = str(validate_uuid)
@@ -150,6 +152,7 @@ def create():
 
 
 @app.route('/update', methods=['POST'])
+@ratelimit(limit=30, per=60)
 def update():
   #print "got form",request.form
 
@@ -245,6 +248,7 @@ def update():
 
 
 @app.route('/login', methods=['POST'])
+@ratelimit(limit=30, per=60)
 def login():
   validate_uuid = UUID(request.form['uuid'])
   uuid = str(validate_uuid)
@@ -324,6 +328,7 @@ def login():
   #return wallet_data
 
 @app.route('/newmfa')
+@ratelimit(limit=30, per=60)
 def generate_mfa():
   try:
     validate_uuid = UUID(request.args.get('uuid'))

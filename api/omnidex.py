@@ -57,6 +57,7 @@ def getOrderbook(lasttrade=0, lastpending=0):
 
 
 @app.route('/designatingcurrencies', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def getDesignatingCurrencies():
     try:
         value = int(re.sub(r'\D+', '', request.form['ecosystem']))
@@ -93,6 +94,7 @@ def getDesignatingCurrencies():
 
 
 @app.route('/<int:denominator>')
+@ratelimit(limit=20, per=60)
 def get_markets_by_denominator(denominator):
     markets = dbSelect("select ma.propertyidselling as marketid, ma.sellingname as marketname, "
                         "CASE WHEN mb.unitprice=0 THEN 0 ELSE cast(1/mb.unitprice as numeric(27,8)) END as bidprice, "
@@ -114,6 +116,7 @@ def get_markets_by_denominator(denominator):
 	} for currency in markets]})
 
 @app.route('/ohlcv/<int:propertyid_desired>/<int:propertyid_selling>')
+@ratelimit(limit=20, per=60)
 def get_OHLCV(propertyid_desired, propertyid_selling):
     orderbook = dbSelect("SELECT timeframe.date,FIRST(offers.unitprice) ,MAX(offers.unitprice), MIN(offers.unitprice), "
                          "LAST(offers.unitprice), SUM(offers.totalselling) FROM generate_series('2016-01-01 00:00'::timestamp,current_date, '1 day') "
@@ -136,6 +139,7 @@ def get_OHLCV(propertyid_desired, propertyid_selling):
 
 
 @app.route('/<int:propertyid_desired>/<int:propertyid_selling>')
+@ratelimit(limit=20, per=60)
 def get_orders_by_market_json(propertyid_desired, propertyid_selling):
     return jsonify(get_orders_by_market(propertyid_desired, propertyid_selling))
 

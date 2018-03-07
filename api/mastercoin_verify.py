@@ -12,6 +12,7 @@ app.debug = True
 
 #TODO COnversion
 @app.route('/properties')
+@ratelimit(limit=12, per=60)
 def properties():
   #ROWS=dbSelect("select * from smartproperties")
   ROWS=dbSelect("select propertyname, propertyid, protocol, propertytype from smartproperties")
@@ -40,6 +41,7 @@ def properties():
   return json_response
 
 @app.route('/addresses')
+@ratelimit(limit=12, per=60)
 def addresses():
   currency_id = request.args.get('currency_id')
   response = []
@@ -72,6 +74,7 @@ def addresses():
 
 
 @app.route('/transactions/<address>')
+@ratelimit(limit=12, per=60)
 def transactions(address=None):
   currency_id = request.args.get('currency_id')
 

@@ -12,12 +12,12 @@ try:
 except:
   expTime=600
 
-def lInit(db)
+def lInit(db):
   try:
     dbk=int(db)
   except:
     dbk=1
-  return redis.strictRedis(db=dbk)
+  return redis.StrictRedis(db=dbk)
 
 def lGet(key):
   return l.get(key)
