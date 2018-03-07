@@ -74,6 +74,7 @@ def estimatefees(addr):
     return jsonify(ret)
 
 @app.route('/fees')
+@ratelimit(limit=20, per=60)
 def getfees():
     return jsonify(getfeesRaw())
 
@@ -106,6 +107,7 @@ def estimatetxcost():
 
 
 @app.route('/address/<page>', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def getaddresshistpage(page=0):
     try:
         address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
@@ -119,6 +121,7 @@ def getaddresshistpage(page=0):
 
 
 @app.route('/address', methods=['POST'])
+@ratelimit(limit=20, per=60)
 def getaddresshist():
     try:
         address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
@@ -221,10 +224,12 @@ def getaddresstxcount(address,limit=10):
 
 
 @app.route('/general/')
+@ratelimit(limit=20, per=60)
 def getrecenttx():
   return getrecenttxpages()
 
 @app.route('/general/<page>')
+@ratelimit(limit=20, per=60)
 def getrecenttxpages(page=0):
     try:
       offset=int(page)*10
@@ -400,6 +405,7 @@ def getaddrhist(address,direction='both',page=0):
     return {role:address_,"transactions":ret}
 
 @app.route('/tx/<hash_id>')
+@ratelimit(limit=20, per=60)
 def gettransaction(hash_id):
     try:
         transaction_ = str(re.sub(r'\W+', '', hash_id.split('.')[0] ) ) #check alphanumeric
