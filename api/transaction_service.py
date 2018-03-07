@@ -298,6 +298,12 @@ def gettxjson(hash_id):
         txJson = json.loads(ROWS[0][0])
       except TypeError:
         txJson = ROWS[0][0]
+      try:
+        if type_int not in txJson and txJson['type']=="DEx Purchase":
+          txJson['type_int']=-22
+      except:
+        pass
+
       lSet(ckey,json.dumps(txJson))
       try:
         #check if tx is unconfirmed and expire cache after 5 min if it is
