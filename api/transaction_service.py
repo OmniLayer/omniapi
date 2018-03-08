@@ -162,6 +162,7 @@ def getaddresshistraw(address,page):
     except:
       pass
 
+    cachetxs(txlist)
     pcount=getaddresstxcount(address)
     response = { 'address': address, 'transactions': txlist , 'pages': pcount}
 
