@@ -605,16 +605,16 @@ def addName(txjson, list):
   #list=getpropnamelist()
   type=txjson['type_int']
   if type in[0,3,20,22,53,55,56,70]:
-    txjson['propertyname']=list[txjson['propertyid']]
+    txjson['propertyname']=list[str(txjson['propertyid'])]
   elif type==4:
     for ss in txjson['subsends']:
-      ss['propertyname']=list[ss['propertyid']]
+      ss['propertyname']=list[str(ss['propertyid'])]
   elif type==-22:
     for p in txjson['purchases']:
-      p['propertyname']=list[p['propertyid']]
+      p['propertyname']=list[str(p['propertyid'])]
   elif type in [25,26]:
-    txjson['propertyiddesiredname']=list[txjson['propertyiddesired']]
-    txjson['propertyidforsalename']=list[txjson['propertyidforsale']]
+    txjson['propertyiddesiredname']=list[str(txjson['propertyiddesired'])]
+    txjson['propertyidforsalename']=list[str(txjson['propertyidforsale'])]
   else:
     pass
 
