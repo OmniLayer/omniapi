@@ -84,7 +84,7 @@ def rawlist():
 
   return response
 
-def getpropnamelist(refresh=false):
+def getpropnamelist(refresh=False):
   ckey="info:propnames"
   try:
     if refresh:
