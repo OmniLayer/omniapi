@@ -84,6 +84,24 @@ def rawlist():
 
   return response
 
+def getpropnamelist(refresh=false):
+  ckey="info:propnames"
+  try:
+    if refresh:
+      raise "force refresh"
+    response=json.loads(lGet(ckey))
+  except:
+    ROWS= dbSelect("select PropertyName,PropertyID from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
+    response={}
+    for x in ROWS:
+      response[int(x[1])]=x[0]
+    #cache property list for 60min
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,3600)
+
+  return response
+
+
 
 @app.route('/listbyecosystem', methods=['POST'])
 @ratelimit(limit=20, per=60)

@@ -8,6 +8,7 @@ from decimal import Decimal
 from blockchain_utils import *
 from stats_service import raw_revision
 from cacher import *
+from properties_service import getpropnamelist
 
 app = Flask(__name__)
 app.debug = True
@@ -144,9 +145,11 @@ def getaddresshistraw(address,page):
       offset=page*10
       ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
       #set and cache data for 7 min
+      pnl=getpropnamelist()
       txlist=[]
       for r in ROWS:
-        txlist.append(r[0])
+        txJson=addName(r[0],pnl)
+        txlist.append(txJson)
       lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
     pcount=getaddresstxcount(address)
@@ -245,9 +248,10 @@ def getrecenttxpages(page=0):
       rev=raw_revision()
       cblock=rev['last_block']
       data = []
+      pnl=getpropnamelist()
       if len(ROWS) > 0:
         for d in ROWS:
-          res = d[0]
+          res = addName(d[0],pnl)
           try:
             res['confirmations'] = cblock - res['block'] + 1
           except:
@@ -295,10 +299,15 @@ def gettxjson(hash_id):
       if len(ROWS) < 1:
         return json.dumps([])
       try:
-        txJson = json.loads(ROWS[0][0])
+        txj = json.loads(ROWS[0][0])
       except TypeError:
-        txJson = ROWS[0][0]
-
+        txj = ROWS[0][0]
+      try:
+        if 'type_int' not in txj and txj['type']=="DEx Purchase":
+          txj['type_int']=-22
+      except:
+        pass
+      txJson=addName(txj,getpropnamelist())
       lSet(ckey,json.dumps(txJson))
       try:
         #check if tx is unconfirmed and expire cache after 5 min if it is
@@ -361,13 +370,14 @@ def getblocktxjson(block):
     except Exception as e:
         return {'error':'This endpoint only consumes valid input. Invalid block'}
 
+    pnl=getpropnamelist()
     ret=[]
     for x in ROWS:
       try:
         txJson = json.loads(x[0])
       except TypeError:
         txJson = x[0]
-      ret.append(txJson)
+      ret.append(addName(txJson,pnl))
 
     response = {"block":block_, "blockhash":bhash, "transactions": ret}
     #cache for 30 min
@@ -588,3 +598,24 @@ def gettransaction_OLD(hash_id):
         ret['issuertokens'] = txJson['issuertokens']
 
     return json.dumps([ ret ] , sort_keys=True, indent=4) #only send back mapped schema
+
+
+
+def addName(txjson, list):
+  #list=getpropnamelist()
+  type=txjson['type_int']
+  if type in[0,3,20,22,53,55,56,70]:
+    txjson['propertyname']=list[txjson['propertyid']]
+  elif type==4:
+    for ss in txjson['subsends']:
+      ss['propertyname']=list[ss['propertyid']]
+  elif type==-22:
+    for p in txjson['purchases']:
+      p['propertyname']=list[p['propertyid']]
+  elif type in [25,26]:
+    txjson['propertyiddesiredname']=list[txjson['propertyiddesired']]
+    txjson['propertyidforsalename']=list[txjson['propertyidforsale']]
+  else:
+    pass
+
+  return txjson
