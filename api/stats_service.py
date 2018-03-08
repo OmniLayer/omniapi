@@ -26,15 +26,16 @@ def status():
   except:
     st={'stats':st}
 
-  coms=commits().get_data()
+  #coms=commits().get_data()
   #print coms
-  try:
-    coms=json.loads(coms)
-  except:
-    coms={'commits':coms}
+  #try:
+  #  coms=json.loads(coms)
+  #except:
+  #  coms={'commits':coms}
 
   #print rev, st, coms
-  merged_response = {key: value for (key, value) in (rev.items() + st.items() + coms.items())}
+  #merged_response = {key: value for (key, value) in (rev.items() + st.items() + coms.items())}
+  merged_response = {key: value for (key, value) in (rev.items() + st.items())}
   return jsonify(merged_response)
 
 

@@ -137,6 +137,9 @@ def getaddresshist():
 
 
 def getaddresshistraw(address,page):
+    rev=raw_revision()
+    cblock=rev['last_block']
+
     ckey="data:addrhist:"+str(address)+":"+str(page)
     try:
       #check cache
@@ -152,6 +155,13 @@ def getaddresshistraw(address,page):
         txlist.append(txJson)
       lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
+
+    try:
+      for tx in txlist:
+        tx['confirmations'] = cblock - tx['block'] + 1
+    except:
+      pass
+
     pcount=getaddresstxcount(address)
     response = { 'address': address, 'transactions': txlist , 'pages': pcount}
 
