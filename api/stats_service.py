@@ -12,17 +12,17 @@ app.debug = True
 @app.route('/status')
 @ratelimit(limit=20, per=60)
 def status():
-  rev=revision().get_data()
+  rev=rawrevision()
   #print rev
   try:
-    rev=json.loads(rev)
+    q=rev['last_block']
   except:
     rev={'revision':rev}
 
-  st=stats().get_data()
+  st=rawstats()
   #print st
   try:
-    st=json.loads(st)
+    q=st['properties_count']
   except:
     st={'stats':st}
 
@@ -60,6 +60,9 @@ def revision():
 @app.route('/stats')
 @ratelimit(limit=20, per=60)
 def stats():
+  return jsonify(rawstats())
+
+def rawstats():
   ckey="info:stats:stats"
   try:
     response=json.loads(lGet(ckey))
@@ -81,8 +84,7 @@ def stats():
     lSet(ckey,json.dumps(response))
     lExpire(ckey,1200)
 
-  json_response = jsonify(response)
-  return json_response
+  return response
 
 
 @app.route('/commits')
