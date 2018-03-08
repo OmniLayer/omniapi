@@ -612,6 +612,7 @@ def addName(txjson, list):
   elif type==-22:
     for p in txjson['purchases']:
       p['propertyname']=list[str(p['propertyid'])]
+      txjson['valid']=p['valid']
   elif type in [25,26]:
     txjson['propertyiddesiredname']=list[str(txjson['propertyiddesired'])]
     txjson['propertyidforsalename']=list[str(txjson['propertyidforsale'])]
