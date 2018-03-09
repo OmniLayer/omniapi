@@ -161,8 +161,8 @@
         }
 
 
-        location = /v1/search { rewrite ^ /v1/search; }
-        location /v1/search { try_files $uri @flask_search_service; }
+        location = /v1/search { rewrite ^ /v1/search/; }
+        location /v1/search/ { try_files $uri @flask_search_service; }
         location @flask_search_service {
                 include uwsgi_params;
                 uwsgi_param SCRIPT_NAME /v1/search;
