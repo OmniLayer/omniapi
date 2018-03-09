@@ -4,14 +4,44 @@ import re
 from flask_rate_limit import *
 from sqltools import *
 import json
-#import requests, glob
+from transaction_service import gettxjson
+from get_balance import balance_full
 
 app = Flask(__name__)
 app.debug = True
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['POST'])
 @ratelimit(limit=15, per=60)
 def search():
+  try:
+      query = re.sub(r'\W+', '', request.form['query'] ) # strip and get query
+  except:
+      return jsonify({ 'status': 400, 'data': 'Invalid/No query found in request' })
+
+
+  asset=[]
+  adrbal={}
+  txj={}
+
+
+  if query.isdigit():
+    asset=dbSelect("select PropertyID, propertyname from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' limit 10")
+  elif query.isalpha():
+    asset=dbSelect("select PropertyID, propertyname from smartproperties where LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') and protocol='Omni' limit 10")
+  else:
+    if 25 < len(query) < 45 :
+      adrbal=balance_full(query)
+    elif len(query) == 64:
+      txj = gettxjson(query)
+    else:
+      return jsonify({ 'status': 400, 'data': 'Search requires either txid or address' })
+
+  return jsonify({ 'status': 200, 'data':{'tx':txj, 'address':adrbal, 'asset':asset}})
+
+
+
+
+def legsearch():
   if 'query' in request.args:
       query = re.sub(r'\W+', '0', request.args.get('query') ) # strip and get query
   else:
