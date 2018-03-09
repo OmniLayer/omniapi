@@ -255,7 +255,7 @@ def getrecenttxpages(page=0):
     try:
       response=json.loads(lGet(ckey))
     except:
-      ROWS=dbSelect("select txdata from txjson txj where protocol != 'Bitcoin' order by txdbserialnum DESC offset %s limit 10;",[offset])
+      ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' order by txdbserialnum DESC offset %s limit 10;",[offset])
       rev=raw_revision()
       cblock=rev['last_block']
       data = []
