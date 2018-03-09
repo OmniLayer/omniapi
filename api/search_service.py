@@ -37,8 +37,8 @@ def search():
       elif len(query) == 64:
         txj = gettxjson(query)
       else:
-        return jsonify({ 'status': 400, 'data': 'Search requires either txid or address' })
-    response={ 'status': 200, 'data':{'tx':txj, 'address':adrbal, 'asset':asset} }
+        pass
+    response={ 'status': 200, 'query':query, 'data':{'tx':txj, 'address':adrbal, 'asset':asset} }
     #cache for 3 min
     lSet(ckey,json.dumps(response))
     lExpire(ckey,180)
