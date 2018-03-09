@@ -26,9 +26,8 @@ def search():
 
   if query.isdigit():
     asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
-  elif query.isalpha():
-    asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') and protocol='Omni' order by propertyid limit 10")
   else:
+    asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where (LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') or LOWER(issuer) like LOWER(\'%" + str(query) + "%\')) and protocol='Omni' order by propertyid limit 10")
     if 25 < len(query) < 45 :
       adrbal=balance_full(query)
     elif len(query) == 64:
