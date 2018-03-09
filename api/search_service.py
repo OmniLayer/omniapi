@@ -6,6 +6,7 @@ from sqltools import *
 import json
 from transaction_service import gettxjson
 from get_balance import balance_full
+from cacher import *
 
 app = Flask(__name__)
 app.debug = True
@@ -18,26 +19,31 @@ def search():
   except:
       return jsonify({ 'status': 400, 'data': 'Invalid/No query found in request' })
 
+  ckey="data:search:"+str(query)
+  try:
+    response = json.loads(ckey)
+  except:
+    asset=[]
+    adrbal={}
+    txj={}
 
-  asset=[]
-  adrbal={}
-  txj={}
 
-
-  if query.isdigit():
-    asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
-  else:
-    asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where (LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') or LOWER(issuer) like LOWER(\'%" + str(query) + "%\')) and protocol='Omni' order by propertyid limit 10")
-    if 25 < len(query) < 45 :
-      adrbal=balance_full(query)
-    elif len(query) == 64:
-      txj = gettxjson(query)
+    if query.isdigit():
+      asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
     else:
-      return jsonify({ 'status': 400, 'data': 'Search requires either txid or address' })
+      asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where (LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') or LOWER(issuer) like LOWER(\'%" + str(query) + "%\')) and protocol='Omni' order by propertyid limit 10")
+      if 25 < len(query) < 45 :
+        adrbal=balance_full(query)
+      elif len(query) == 64:
+        txj = gettxjson(query)
+      else:
+        return jsonify({ 'status': 400, 'data': 'Search requires either txid or address' })
+    response={ 'status': 200, 'data':{'tx':txj, 'address':adrbal, 'asset':asset} }
+    #cache for 3 min
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,180)
 
-  return jsonify({ 'status': 200, 'data':{'tx':txj, 'address':adrbal, 'asset':asset}})
-
-
+  return jsonify(response)
 
 
 def legsearch():
