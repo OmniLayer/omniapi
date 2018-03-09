@@ -19,9 +19,9 @@ def search():
   except:
       return jsonify({ 'status': 400, 'data': 'Invalid/No query found in request' })
 
-  ckey="data:search:"+str(query)
+ckey="data:search:"+str(query)  ckey="data:search:"+str(query)
   try:
-    response = json.loads(ckey)
+    response = json.loads(lGet(ckey))
   except:
     asset=[]
     adrbal={}
