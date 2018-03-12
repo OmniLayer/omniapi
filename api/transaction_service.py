@@ -261,7 +261,7 @@ def getrecenttxpages(page=0):
 
     rev=raw_revision()
     cblock=rev['last_block']
-    ckey="data:tx:general:"+str(block)+":"+str(page)
+    ckey="data:tx:general:"+str(cblock)+":"+str(page)
     try:
       response=json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
