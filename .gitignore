@@ -1,4 +1,4 @@
 *.log
 *.pyc
 api/config.py
-
+logs/*.log

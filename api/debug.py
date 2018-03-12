@@ -1,8 +1,7 @@
 import os, sys, commands
 
 from config import DEBUG_LEVEL
-#debug_level = int(os.environ.get('DEBUGLEVEL'))
-
+LOGDIR=os.environ.get('LOGDIR')
 
 def print_debug( msg, verbose):
   if int(verbose) < DEBUG_LEVEL:
@@ -11,20 +10,9 @@ def print_debug( msg, verbose):
       for x in msg:
         temp+=str(x)+" "
       msg=temp
-    print str(msg)
+    #print str(msg)
+    log_file(msg)
 
-def log_debug( msg, verbose ):
-
-  data_dir_root = os.environ.get('DATADIR')
-
-  #print the message to debug log if debug variable is set
-  #add  'from debug import *' to header
-  # call with  print_debug("my message",5)
-  # outputs to Datadir/debug.log  if the number above is > than the number in Datadir/debug.level
-
-  if int(verbose) < DEBUG_LEVEL:
-    commands.getoutput('echo '+msg+' >> '+data_dir_root+'/debug.log')
-    return 1
-
-  return 0
+def log_file( msg ):
+  commands.getoutput('echo '+msg+' >> '+LOGDIR+'/debug.log')
 
