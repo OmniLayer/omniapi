@@ -142,6 +142,11 @@ def getaddresshistraw(address,page):
     rev=raw_revision()
     cblock=rev['last_block']
 
+    try:
+      page=int(page)
+    except:
+      page=1
+
     page-=1
     if page<0:
       page=0
@@ -258,6 +263,11 @@ def getrecenttx():
 @ratelimit(limit=20, per=60)
 def getrecenttxpages(page=1):
     #pagination starts at 1 so adjust accordingly to treat page 0 and 1 the same
+    try:
+      page=int(page)
+    except:
+      page=1
+
     page-=1
     if page < 0:
       page=0
@@ -422,6 +432,11 @@ def getblocktxjson(block):
   return response
 
 def getaddrhist(address,direction='both',page=1):
+    try:
+      page=int(page)
+    except:
+      page=1
+
     page-=1
     if page<0:
       page=0
