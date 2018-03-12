@@ -286,8 +286,7 @@ def getrecenttxpages(page=0):
       #cache pages for 5 min
       lSet(ckey,json.dumps(response))
       lExpire(ckey,300)
-      
-    cachetxs(data)
+      cachetxs(data)
 
     return jsonify(response)
 
