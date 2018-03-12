@@ -5,7 +5,7 @@ import re
 from flask_rate_limit import *
 #import psycopg2, psycopg2.extras
 from common import *
-
+from debug import *
 
 app = Flask(__name__)
 app.debug = True
@@ -78,7 +78,7 @@ def addresses():
 def transactions(address=None):
   currency_id = request.args.get('currency_id')
 
-  print address, currency_id
+  print_debug((address, currency_id),4)
 
   if address == None:
     abort(400)

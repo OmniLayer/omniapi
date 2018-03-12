@@ -17,13 +17,13 @@ app.debug = True
 @ratelimit(limit=20, per=60)
 def get_balance_response():
   request_dict=request.form
-  print "get_balance_response(request_dict)",request_dict
+  print_debug(("get_balance_response(request_dict)",request_dict),4)
 
   try:
       addrs_list=request_dict['addr']
   except KeyError:
       return jsonify({"error":"'addr' field not supplied"})
-  print addrs_list
+  print_debug(addrs_list,4)
 
   if len(request_dict.getlist('addr'))!=1:
       return jsonify({"error":"This endpoint accepts single address lookups. For multiple addresses use the v2 endpoint"})
@@ -60,12 +60,12 @@ def balance_propid(addr,pid):
   try:
     for x in bal['balance']:
      if x['id']==pid:
-       print x
+       print_debug(x,4)
        if x['divisible']:
          return from_satoshi(x['value'])
        else:
          return x['value']
     return '0'
   except Exception as e:
-    print "error getting bal for "+str(addr)+" "+str(e)
+    print_debug(("error getting bal for ",addr,e),3)
     return '0'

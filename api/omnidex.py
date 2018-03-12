@@ -4,6 +4,8 @@ import re
 import time
 from sqltools import *
 from math import ceil
+from debug import *
+
 app = Flask(__name__)
 app.debug = True
 
@@ -12,7 +14,7 @@ def fixDecimal(value):
     try:
       return str(ceil(float(value)*(1e8))/1e8)
     except Exception as e:
-      print "couldn't convert ",value,"got error: ",e
+      print_debug(("couldn't convert ",value,"got error: ",e),3)
 
 #@app.route('/book')
 def getOrderbook(lasttrade=0, lastpending=0):

@@ -7,7 +7,7 @@ from common import *
 
 def get_balance_v2_response(request_dict):
   import re
-  print "get_balance_response(request_dict)",request_dict
+  print_debug(("get_balance_response(request_dict)",request_dict),4)
 
   try:
       addrs_list=request_dict['addr']

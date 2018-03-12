@@ -5,6 +5,7 @@ from decimal import Decimal
 from flask_rate_limit import *
 from common import *
 from cacher import *
+from debug import *
 
 app = Flask(__name__)
 app.debug = True
@@ -22,7 +23,9 @@ def getlast():
       try:
         #check cache
         block = json.loads(ckey)
+        print_debug(("cache looked success",ckey),7)
       except:
+        print_debug(("cache looked failed",ckey),7)
         try:
           data = requests.get('https://blockchain.info/latestblock', timeout=10)
           block = data.json()

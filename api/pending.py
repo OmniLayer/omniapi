@@ -1,13 +1,14 @@
 from decode import *
 from sqltools import *
 import decimal
+from debug import *
 
 def insertpending(txhex):
 
   try:
     rawtx = decode(txhex)
   except Exception,e:
-    print "Error: ", e, "\n Could not decode PendingTx: ", txhex
+    print_debug(("Error: ", e, "\n Could not decode PendingTx: ", txhex),3)
     return
 
   if 'BTC' in rawtx:
@@ -58,7 +59,7 @@ def insertbtc(rawtx):
 
     dbCommit()
   except Exception,e:
-    print "Error: ", e, "\n Could not add BTC PendingTx: ", rawtx
+    print_debug(("Error: ", e, "\n Could not add BTC PendingTx: ", rawtx),3)
     dbRollback()  
 
 def insertomni(rawtx):
@@ -134,6 +135,6 @@ def insertomni(rawtx):
 
     dbCommit()
   except Exception,e:
-    print "Error: ", e, "\n Could not add OMNI PendingTx: ", rawtx
+    print_debug(("Error: ", e, "\n Could not add OMNI PendingTx: ", rawtx),3)
     dbRollback()
 

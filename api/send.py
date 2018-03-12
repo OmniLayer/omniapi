@@ -2,7 +2,9 @@ import urlparse
 import os, sys
 from blockchain_utils import *
 from common import *
+from debug import *
 import random
+
 
 def send_form_response(response_dict):
     expected_fields=['from_address', 'to_address', 'amount', 'currency', 'fee']
@@ -29,7 +31,7 @@ def send_form_response(response_dict):
         response_status='invalid pubkey'
         pubkey=None
 
-    print response_dict
+    print_debug(response_dict,4)
 
     from_addr=response_dict['from_address'][0]
     if not is_valid_bitcoin_address_or_pubkey(from_addr):
@@ -95,17 +97,17 @@ def send_form_response(response_dict):
           tx_to_sign_dict['sourceScript']=response_status
 
       response='{"status":"'+response_status+'", "transaction":"'+tx_to_sign_dict['transaction']+'", "sourceScript":"'+tx_to_sign_dict['sourceScript']+'"}'
-      print "Sending unsigned tx to user for signing", response
+      print_debug(("Sending unsigned tx to user for signing", response),4)
       return (response, None)
     except Exception as e:
-      print "error creating unsigned tx", e
+      print_debug(("error creating unsigned tx", e),3)
       return (None, str(e))
 
 
 # simple send and bitcoin send (with or without marker)
 def prepare_send_tx_for_signing(from_address, to_address, marker_address, currency_id, amount, btc_fee=500000, magicbyte=0):
-    print '*** send.py tx for signing: from_address, to_address, marker_address, currency_id, amount, btc_fee, magicbyte'
-    print from_address, to_address, marker_address, currency_id, amount, btc_fee, magicbyte
+    print_debug('*** send.py tx for signing: from_address, to_address, marker_address, currency_id, amount, btc_fee, magicbyte',4)
+    print_debug((from_address, to_address, marker_address, currency_id, amount, btc_fee, magicbyte),4)
 
     # consider a more general func that covers also sell offer and sell accept
 

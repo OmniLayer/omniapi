@@ -9,6 +9,7 @@ from blockchain_utils import *
 from stats_service import raw_revision
 from cacher import *
 from properties_service import getpropnamelist
+from debug import *
 
 app = Flask(__name__)
 app.debug = True
@@ -30,8 +31,7 @@ def estimatefees(addr):
     try:
       fees=getfeesRaw()
     except Exception as e:
-      print "Fee lookup failed, falling back"
-      print e
+      print_debug(("Fee lookup failed, falling back",e),3)
       fees={"unit": "Satoshi/kB", "faster": 275000, "fast": 245000, "normal": 215000}
 
     #initial miner fee estimate
@@ -85,9 +85,11 @@ def getfeesRaw():
     try:
       #check cache first
       fee=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
     except:
+      print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("select value from settings where key='feeEstimates'")
-      print ROWS
+      print_debug(ROWS,3)
       if len(ROWS) > 0:
         fee=json.loads(ROWS[0][0])
       #cache result for 10 min
@@ -144,7 +146,9 @@ def getaddresshistraw(address,page):
     try:
       #check cache
       txlist = json.loads(ckey)
+      print_debug(("cache looked success",ckey),7)
     except:
+      print_debug(("cache looked failed",ckey),7)
       offset=page*10
       ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
       #set and cache data for 7 min
@@ -211,7 +215,9 @@ def getpagecounttxjson(limit=10):
       raise "not in cache"
     else:
       count=int(rc)
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     ROWS=dbSelect("select count(txdbserialnum) from txjson;")
     count=int(ROWS[0][0])
     #cache 10 min
@@ -228,7 +234,9 @@ def getaddresstxcount(address,limit=10):
       raise "not in cache"
     else:
       count=int(rc)
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     ROWS=dbSelect("select count(txdbserialnum) from addressesintxs where address=%s;",[address])
     count=int(ROWS[0][0])
     lSet(ckey,count)
@@ -254,7 +262,9 @@ def getrecenttxpages(page=0):
     ckey="data:tx:general:"+str(page)
     try:
       response=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
     except:
+      print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' order by txdbserialnum DESC offset %s limit 10;",[offset])
       rev=raw_revision()
       cblock=rev['last_block']
@@ -290,7 +300,9 @@ def cachetxs(txlist):
         #check if tx is unconfirmed and expire cache after 5 min if it is
         if txJson['confirmations'] == 0:
           lExpire(ckey,300)
+        print_debug(("cache looked success",ckey),7)
       except:
+        print_debug(("cache looked failed",ckey),7)
         lExpire(ckey,300)
 
 def gettxjson(hash_id):
@@ -305,7 +317,9 @@ def gettxjson(hash_id):
     ckey="data:tx:"+str(transaction_)
     try:
       txJson=lGet(json.loads(ckey))
+      print_debug(("cache looked success",ckey),7)
     except:
+      print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
       if len(ROWS) < 1:
         return json.dumps([])
@@ -354,7 +368,9 @@ def getblockhash(blocknumber):
     bhash=lGet(ckey)
     if bhash in ['None',None]:
       raise "not cached"
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     ROWS=dbSelect("select blockhash from blocks where blocknumber=%s", [block_])
     if len(ROWS) < 1:
       bhash="error: block not available."
@@ -374,7 +390,9 @@ def getblocktxjson(block):
   ckey="data:block:txjson:"+str(block)
   try:
     response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     try:
         block_ = int( block ) #check numeric
         ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txblocknumber=%s", [block_])
@@ -421,7 +439,9 @@ def getaddrhist(address,direction='both',page=0):
     ckey="data:oe:addrhist:"+str(address_)+":"+str(direction)
     try:
       ret=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
     except:
+      print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect(query)
       ret=[]
       for x in ROWS:

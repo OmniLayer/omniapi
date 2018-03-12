@@ -6,6 +6,7 @@ from flask_rate_limit import *
 from common import *
 from property_service import getpropertyraw
 from cacher import *
+from debug import *
 
 data_dir_root = os.environ.get('DATADIR')
 
@@ -22,7 +23,7 @@ def categories():
         try:
             categories = json.loads(f.read())
         except ValueError:
-            print 'Error decoding JSON', categories_file.split('/')[-1][:-5]
+            print_debug(('Error decoding JSON', categories_file.split('/')[-1][:-5]),4)
 
     data = categories.keys()
 
@@ -46,7 +47,7 @@ def subcategories():
         try:
             categories = json.loads(f.read())
         except ValueError:
-            print 'Error decoding JSON', categories_file.split('/')[-1][:-5]
+            print_debug(('Error decoding JSON', categories_file.split('/')[-1][:-5]),4)
 
     try:
         data = categories[category]
@@ -69,7 +70,9 @@ def rawlist():
   ckey="info:proplist"
   try:
     response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
 
     data=[prop[0] for prop in ROWS]
@@ -90,7 +93,9 @@ def getpropnamelist(refresh=False):
     if refresh:
       raise "force refresh"
     response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     ROWS= dbSelect("select PropertyName,PropertyID from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
     response={}
     for x in ROWS:
@@ -149,7 +154,9 @@ def listbyowner():
   ckey="data:property:owner:"+str(addresses)
   try:
     response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' AND issuer= ANY(%s) ORDER BY PropertyName,PropertyID", (addresses,))
     data = [data[0] for data in ROWS]
     response = {
@@ -181,7 +188,9 @@ def listcrowdsales():
   ckey="data:property:crowdsale:"+str(value)
   try:
     response=json.loads(lGet(cket))
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     ROWS= dbSelect("select PropertyData from smartproperties where PropertyData::json->>'fixedissuance'='false' AND PropertyData::json->>'active'='true' AND ecosystem=%s ORDER BY PropertyName,PropertyID", [ecosystem])
     data=[row[0] for row in ROWS]
 
@@ -226,7 +235,9 @@ def gethistory(property_id):
       total=int(lGet(ckey))
       if total in ['None',None]:
         raise "not cached"
+      print_debug(("cache looked success",ckey),7)
     except:
+      print_debug(("cache looked failed",ckey),7)
       total=dbSelect(total_query,[property_id])[0][0]
       lSet(ckey,total)
       lExpire(ckey,600)
@@ -234,7 +245,9 @@ def gethistory(property_id):
     ckey="data:property:history:txdata:"+str(property_id)+":"+str(page)
     try:
       transactions=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
     except:
+      print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect(transactions_query,(property_id,offset))
       transactions=[row[0] for row in ROWS]
       #cache 10 min
@@ -297,6 +310,6 @@ def filterProperties( properties ):
                     if str(prop) in addr:
                       addresses_data.append({ 'address': address_file.split('/')[-1][:-5], 'data': addr[str(prop)] })
                   except ValueError:
-                    print 'Error decoding JSON', address_file.split('/')[-1][:-5]
+                    print_debug(('Error decoding JSON', address_file.split('/')[-1][:-5]),3)
 
     return ['OK',addresses_data]

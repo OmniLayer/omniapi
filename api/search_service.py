@@ -7,6 +7,7 @@ import json
 from transaction_service import gettxjson
 from get_balance import balance_full
 from cacher import *
+from debug import *
 
 app = Flask(__name__)
 app.debug = True
@@ -22,7 +23,9 @@ def search():
   ckey="data:search:"+str(query)
   try:
     response = json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     asset=[]
     adrbal={}
     txj={}

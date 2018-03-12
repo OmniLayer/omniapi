@@ -7,6 +7,7 @@ from common import *
 from blockchain_utils import *
 import config
 from omnitransaction import OmniTransaction
+from debug import *
 
 app = Flask(__name__)
 app.debug = True
@@ -31,7 +32,7 @@ def generate_tx(tx_type):
     expected_fields=['transaction_version', 'transaction_from','pubkey','fee']
     null_fields=['property_category', 'property_subcategory','property_url', 'property_data']
 
-    print "Form ",request.form
+    print_debug(("Form ",request.form),4)
 
     #might add tx 00, 53, etc later;
     if tx_type == 50:

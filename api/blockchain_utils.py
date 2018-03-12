@@ -5,6 +5,7 @@ import json, re
 from config import BTAPIKEY
 from rpcclient import gettxout
 from cacher import *
+from debug import *
 
 try:
   expTime=config.BTCBAL_CACHE
@@ -19,7 +20,7 @@ def bc_getutxo(address, ramount, page=1, retval=None, avail=0):
     if r.status_code == 200:
       response = r.json()
       unspents = response['data']
-      print "got unspent list (btrail)", response
+      print_debug(("got unspent list (btrail)", response),4)
       for tx in unspents:
         txUsed=gettxout(tx['hash'],tx['index'])
         isUsed = ('result' in txUsed and txUsed['result']==None)

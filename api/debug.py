@@ -1,9 +1,21 @@
 import os, sys, commands
 
-def print_debug( msg, verbose ):
+#debug_level = int(os.environ.get('DEBUGLEVEL'))
+debug_level = 4
+
+
+def print_debug( msg, verbose):
+  if int(verbose) < debug_level:
+    if type(msg) == tuple:
+      temp=""
+      for x in msg:
+        temp+=str(x)+" "
+      msg=temp
+    print str(msg)
+
+def log_debug( msg, verbose ):
 
   data_dir_root = os.environ.get('DATADIR')
-  debug_level = int(os.environ.get('DEBUGLEVEL'))
 
   #print the message to debug log if debug variable is set
   #add  'from debug import *' to header

@@ -2,7 +2,7 @@ import urlparse
 import os, sys,re
 from common import *
 from pending import *
-
+from debug import *
 
 error_codez= {
  '-1': 'Exception thrown. Contact a developer.',
@@ -40,20 +40,20 @@ def pushtx_response(response_dict):
       try:
         insertpending(signed_tx)
       except Exception as e:
-        print "error inserting pending tx"+str(e)
+        print_debug("error inserting pending tx"+str(e),3)
 
-    print signed_tx,'\n', response
+    print_debug((signed_tx,'\n', response),4)
     return (response, None)
 
 def pushtxnode(signed_tx):
     import commands, json
     signed_tx = re.sub(r'\W+', '', signed_tx) #check alphanumeric
-    print "final signed", signed_tx
+    print_debug(("final signed", signed_tx),4)
     #output=commands.getoutput('bitcoind sendrawtransaction ' +  str(signed_tx) )
     output=sendrawtransaction(str(signed_tx))
     #output="Test output for error code handling: : {u'message': u'66: insufficient priority', u'code': -26}"
 
-    print 'raw response',output,'\n'
+    print_debug(('raw response',output,'\n'),4)
 
     ret=re.findall('{.+',str(output))
     if 'code' in ret[0]:
@@ -79,7 +79,7 @@ def pushtxnode(signed_tx):
         response_status='OK'
         response=json.dumps({"status":response_status, "pushed": 'success', "tx": output['result'] })
 
-    print response
+    print_debug(response,4)
     return response
 
 def pushtx_handler(environ, start_response):

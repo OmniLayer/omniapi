@@ -4,6 +4,7 @@ import os, sys, re
 from flask_rate_limit import *
 from common import *
 from cacher import *
+from debug import *
 
 app = Flask(__name__)
 app.debug = True
@@ -23,7 +24,9 @@ def getpropertyraw(prop_id):
   ckey="data:prop:"+str(prop_id)
   try:
     ret=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
   except:
+    print_debug(("cache looked failed",ckey),7)
     if property_ in [0,1,2]:
       ROWS=dbSelect("select propertydata from smartproperties sp where (protocol='Bitcoin' or protocol='Omni') and sp.propertyid=%s",[property_])
 

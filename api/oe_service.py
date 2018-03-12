@@ -5,6 +5,7 @@ from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
 from property_service import getpropertyraw
 from stats_service import raw_revision
+from debug import *
 
 app = Flask(__name__)
 app.debug = True
@@ -46,7 +47,7 @@ def requeststat_aspx():
 @app.route('/ask.aspx', methods=['get'])
 @ratelimit(limit=30, per=60)
 def ask_aspx():
-  print request.args
+  print_debug(request.args,4)
   args=request.args
   if "api" not in args:
     return jsonify({"error":"invalid request"})
@@ -140,7 +141,7 @@ def ask_aspx():
       raw=getpropertyraw(pid)
       return raw['name']
     except Exception, e:
-      print "getpropertyname error: "+str(e)
+      print_debug("getpropertyname error: "+str(e),4)
       return jsonify({"error":"invalid request"})
 
   #getpropertydivisibility	prop	Requests the divisibility for a given property ID
@@ -152,7 +153,7 @@ def ask_aspx():
       raw=getpropertyraw(pid)
       return json.dumps(raw['divisible'])
     except Exception, e:
-      print "getpropertydivisibility error: "+str(e)
+      print_debug("getpropertydivisibility error: "+str(e),4)
       return jsonify({"error":"invalid request"})
 
   #getpropertytotaltokens	prop	Requests the total number of tokens for a given property ID
@@ -164,7 +165,7 @@ def ask_aspx():
       raw=getpropertyraw(pid)
       return raw['totaltokens']
     except Exception, e:
-      print "getpropertytotaltokens error: "+str(e)
+      print_debug("getpropertytotaltokens error: "+str(e),4)
       return jsonify({"error":"invalid request"})
 
 #getdexlastprice	-	Requests the last price of the Omni token via the Basic Distributed Exchange

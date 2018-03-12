@@ -3,6 +3,7 @@ import os, sys, re, random, pybitcointools, bitcoinrpc, math
 from decimal import Decimal
 from common import *
 from blockchain_utils import *
+from debug import *
 import config
 
 class OmniTransaction:
@@ -24,13 +25,13 @@ class OmniTransaction:
 
         try:
           if config.D_PUBKEY and ( 'donate' in form ) and ( form['donate'] in ['true', 'True'] ):
-            print "We're Donating to pubkey for: "+pybitcointools.pubkey_to_address(config.D_PUBKEY)
+            print_debug(("We're Donating to pubkey for: ",pybitcointools.pubkey_to_address(config.D_PUBKEY)),4)
             self.pubkey = config.D_PUBKEY
           else:
-            print "not donating"
+            print_debug("not donating",4)
             self.pubkey = form['pubkey']
         except NameError, e:
-          print e
+          print_debug(e,3)
           self.pubkey = form['pubkey']
         #self.fee = estimateFee(self.confirm_target)['result']
         #make sure fee is correct length
@@ -74,9 +75,9 @@ class OmniTransaction:
         fee_total_satoshi = int( round( fee_total * Decimal(1e8) ) )
 
         # Get utxo to generate inputs
-        print "Calling bc_getutxo with ", self.rawdata['transaction_from'], fee_total_satoshi
+        print_debug(("Calling bc_getutxo with ", self.rawdata['transaction_from'], fee_total_satoshi),4)
         dirty_txes = bc_getutxo( self.rawdata['transaction_from'], fee_total_satoshi )
-        print "received", dirty_txes
+        print_debug(("received", dirty_txes),4)
 
         if (dirty_txes['error'][:3]=='Con'):
             return { "status": "NOT OK", "error": "Couldn't get list of unspent tx's. Response Code: " + str(dirty_txes['code'])  }

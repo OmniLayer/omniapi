@@ -1,6 +1,7 @@
 import config
 import redis
 import json
+from debug import *
 
 #remote server
 r = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
