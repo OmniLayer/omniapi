@@ -36,4 +36,5 @@ REDIS_DB=0
 REDIS_ADDRSPACE=""
 #How long, in seconds, to cache BTC balance info for new addresses, Default 10min (600)
 BTCBAL_CACHE=600
-
+#Debug level (3: errors only, 4: errors and info, 7: errors, info, cache debugging)
+DEBUG_LEVEL=3

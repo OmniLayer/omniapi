@@ -1,11 +1,11 @@
 import os, sys, commands
 
+from config import DEBUG_LEVEL
 #debug_level = int(os.environ.get('DEBUGLEVEL'))
-debug_level = 4
 
 
 def print_debug( msg, verbose):
-  if int(verbose) < debug_level:
+  if int(verbose) < DEBUG_LEVEL:
     if type(msg) == tuple:
       temp=""
       for x in msg:
@@ -22,7 +22,7 @@ def log_debug( msg, verbose ):
   # call with  print_debug("my message",5)
   # outputs to Datadir/debug.log  if the number above is > than the number in Datadir/debug.level
 
-  if int(verbose) < debug_level:
+  if int(verbose) < DEBUG_LEVEL:
     commands.getoutput('echo '+msg+' >> '+data_dir_root+'/debug.log')
     return 1
 
