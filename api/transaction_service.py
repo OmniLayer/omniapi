@@ -145,7 +145,7 @@ def getaddresshistraw(address,page):
     ckey="data:addrhist:"+str(address)+":"+str(page)
     try:
       #check cache
-      txlist = json.loads(ckey)
+      txlist = json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
@@ -259,15 +259,15 @@ def getrecenttxpages(page=0):
       offset=0
       page=0
 
-    ckey="data:tx:general:"+str(page)
+    rev=raw_revision()
+    cblock=rev['last_block']
+    ckey="data:tx:general:"+str(block)+":"+str(page)
     try:
       response=json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' order by txdbserialnum DESC offset %s limit 10;",[offset])
-      rev=raw_revision()
-      cblock=rev['last_block']
       data = []
       pnl=getpropnamelist()
       if len(ROWS) > 0:
