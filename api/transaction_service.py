@@ -31,7 +31,7 @@ def estimatefees(addr):
     try:
       fees=getfeesRaw()
     except Exception as e:
-      print_debug(("Fee lookup failed, falling back",e),3)
+      print_debug(("Fee lookup failed, falling back",e),2)
       fees={"unit": "Satoshi/kB", "faster": 275000, "fast": 245000, "normal": 215000}
 
     #initial miner fee estimate
@@ -89,7 +89,7 @@ def getfeesRaw():
     except:
       print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("select value from settings where key='feeEstimates'")
-      print_debug(ROWS,3)
+      print_debug(ROWS,2)
       if len(ROWS) > 0:
         fee=json.loads(ROWS[0][0])
       #cache result for 10 min
@@ -319,7 +319,7 @@ def cachetxs(txlist):
         if tx['confirmations'] == 0:
           lExpire(ckey,300)
       except:
-        print_debug(("error expiring",ckey,tx),3)
+        print_debug(("error expiring",ckey,tx),2)
         lExpire(ckey,300)
 
 def gettxjson(hash_id):

@@ -2,6 +2,7 @@ from flask import Flask, jsonify, abort, json, make_response, Response, request,
 from cacher import *
 import time
 from functools import update_wrapper
+from debug import *
 
 #init ratelimit redis key store on db 1
 redis = lInit(1)
@@ -41,7 +42,7 @@ def get_view_rate_limit():
 def on_over_limit(limit):
     akey='triggered/'+limit.key_prefix+time.strftime("%Y-%m-%d", time.gmtime())
     redis.incr(akey)
-    print 'Rate Limit Reached: '+str(limit.key)
+    print_debug(('Rate Limit Reached: ',str(limit.key)),3)
     return 'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit-10)+' every '+str(limit.per)+'s.', 400
 
 def ratelimit(limit, per=300, send_x_headers=True,

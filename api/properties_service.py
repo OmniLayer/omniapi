@@ -313,6 +313,6 @@ def filterProperties( properties ):
                     if str(prop) in addr:
                       addresses_data.append({ 'address': address_file.split('/')[-1][:-5], 'data': addr[str(prop)] })
                   except ValueError:
-                    print_debug(('Error decoding JSON', address_file.split('/')[-1][:-5]),3)
+                    print_debug(('Error decoding JSON', address_file.split('/')[-1][:-5]),2)
 
     return ['OK',addresses_data]

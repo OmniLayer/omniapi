@@ -14,7 +14,7 @@ def fixDecimal(value):
     try:
       return str(ceil(float(value)*(1e8))/1e8)
     except Exception as e:
-      print_debug(("couldn't convert ",value,"got error: ",e),3)
+      print_debug(("couldn't convert ",value,"got error: ",e),2)
 
 #@app.route('/book')
 def getOrderbook(lasttrade=0, lastpending=0):

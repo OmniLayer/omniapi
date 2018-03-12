@@ -8,7 +8,7 @@ def insertpending(txhex):
   try:
     rawtx = decode(txhex)
   except Exception,e:
-    print_debug(("Error: ", e, "\n Could not decode PendingTx: ", txhex),3)
+    print_debug(("Error: ", e, "\n Could not decode PendingTx: ", txhex),2)
     return
 
   if 'BTC' in rawtx:
@@ -59,7 +59,7 @@ def insertbtc(rawtx):
 
     dbCommit()
   except Exception,e:
-    print_debug(("Error: ", e, "\n Could not add BTC PendingTx: ", rawtx),3)
+    print_debug(("Error: ", e, "\n Could not add BTC PendingTx: ", rawtx),2)
     dbRollback()  
 
 def insertomni(rawtx):
@@ -135,6 +135,6 @@ def insertomni(rawtx):
 
     dbCommit()
   except Exception,e:
-    print_debug(("Error: ", e, "\n Could not add OMNI PendingTx: ", rawtx),3)
+    print_debug(("Error: ", e, "\n Could not add OMNI PendingTx: ", rawtx),2)
     dbRollback()
 

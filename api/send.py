@@ -100,7 +100,7 @@ def send_form_response(response_dict):
       print_debug(("Sending unsigned tx to user for signing", response),4)
       return (response, None)
     except Exception as e:
-      print_debug(("error creating unsigned tx", e),3)
+      print_debug(("error creating unsigned tx", e),2)
       return (None, str(e))
 
 

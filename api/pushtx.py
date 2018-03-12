@@ -40,7 +40,7 @@ def pushtx_response(response_dict):
       try:
         insertpending(signed_tx)
       except Exception as e:
-        print_debug("error inserting pending tx"+str(e),3)
+        print_debug("error inserting pending tx"+str(e),2)
 
     print_debug((signed_tx,'\n', response),4)
     return (response, None)

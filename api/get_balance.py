@@ -67,5 +67,5 @@ def balance_propid(addr,pid):
          return x['value']
     return '0'
   except Exception as e:
-    print_debug(("error getting bal for ",addr,e),3)
+    print_debug(("error getting bal for ",addr,e),2)
     return '0'

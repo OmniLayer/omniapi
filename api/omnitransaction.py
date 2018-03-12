@@ -31,7 +31,7 @@ class OmniTransaction:
             print_debug("not donating",4)
             self.pubkey = form['pubkey']
         except NameError, e:
-          print_debug(e,3)
+          print_debug(e,2)
           self.pubkey = form['pubkey']
         #self.fee = estimateFee(self.confirm_target)['result']
         #make sure fee is correct length
