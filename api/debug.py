@@ -10,8 +10,8 @@ def print_debug( msg, verbose):
       for x in msg:
         temp+=str(x)+" "
       msg=temp
-    #print str(msg)
-    log_file(msg)
+    print str(msg)
+    #log_file(msg)
 
 def log_file( msg ):
   commands.getoutput('echo '+msg+' >> '+LOGDIR+'/debug.log')
