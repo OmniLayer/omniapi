@@ -284,7 +284,7 @@ def getrecenttxpages(page=0):
       pages=getpagecounttxjson()
       response={'pages':pages,'transactions':data}
       #cache pages for 5 min
-      lSet(ckey,response)
+      lSet(ckey,json.dumps(response))
       lExpire(ckey,300)
       
     cachetxs(data)
@@ -295,7 +295,7 @@ def getrecenttxpages(page=0):
 def cachetxs(txlist):
     for tx in txlist:
       ckey="data:tx:"+str(tx['txid'])
-      lSet(ckey,tx)
+      lSet(ckey,json.dumps(tx))
       try:
         #check if tx is unconfirmed and expire cache after 5 min if it is
         if txJson['confirmations'] == 0:
