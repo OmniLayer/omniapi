@@ -142,6 +142,10 @@ def getaddresshistraw(address,page):
     rev=raw_revision()
     cblock=rev['last_block']
 
+    page-=1
+    if page<0:
+      page=0
+
     ckey="data:addrhist:"+str(address)+":"+str(page)
     try:
       #check cache
@@ -252,7 +256,12 @@ def getrecenttx():
 
 @app.route('/general/<page>')
 @ratelimit(limit=20, per=60)
-def getrecenttxpages(page=0):
+def getrecenttxpages(page=1):
+    #pagination starts at 1 so adjust accordingly to treat page 0 and 1 the same
+    page-=1
+    if page < 0:
+      page=0
+
     try:
       offset=int(page)*10
     except:
@@ -412,7 +421,11 @@ def getblocktxjson(block):
     lExpire(ckey,1800)
   return response
 
-def getaddrhist(address,direction='both',page=0):
+def getaddrhist(address,direction='both',page=1):
+    page-=1
+    if page<0:
+      page=0
+
     try:
         address_ = str(re.sub(r'\W+', '', address.split('.')[0] ) ) #check alphanumeric
     except ValueError:

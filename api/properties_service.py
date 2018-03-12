@@ -213,11 +213,9 @@ def getdata(property_id):
 def gethistory(property_id):
     try:
         page = int(request.form['page'])
-        offset = page * 10
     except KeyError:
       try:
         page = int(request.form['start'])
-        offset = page * 10
       except KeyError:
         abort(make_response('No field \'page\' in request, request failed', 400))
       except ValueError:
@@ -225,6 +223,11 @@ def gethistory(property_id):
     except ValueError:
         abort(make_response('Field \'page\' must be an integer, request failed', 400))
 
+    #adjust page/offset so 0/1 are same starting
+    page -= 1
+    if page<0:
+      page=0
+    offset = page * 10
 
 
     transactions_query = "select txjson.txdata as data from propertyhistory ph, txjson where ph.txdbserialnum =txjson.txdbserialnum and ph.propertyid=%s order by ph.txdbserialnum LIMIT 10 OFFSET %s;"
