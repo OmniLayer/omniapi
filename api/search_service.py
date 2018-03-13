@@ -32,7 +32,12 @@ def search():
 
 
     if query.isdigit():
-      asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
+      if int(query) == 1:
+        asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where ecosystem='Production' and protocol='Omni' order by propertyid")
+      elif int(query) == 2:
+        asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where ecosystem='Test' and protocol='Omni' order by propertyid")
+      else:
+        asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
     else:
       asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where (LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') or LOWER(issuer) like LOWER(\'%" + str(query) + "%\')) and protocol='Omni' order by propertyid limit 10")
       if 25 < len(query) < 45 :
@@ -42,9 +47,9 @@ def search():
       else:
         pass
     response={ 'status': 200, 'query':query, 'data':{'tx':txj, 'address':adrbal, 'asset':asset} }
-    #cache for 3 min
+    #cache for 5 min
     lSet(ckey,json.dumps(response))
-    lExpire(ckey,180)
+    lExpire(ckey,300)
 
   return jsonify(response)
 
