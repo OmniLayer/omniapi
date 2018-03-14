@@ -6,6 +6,7 @@ kill_child_processes() {
   uwsgi --stop /tmp/omniapi.pid
   #kill $WEBSOCKET_PID
   rm -f $LOCK_FILE
+  exit 1
 }
 
 # Ctrl-C trap. Catches INT and service stop signal
