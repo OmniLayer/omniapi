@@ -2,8 +2,10 @@
 Description=OmniAPI service
 
 [Service]
+Environment="PATH=/home/ubuntu/bin:/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=/home/ubuntu/omniapi/startApi.sh
-user=ubuntu
+PIDFile=/tmp/omniapi.pid
+User=ubuntu
 Restart=on-failure
 RestartSec=30
 

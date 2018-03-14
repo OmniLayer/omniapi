@@ -1,12 +1,13 @@
-update the user/path to startApi.sh in the omniapi.service file. 
+update the user (ubuntu) and the path to startApi.sh in the omniapi.service file to match your system setup.
 
 Copy it to /etc/systemd/system
 
-#reload damon to see new file
+#reload daemon to see new file
 sudo systemctl daemon-reload
-
-#set it to auto start on boot
-sudo systemctl enable omniapi.service
 
 #start the service
 sudo systemctl start omniapi.service
+
+#if everything works/checks out then set it to auto start on boot
+sudo systemctl enable omniapi.service
+

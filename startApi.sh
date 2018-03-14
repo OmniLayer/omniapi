@@ -2,24 +2,26 @@
 PYTHONBIN=python
 
 kill_child_processes() {
-  kill $SERVER_PID
-  kill $WEBSOCKET_PID
+  #kill $SERVER_PID
+  uwsgi --stop /tmp/omniapi.pid
+  #kill $WEBSOCKET_PID
   rm -f $LOCK_FILE
 }
 
-# Ctrl-C trap. Catches INT signal
-trap "kill_child_processes 1 $$; exit 0" INT
-echo "Starting app.sh: $(TZ='UTC' date)"
+# Ctrl-C trap. Catches INT and service stop signal
+trap kill_child_processes INT TERM SIGINT SIGTERM
+
+echo "Service Starting: $(TZ='UTC' date)"
 
 echo "Establishing environment variables..."
-APPDIR=`pwd`
+APPDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 LOGDIR=$APPDIR/logs
 LOCK_FILE=$APPDIR/omniapi.lock
 
 # Export directories for API scripts to use
 export LOGDIR
 
-echo "Beginning main run loop..."
+echo "Starting Service watch loop..."
 while true
 do
 
@@ -44,13 +46,7 @@ do
       else
         echo "Starting uwsgi daemon..."
         cd $APPDIR/api
-        #if [[ "$OSTYPE" == "darwin"* ]]; then
-        uwsgi -s 127.0.0.1:1088 -p 8 -M --vhost --enable-threads --log-x-forwarded-for --logto $LOGDIR/apps.log &
-        #else
-        #  uwsgi -s 127.0.0.1:1088 -p 8 -M --vhost --enable-threads --plugin $PYTHONBIN --logto $APPDIR/apps.log &
-        #fi
-        SERVER_PID=$!
-        echo $SERVER_PID > /tmp/omniapi.pid
+        uwsgi -s 127.0.0.1:1088 -p 8 -M --vhost --enable-threads --log-x-forwarded-for --logto $LOGDIR/apps.log --pidfile /tmp/omniapi.pid &
         #get snapshot of directory files
         APISHA=`ls -lR $APPDIR/api/*.py | sha1sum`
     fi
@@ -64,21 +60,21 @@ do
         echo Api Reloaded
     fi
 
-    ps a | grep -v grep | grep "python websocket.py" > /dev/null
-    if [ $? -eq 0 ]; then
-        echo "websocket api is running."
-      else
-        echo "Starting websocket daemon..."
-        cd $APPDIR/api
-        $PYTHONBIN websocket.py > $LOGDIR/websocket.log 2>&1 &
-        WEBSOCKET_PID=$!
-    fi
+    #ps a | grep -v grep | grep "python websocket.py" > /dev/null
+    #if [ $? -eq 0 ]; then
+    #    echo "websocket api is running."
+    #  else
+    #    echo "Starting websocket daemon..."
+    #    cd $APPDIR/api
+    #    $PYTHONBIN websocket.py > $LOGDIR/websocket.log 2>&1 &
+    #    WEBSOCKET_PID=$!
+    #fi
 
     # unlock
     rm -f $LOCK_FILE
   fi
 
-  echo "Done, sleeping..."
+  #echo "Done, sleeping..."
   # Wait a minute, and do it all again.
   sleep 60
 done
