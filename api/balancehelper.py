@@ -67,9 +67,9 @@ def get_balancedata(address):
               btc_balance[ 'value' ] = str(long(0))
               btc_balance[ 'error' ] = True
         else:
-          #get regular balance from db
-          if balrow[4] < 0:
-            #update the 'available' balance immediately when the sender sent something. prevent double spend
+          #get regular balance from db 
+          if balrow[4] < 0 and not balrow[6] > 0:
+            #update the 'available' balance immediately when the sender sent something. prevent double spend as long as its not frozen
             res['value'] = str(long(balrow[2]+balrow[4]))
           else:
             res['value'] = str(long(balrow[2]))
@@ -183,7 +183,7 @@ def get_bulkbalancedata(addresses):
               btc_balance[ 'error' ] = True
         else:
           #get regular balance from db
-          if balrow[4] < 0:
+          if balrow[4] < 0 and not balrow[6] > 0:
             #update the 'available' balance immediately when the sender sent something. prevent double spend
             res['value'] = str(long(balrow[2]+balrow[4]))
           else:
