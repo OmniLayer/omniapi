@@ -395,7 +395,7 @@ def getrawpending():
       #cache for 5 min
       lSet(ckey,json.dumps(response))
       lExpire(ckey,300)
-
+      return response
 
 def gettxjson(hash_id):
     try:
