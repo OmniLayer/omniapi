@@ -390,7 +390,11 @@ def getrawpending():
       if len(ROWS) > 0:
         for d in ROWS:
           res = addName(d[0],pnl)
-          res['blocktime']=int(d[1])
+          if 'blocktime' not in txJson:
+            try:
+              res['blocktime']=int(d[1])
+            except:
+              pass
           data.append(res)
           try:
             index[res['referenceaddress']].append(res)
@@ -430,7 +434,11 @@ def gettxjson(hash_id):
       except:
         pass
       txJson=addName(txj,getpropnamelist())
-      txJson['blocktime']=int(ROWS[0][1])
+      if 'blocktime' not in txJson:
+        try:
+          txJson['blocktime']=int(ROWS[0][1])
+        except: 
+          pass
       lSet(ckey,json.dumps(txJson))
       try:
         #check if tx is unconfirmed and expire cache after 5 min if it is
