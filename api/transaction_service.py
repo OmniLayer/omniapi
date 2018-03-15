@@ -417,7 +417,7 @@ def gettxjson(hash_id):
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
+      ROWS=dbSelect("select txj.txdata, extract(epoch from t.txrecvtime) from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
       if len(ROWS) < 1:
         return json.dumps([])
       try:
@@ -430,6 +430,7 @@ def gettxjson(hash_id):
       except:
         pass
       txJson=addName(txj,getpropnamelist())
+      txJson['blocktime']=int(ROWS[0][1])
       lSet(ckey,json.dumps(txJson))
       try:
         #check if tx is unconfirmed and expire cache after 5 min if it is
