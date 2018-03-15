@@ -109,6 +109,15 @@ def ask_aspx():
     return json.dumps(raw_revision()['last_block'])
 
 #gethistory	address	Requests the historical transactions for a given address
+  elif api=="gethistory":
+    if 'address' not in args:
+      return jsonify({"error":"invalid request"})
+
+    address=args['address']
+    #if is_valid_bitcoin_address(address):
+    return jsonify( getaddrhist(address,'both'))
+    #else:
+    #  return jsonify({"error":"invalid address"})
 
   #getsenderhistory	address	Requests the historical transactions sent from a given address
   elif api=="getsenderhistory":
