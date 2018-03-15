@@ -381,13 +381,14 @@ def getrawpending():
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' and txdbserialnum < 0 order by txdbserialnum DESC;")
+      ROWS=dbSelect("select txj.txdata, extract(epoch from tx.blocktime) from txjson txj,transactions tx where tx.txdbserialnum=txj.txdbserialnum and txj.protocol = 'Omni' and txj.txdbserialnum < 0 order by txdbserialnum DESC;")
       data = []
       index = {}
       pnl=getpropnamelist()
       if len(ROWS) > 0:
         for d in ROWS:
           res = addName(d[0],pnl)
+          res['blocktime']=int(d[1])
           data.append(res)
           try:
             index[res['referenceaddress']].append(res)
