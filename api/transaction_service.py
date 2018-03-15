@@ -390,7 +390,7 @@ def getrawpending():
       if len(ROWS) > 0:
         for d in ROWS:
           res = addName(d[0],pnl)
-          if 'blocktime' not in txJson:
+          if 'blocktime' not in res:
             try:
               res['blocktime']=int(d[1])
             except:
