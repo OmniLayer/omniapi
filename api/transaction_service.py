@@ -350,6 +350,7 @@ def getrecenttxpages(page=1):
             res['confirmations'] = 0
           data.append(res)
       pages=getpagecounttxjson()
+      data=toadd+data
       response={'pages':pages,'transactions':data}
       #cache pages for 5 min
       lSet(ckey,json.dumps(response))
