@@ -179,7 +179,8 @@ def getaddresshistraw(address,page):
           offset -= count
           if offset < 0:
             offset = 0
-      except:
+      except Exception as e:
+        print_debug(("getaddresshistraw pending inject failed",e),2)
         pass
 
       ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s and txj.txdbserialnum > 0 order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
@@ -331,7 +332,8 @@ def getrecenttxpages(page=1):
           offset -= count
           if offset < 0:
             offset = 0
-      except:
+      except Exception as e:
+        print_debug(("getgeneral pending inject failed",e),2)
         pass
 
 
@@ -395,7 +397,7 @@ def getrawpending():
       #cache for 5 min
       lSet(ckey,json.dumps(response))
       lExpire(ckey,300)
-      return response
+    return response
 
 def gettxjson(hash_id):
     try:
