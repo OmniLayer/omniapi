@@ -151,6 +151,9 @@ def getaddresshistraw(address,page):
     if page<0:
       page=0
 
+    toadd=[]
+    limit=10
+    offset=page*10
     ckey="data:addrhist:"+str(address)+":"+str(page)
     try:
       #check cache
@@ -158,14 +161,35 @@ def getaddresshistraw(address,page):
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      offset=page*10
-      ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s order by txj.txdbserialnum desc limit 10 offset %s",(address,offset))
+
+      raw=getrawpending()
+      try:
+        pending=raw['index'][address]
+        count=len(pending)
+
+        if count > 0:
+          max=offset+10
+          if max > count:
+            max = count
+
+          for x in range(offset,max):
+            toadd.append(pending[x])
+
+          limit-=len(toadd)
+          offset -= count
+          if offset < 0:
+            offset = 0
+      except:
+        pass
+
+      ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s and txj.txdbserialnum > 0 order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
       #set and cache data for 7 min
       pnl=getpropnamelist()
       txlist=[]
       for r in ROWS:
         txJson=addName(r[0],pnl)
         txlist.append(txJson)
+      txlist = toadd+txlist
       lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
 
@@ -280,13 +304,38 @@ def getrecenttxpages(page=1):
 
     rev=raw_revision()
     cblock=rev['last_block']
+    toadd=[]
+    limit=10
+
     ckey="data:tx:general:"+str(cblock)+":"+str(page)
     try:
       response=json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' order by txdbserialnum DESC offset %s limit 10;",[offset])
+
+      raw=getrawpending()
+      try:
+        pending=raw['data']
+        count=len(pending)
+
+        if count > 0:
+          max=offset+10
+          if max > count:
+            max = count
+
+          for x in range(offset,max):
+            toadd.append(pending[x])
+
+          limit-=len(toadd)
+          offset -= count
+          if offset < 0:
+            offset = 0
+      except:
+        pass
+
+
+      ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' and txdbserialnum > 0 order by txdbserialnum DESC offset %s limit %s;",(offset,limit)])
       data = []
       pnl=getpropnamelist()
       if len(ROWS) > 0:
@@ -321,6 +370,31 @@ def cachetxs(txlist):
       except:
         print_debug(("error expiring",ckey,tx),2)
         lExpire(ckey,300)
+
+def getrawpending():
+    ckey="data:tx:pendinglist"
+    try:
+      response=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
+    except:
+      print_debug(("cache looked failed",ckey),7)
+      ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' and txdbserialnum < 0 order by txdbserialnum DESC;")
+      data = []
+      index = {}
+      pnl=getpropnamelist()
+      if len(ROWS) > 0:
+        for d in ROWS:
+          res = addName(d[0],pnl)
+          data.append(res)
+          try:
+            index[res['referenceaddress']].append(res)
+          except:
+            index[res['referenceaddress']]=[res]
+      response={'data':data,'index':index}
+      #cache for 5 min
+      lSet(ckey,json.dumps(response))
+      lExpire(ckey,300)
+
 
 def gettxjson(hash_id):
     try:
