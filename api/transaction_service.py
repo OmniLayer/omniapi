@@ -335,7 +335,7 @@ def getrecenttxpages(page=1):
         pass
 
 
-      ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' and txdbserialnum > 0 order by txdbserialnum DESC offset %s limit %s;",(offset,limit)])
+      ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' and txdbserialnum > 0 order by txdbserialnum DESC offset %s limit %s;",(offset,limit))
       data = []
       pnl=getpropnamelist()
       if len(ROWS) > 0:
