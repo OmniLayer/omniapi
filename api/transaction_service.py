@@ -375,7 +375,9 @@ def cachetxs(txlist):
         lExpire(ckey,300)
 
 def getrawpending():
-    ckey="data:tx:pendinglist"
+    rev=raw_revision()
+    cblock=rev['last_block']
+    ckey="data:tx:pendinglist:"+str(cblock)
     try:
       response=json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
