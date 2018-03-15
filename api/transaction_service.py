@@ -183,7 +183,7 @@ def getaddresshistraw(address,page):
         print_debug(("getaddresshistraw pending inject failed",e),2)
         pass
 
-      ROWS=dbSelect("select txj.txdata from txjson txj, addressesintxs atx where atx.txdbserialnum=txj.txdbserialnum and atx.address=%s and txj.txdbserialnum > 0 order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
+      ROWS=dbSelect("select txj.txdata from txjson txj, (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0) q where q.txdbserialnum=txj.txdbserialnum order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
       #set and cache data for 7 min
       pnl=getpropnamelist()
       txlist=[]
