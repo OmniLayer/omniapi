@@ -381,7 +381,7 @@ def getrawpending():
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      ROWS=dbSelect("select txj.txdata, extract(epoch from tx.txrecvtime) from txjson txj,transactions tx where tx.txdbserialnum=txj.txdbserialnum and txj.protocol = 'Omni' and txj.txdbserialnum < 0 order by txj.txdbserialnum DESC;")
+      ROWS=dbSelect("select txj.txdata, extract(epoch from tx.txrecvtime) from txjson txj,transactions tx where tx.txdbserialnum=txj.txdbserialnum and txj.protocol = 'Omni' and txj.txdbserialnum < 0 order by txj.txdbserialnum ASC;")
       data = []
       index = {}
       pnl=getpropnamelist()
