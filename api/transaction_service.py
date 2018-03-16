@@ -6,7 +6,6 @@ from flask_rate_limit import *
 from common import *
 from decimal import Decimal
 from blockchain_utils import *
-from stats_service import raw_revision
 from cacher import *
 from properties_service import getpropnamelist
 from debug import *

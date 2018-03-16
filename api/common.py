@@ -3,6 +3,7 @@ import os, sys, pybitcointools, bitcoinrpc, getpass
 from bitcoin_tools import *
 from sqltools import *
 from rpcclient import *
+from cacher import *
 
 http_status = '200 OK'
 
@@ -38,6 +39,20 @@ def general_handler(environ, start_response, response_dict_to_response_func):
         start_response(http_status, headers)
         return response
 
+
+def raw_revision():
+  ckey="info:stats:revision"
+  try:
+    response = json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    ROWS=dbSelect("select blocknumber, blocktime from blocks order by blocknumber desc limit 1")
+    response = {'last_block': ROWS[0][0], 'last_parsed': str(ROWS[0][1])}
+    #cache 1 min
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,60)
+  return response
 
 def isDivisibleProperty(ptype):
   #1: New Indivisible tokens

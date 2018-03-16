@@ -4,7 +4,7 @@ from bitcoin_tools import *
 from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
 from property_service import getpropertyraw, getpropdistraw
-from stats_service import raw_revision
+from common import raw_revision
 from debug import *
 
 app = Flask(__name__)

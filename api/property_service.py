@@ -1,7 +1,6 @@
 import urlparse
 import os, sys, re
 #from flask import Flask, request, jsonify, abort, json, make_response, Response
-from stats_service import raw_revision
 from flask_rate_limit import *
 from common import *
 from cacher import *
@@ -181,11 +180,11 @@ def getpropdistraw(prop_id):
     for row in ROWS:
       frozen=row[3]
       if(divisible):
-        bal = Decimal(row[1]) / Decimal(1e8)
-        resv = Decimal(row[2]) / Decimal(1e8)
+        bal = str( Decimal(row[1]) / Decimal(1e8) )
+        resv = str( Decimal(row[2]) / Decimal(1e8) )
       else:
-        bal = row[1]
-        resv = row[2]
+        bal = str(row[1])
+        resv = str(row[2])
       if frozen == 0:
         resp={'address' : row[0], 'balance' : bal,'reserved' : resv}
       else:
