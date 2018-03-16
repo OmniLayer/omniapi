@@ -5,6 +5,7 @@ import time
 from flask_rate_limit import *
 from common import *
 from property_service import getpropertyraw
+from stats_service import raw_revision
 from cacher import *
 from debug import *
 from decimal import Decimal
