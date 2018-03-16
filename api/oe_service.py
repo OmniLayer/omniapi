@@ -3,7 +3,7 @@ from flask_rate_limit import *
 from bitcoin_tools import *
 from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
-from property_service import getpropertyraw
+from property_service import getpropertyraw, getpropdistraw
 from stats_service import raw_revision
 from debug import *
 
@@ -68,7 +68,13 @@ def ask_aspx():
     #  return jsonify({"error":"invalid address"})
  
 #getreservedbalance	prop, address	Requests the reserved balance for a given property ID and address
-#getpropertybalances	prop	Requests the balances of all addresses holding tokens of a given property ID
+
+  #getpropertybalances	prop	Requests the balances of all addresses holding tokens of a given property ID
+  elif api=="getpropertybalances":
+    if 'prop' not in args:
+      return jsonify({"error":"invalid request, missing prop"})
+    #weird formatting, to match legacy oe need to remove curly brackets
+    return jsonify(getpropdistraw(pid))
 
   #gettx	txid	Requests the transaction details for a given transaction ID
   elif api=="gettx":
