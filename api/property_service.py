@@ -156,7 +156,7 @@ def getpropertyleg(prop_id):
 @app.route('/distribution/<prop_id>', methods=['GET'])
 @ratelimit(limit=20, per=60)
 def getpropdist(prop_id):
-  return jsonify(getpropdistraw(pid))
+  return jsonify(getpropdistraw(prop_id))
 
 def getpropdistraw(prop_id):
   try:
@@ -193,5 +193,5 @@ def getpropdistraw(prop_id):
     #cache 10 min
     lSet(ckey,json.dumps(response))
     lExpire(ckey,600)
-  return jsonify(response)
+  return response
 
