@@ -174,7 +174,7 @@ def getpropdistraw(prop_id):
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni'", [p$
+    ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni'", [property_])
 
     response=[]
     divisible=getpropertyraw(str(property_))['divisible']
