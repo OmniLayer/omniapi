@@ -3,7 +3,8 @@ from flask_rate_limit import *
 from bitcoin_tools import *
 from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
-from property_service import getpropertyraw, getpropdistraw
+from property_service import getpropertyraw
+from properties_service import getpropdistraw
 from stats_service import raw_revision
 from debug import *
 
