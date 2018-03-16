@@ -173,7 +173,7 @@ def getpropdistraw(prop_id):
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni'", [property_])
+    ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni' and (balanceavailable>0 or balancereserved>0 or balancefrozen>0)", [property_])
 
     response=[]
     divisible=getpropertyraw(str(property_))['divisible']
@@ -182,13 +182,15 @@ def getpropdistraw(prop_id):
       if(divisible):
         bal = str( Decimal(row[1]) / Decimal(1e8) )
         resv = str( Decimal(row[2]) / Decimal(1e8) )
+        frz = str( Decimal(row[3]) / Decimal(1e8) )
       else:
         bal = str(row[1])
         resv = str(row[2])
+        frz = str(row[3])
       if frozen == 0:
-        resp={'address' : row[0], 'balance' : bal,'reserved' : resv}
+        resp={'address' : row[0], 'balance' : bal, 'reserved' : resv}
       else:
-        resp={'address' : row[0], 'balance' : bal,'reserved' : resv, 'frozen' : True}
+        resp={'address' : row[0], 'balance' : frz, 'reserved' : resv, 'frozen' : True}
       response.append(resp)
     #cache 10 min
     lSet(ckey,json.dumps(response))
