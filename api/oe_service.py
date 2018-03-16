@@ -75,7 +75,7 @@ def ask_aspx():
     if 'prop' not in args:
       return jsonify({"error":"invalid request, missing prop"})
     #weird formatting, to match legacy oe need to remove curly brackets
-    return jsonify(getpropdistraw(pid))
+    return jsonify(getpropdistraw(args['prop']))
 
   #gettx	txid	Requests the transaction details for a given transaction ID
   elif api=="gettx":
