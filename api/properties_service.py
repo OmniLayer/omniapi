@@ -8,7 +8,6 @@ from property_service import getpropertyraw
 from stats_service import raw_revision
 from cacher import *
 from debug import *
-from decimal import Decimal
 
 data_dir_root = os.environ.get('DATADIR')
 
@@ -200,49 +199,6 @@ def listcrowdsales():
                 'status' : 'OK',
                 'crowdsales' : data
                 }
-    #cache 10 min
-    lSet(ckey,json.dumps(response))
-    lExpire(ckey,600)
-  return jsonify(response)
-
-
-@app.route('/distribution/<prop_id>', methods=['GET'])
-@ratelimit(limit=20, per=60)
-def getpropdist(prop_id):
-  return jsonify(getpropdistraw(pid))
-
-def getpropdistraw(prop_id):
-  try:
-    property_ = int(re.sub(r'\D+', '', prop_id.split('.')[0] ) ) #check alphanumeric
-  except ValueError:
-    abort(make_response('This endpoint only consumes valid input', 400))
-
-  rev=raw_revision()
-  cblock=rev['last_block']
-
-  ckey="data:property:dist:"+str(cblock)+":"+str(property_)
-  try:
-    response=json.loads(lGet(ckey))
-    print_debug(("cache looked success",ckey),7)
-  except:
-    print_debug(("cache looked failed",ckey),7)
-    ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni'", [property_])
-
-    response=[]    
-    divisible=getpropertyraw(str(property_))['divisible']
-    for row in ROWS:
-      frozen=row[3]
-      if(divisible):
-        bal = Decimal(row[1]) / Decimal(1e8)
-        resv = Decimal(row[2]) / Decimal(1e8)
-      else:
-        bal = row[1]
-        resv = row[2]
-      if frozen == 0:
-        resp={'address' : row[0], 'balance' : bal,'reserved' : resv}
-      else:
-        resp={'address' : row[0], 'balance' : bal,'reserved' : resv, 'frozen' : True}
-      response.append(resp)
     #cache 10 min
     lSet(ckey,json.dumps(response))
     lExpire(ckey,600)
