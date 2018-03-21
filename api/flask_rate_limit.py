@@ -43,7 +43,7 @@ def on_over_limit(limit):
     akey='triggered/'+limit.key_prefix+time.strftime("%Y-%m-%d", time.gmtime())
     redis.incr(akey)
     print_debug(('Rate Limit Reached: ',str(limit.key)),3)
-    return {'error':True, 'msg':'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit-10)+' every '+str(limit.per)+'s.'}, 400
+    return jsonify({'error':True, 'msg':'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit-10)+' every '+str(limit.per)+'s.'}), 400
 
 def ratelimit(limit, per=300, send_x_headers=True,
               over_limit=on_over_limit,
