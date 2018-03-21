@@ -257,7 +257,11 @@ def getpagecounttxjson(limit=10):
     lSet(ckey,count)
     lExpire(ckey,600)
 
-  return (count/limit)
+  ret=(count/limit)
+  if (count % limit > 0):
+    ret+=1
+
+  return ret
 
 def getaddresstxcount(address,limit=10):
   ckey="info:addr:"+str(address)+":pcount"
@@ -275,7 +279,11 @@ def getaddresstxcount(address,limit=10):
     lSet(ckey,count)
     lExpire(ckey,600)
 
-  return (count/limit)
+  ret=(count/limit)
+  if (count % limit > 0):
+    ret+=1
+
+  return ret
 
 
 @app.route('/general/')
