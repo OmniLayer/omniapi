@@ -29,14 +29,22 @@ def getpropertyraw(prop_id):
   except:
     print_debug(("cache looked failed",ckey),7)
     if property_ in [0,1,2]:
-      ROWS=dbSelect("select propertydata from smartproperties sp where (protocol='Bitcoin' or protocol='Omni') and sp.propertyid=%s",[property_])
+      ROWS=dbSelect("select propertydata,registrationdata,flags from smartproperties sp where (protocol='Bitcoin' or protocol='Omni') and sp.propertyid=%s",[property_])
 
       try:
         ret=json.loads(ROWS[0][0])
       except TypeError:
         ret=ROWS[0][0]
+
+      rdata=ROWS[0][1]
+
+      try:
+        flags=json.loads(ROWS[0][2])
+      except TypeError:
+        flags=ROWS[0][2]
+
     else:
-      ROWS=dbSelect("select txj.txdata,sp.propertydata from txjson txj, smartproperties sp where sp.createtxdbserialnum = txj.txdbserialnum "
+      ROWS=dbSelect("select txj.txdata,sp.propertydata,sp.registrationdata,sp.flags from txjson txj, smartproperties sp where sp.createtxdbserialnum = txj.txdbserialnum "
                     "and sp.propertyid=%s",[property_])
 
       try:
@@ -49,8 +57,25 @@ def getpropertyraw(prop_id):
       except TypeError:
         txData=ROWS[0][1]
 
+      rdata=ROWS[0][2]
+
+      try:
+        flags=json.loads(ROWS[0][3])
+      except TypeError:
+        flags=ROWS[0][3]
+
       ret = txJson.copy()
       ret.update(txData)
+
+    if flags in ['None',None]:
+      flags={}
+
+    if 'registered' in flags:
+      ret['registered']=flags['registered']
+    else:
+      ret['registered']=False
+    ret['flags']=flags
+    ret['rdata']=rdata
 
     #expire after 30 min
     lSet(ckey,json.dumps(ret))

@@ -6,6 +6,8 @@ from flask_rate_limit import *
 #import psycopg2, psycopg2.extras
 from common import *
 from debug import *
+from property_service import getpropdistraw
+from properties_service import rawlist
 
 app = Flask(__name__)
 app.debug = True
@@ -14,6 +16,10 @@ app.debug = True
 @app.route('/properties')
 @ratelimit(limit=12, per=60)
 def properties():
+  return jsonify(rawlist())
+
+
+def properties_OLD():
   #ROWS=dbSelect("select * from smartproperties")
   ROWS=dbSelect("select propertyname, propertyid, protocol, propertytype from smartproperties")
 
@@ -42,7 +48,14 @@ def properties():
 
 @app.route('/addresses')
 @ratelimit(limit=12, per=60)
-def addresses():
+def address():
+ currency_id = request.args.get('currency_id')
+ currency_id = re.sub(r'\D+', '', currency_id) 
+ return jsonify(getpropdistraw(str(currency_id)))
+
+
+
+def addresses_OLD():
   currency_id = request.args.get('currency_id')
   response = []
 
@@ -73,8 +86,8 @@ def addresses():
   return json_response
 
 
-@app.route('/transactions/<address>')
-@ratelimit(limit=12, per=60)
+#@app.route('/transactions/<address>')
+#@ratelimit(limit=12, per=60)
 def transactions(address=None):
   currency_id = request.args.get('currency_id')
 
