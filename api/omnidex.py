@@ -5,6 +5,7 @@ import time
 from sqltools import *
 from math import ceil
 from debug import *
+from cacher import *
 
 app = Flask(__name__)
 app.debug = True
@@ -117,6 +118,8 @@ def get_markets_by_denominator(denominator):
          "propertytype" : currency[6]
 	} for currency in markets]})
 
+
+
 @app.route('/ohlcv/<int:propertyid_desired>/<int:propertyid_selling>')
 @ratelimit(limit=20, per=60)
 def get_OHLCV(propertyid_desired, propertyid_selling):
@@ -127,10 +130,11 @@ def get_OHLCV(propertyid_desired, propertyid_selling):
                          "on ao.CreateTXDBSerialNum = createtx.TxDBSerialNum left outer join Transactions lasttx on ao.LastTXDBSerialNum = lasttx.TxDBSerialNum "
                          "where (ao.OfferState = 'sold' or ao.OfferState = 'active')  and ao.unitprice > 0 and ao.PropertyIdSelling = %s and "
                          "ao.PropertyIdDesired = %s ORDER BY createtx.TXRecvTime DESC) offers on DATE(offers.createdate) <= timeframe.date and "
-                         "DATE(offers.solddate) >= timeframe.date group by timeframe.date",[propertyid_selling, propertyid_desired])
+                         "DATE(offers.solddate) >= timeframe.date group by timeframe.date order by timeframe.date",[propertyid_selling, propertyid_desired])
     return jsonify({"status" : 200, "orderbook": [
         {
-            "date":int((time.mktime(order[0].timetuple()) + order[0].microsecond/1000000.0)/86400),
+            "date_int":int((time.mktime(order[0].timetuple()) + order[0].microsecond/1000000.0)/86400),
+            "date":str(order[0]).split(' ')[0],
             "open":order[1], #if order[1] is not None else 160 - (0.01 * orderbook.index(order)),
             "high" : order[2], #if order[2] is not None else 160 + (0.01 * orderbook.index(order)),
             "low" : order[3], #if order[3] is not None else 160 - (0.01 * orderbook.index(order)),
@@ -140,13 +144,96 @@ def get_OHLCV(propertyid_desired, propertyid_selling):
         } for order in orderbook]})
 
 
+
+def get_last_price_raw(propertyid_desired, propertyid_selling):
+  try:
+    propertyid_desired = int(propertyid_desired)
+    propertyid_selling = int(propertyid_selling)
+  except:
+    return '0'
+  ckey="data:omnidex:mrkt:lastprice:"+str(propertyid_desired)+":"+str(propertyid_selling)
+  try:
+    price=lGet(ckey)
+    if price in ['None',None]:
+      raise "failed to load"
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    ROW=dbSelect("select lastprice from markets where propertyidselling =%s and propertyiddesired=%s",(propertyid_selling,propertyid_desired))
+    try:
+      price=str(ROW[0][0])
+    except:
+      price='0'
+    lSet(ckey,price)
+    lExpire(ckey,600)
+  return price
+  
+
 @app.route('/<int:propertyid_desired>/<int:propertyid_selling>')
 @ratelimit(limit=20, per=60)
 def get_orders_by_market_json(propertyid_desired, propertyid_selling):
-    return jsonify(get_orders_by_market(propertyid_desired, propertyid_selling))
+    return jsonify(get_orders_by_market_raw(propertyid_desired, propertyid_selling))
 
 
-def get_orders_by_market(propertyid_desired, propertyid_selling):
+def get_orders_by_market_raw(propertyid_desired, propertyid_selling):
+    try:
+      propertyid_desired = int(propertyid_desired)
+      propertyid_selling = int(propertyid_selling)
+      orderbook = get_orders_by_market_book(propertyid_desired, propertyid_selling)
+      cancels   = get_orders_by_market_cancels(propertyid_desired, propertyid_selling)
+      response  = {"status" : 200, "orderbook": orderbook, "cancels": cancels}
+    except:
+      response  = {"status" : 400, "error" : "only use valid property id"}
+    return response
+
+
+
+def get_orders_by_market_book_oe(propertyid_desired, propertyid_selling):
+  ckey="data:omnidex:mrkt:book:oe:"+str(propertyid_desired)+":"+str(propertyid_selling)
+  try:
+    response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    orderbook = dbSelect("SELECT ao.propertyiddesired, ao.propertyidselling, "
+                         "CASE WHEN txj.txdata->>'propertyidforsaleisdivisible' = 'true' THEN round((ao.AmountAvailable / 100000000),8) ELSE ao.AmountAvailable END, "
+                         "CASE WHEN txj.txdata->>'propertyiddesiredisdivisible' = 'true' THEN round((ao.AmountDesired / 100000000),8) ELSE ao.AmountDesired END, "
+                         "cast(txj.txdata->>'amountforsale' as numeric), cast(txj.txdata->>'amountdesired' as numeric), "
+                         "cast(txj.txdata->>'unitprice' as numeric), ao.Seller, tx.TxRecvTime, 'active', tx.txhash from activeoffers ao, transactions tx, txjson txj "
+                         "where ao.CreateTxDBSerialNum = txj.TxDBSerialNum and ao.CreateTxDBSerialNum = tx.TxDBSerialNum and ao.propertyiddesired = %s and "
+                         "ao.propertyidselling = %s and ao.OfferState = 'active' union all select cast(txj.txdata->>'propertyiddesired' as bigint), "
+                         "cast(txj.txdata->>'propertyidforsale' as bigint), cast(txj.txdata->>'amountforsale' as numeric), cast(txj.txdata->>'amountdesired' as numeric), "
+                         "cast(txj.txdata->>'amountforsale' as numeric) ,cast(txj.txdata->>'amountdesired' as numeric), cast(txj.txdata->>'unitprice' as numeric), txj.txdata->>'sendingaddress', tx.TxRecvTime, "
+                         "'pending', tx.txhash from transactions tx inner join txjson txj "
+                         "on tx.txdbserialnum = txj.txdbserialnum where tx.txdbserialnum < 0 and tx.txtype = 25 and cast(txj.txdata->>'propertyidforsale' as numeric) = %s "
+                         "and cast(txj.txdata->>'propertyiddesired' as numeric) = %s",[propertyid_desired,propertyid_selling,propertyid_selling,propertyid_desired])
+    #"amountremaining"/available and "amountforsale" = "propertyidforsale"/selling
+    #"amounttofill"  and  "amountdesired"  = "propertyiddesired"/buying
+    response = [
+        {
+            "propertyid_buying":order[0],
+            "propertyid_selling":order[1],
+            "amountremaining" : str(order[2]),
+            "amounttofill" : str(order[3]),
+            "amountforsale" : str(order[4]),
+            "amountdesired": str(order[5]),
+            "unit_price" : fixDecimal(order[6]),
+            "address" : str(order[7]),
+            "time" : str(order[8]),
+            "status" : order[9],
+            "txid" : str(order[10])
+        } for order in orderbook]
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,600)
+  return response
+
+def get_orders_by_market_book(propertyid_desired, propertyid_selling):
+  ckey="data:omnidex:mrkt:book:"+str(propertyid_desired)+":"+str(propertyid_selling)
+  try:
+    response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
     orderbook = dbSelect("SELECT ao.propertyiddesired, ao.propertyidselling, ao.AmountAvailable, ao.AmountDesired, ao.TotalSelling, ao.AmountAccepted, "
                          "cast(txj.txdata->>'unitprice' as numeric), ao.Seller, tx.TxRecvTime, 'active', tx.txhash from activeoffers ao, transactions tx, txjson txj "
                          "where ao.CreateTxDBSerialNum = txj.TxDBSerialNum and ao.CreateTxDBSerialNum = tx.TxDBSerialNum and ao.propertyiddesired = %s and "
@@ -159,18 +246,8 @@ def get_orders_by_market(propertyid_desired, propertyid_selling):
                          "cast(txj.txdata->>'unitprice' as numeric),txj.txdata->>'sendingaddress', tx.TxRecvTime, 'pending',tx.txhash from transactions tx inner join txjson txj "
                          "on tx.txdbserialnum = txj.txdbserialnum where tx.txdbserialnum < 0 and tx.txtype = 25 and cast(txj.txdata->>'propertyidforsale' as numeric) = %s "
                          "and cast(txj.txdata->>'propertyiddesired' as numeric) = %s",[propertyid_desired,propertyid_selling,propertyid_selling,propertyid_desired])
-
-    cancels = dbSelect("SELECT cast(txj.txdata->>'propertyiddesired' as bigint),cast(txj.txdata->>'propertyidforsale' as bigint),CASE WHEN "
-                       "txj.txdata->>'propertyiddesiredisdivisible' = 'true' THEN round(cast(txj.txdata->>'amountdesired' as numeric) * 100000000) "
-                       "ELSE cast(txj.txdata->>'amountdesired' as numeric) END,CASE WHEN txj.txdata->>'propertyidforsaleisdivisible' = 'true' THEN "
-                       "round(cast(txj.txdata->>'amountforsale' as numeric) * 100000000) ELSE cast(txj.txdata->>'amountforsale' as numeric) END, "
-                       "cast(txj.txdata->>'unitprice' as numeric),txj.txdata->>'sendingaddress', tx.TxRecvTime, 'pending', tx.txhash from transactions tx "
-                       "inner join txjson txj on tx.txdbserialnum = txj.txdbserialnum where tx.txdbserialnum < 0 and tx.txtype = 26 and "
-                       "cast(txj.txdata->>'propertyidforsale' as numeric) = %s and cast(txj.txdata->>'propertyiddesired' as numeric) = %s",
-                       [propertyid_selling,propertyid_desired])
-
-    return {"status" : 200, "orderbook": [
-        {
+    response = [
+      {
             "propertyid_desired":order[0],
             "propertyid_selling":order[1],
             "available_amount" : str(order[2]),
@@ -182,8 +259,29 @@ def get_orders_by_market(propertyid_desired, propertyid_selling):
             "time" : str(order[8]),
             "status" : order[9],
             "txhash" : str(order[10])
-        } for order in orderbook], "cancels":[
-        {
+      } for order in orderbook]
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,600)
+  return response
+
+
+def get_orders_by_market_cancels(propertyid_desired, propertyid_selling):
+  ckey="data:omnidex:mrkt:cancels:"+str(propertyid_desired)+":"+str(propertyid_selling)
+  try:
+    response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    cancels = dbSelect("SELECT cast(txj.txdata->>'propertyiddesired' as bigint),cast(txj.txdata->>'propertyidforsale' as bigint),CASE WHEN "
+                       "txj.txdata->>'propertyiddesiredisdivisible' = 'true' THEN round(cast(txj.txdata->>'amountdesired' as numeric) * 100000000) "
+                       "ELSE cast(txj.txdata->>'amountdesired' as numeric) END,CASE WHEN txj.txdata->>'propertyidforsaleisdivisible' = 'true' THEN "
+                       "round(cast(txj.txdata->>'amountforsale' as numeric) * 100000000) ELSE cast(txj.txdata->>'amountforsale' as numeric) END, "
+                       "cast(txj.txdata->>'unitprice' as numeric),txj.txdata->>'sendingaddress', tx.TxRecvTime, 'pending', tx.txhash from transactions tx "
+                       "inner join txjson txj on tx.txdbserialnum = txj.txdbserialnum where tx.txdbserialnum < 0 and tx.txtype = 26 and "
+                       "cast(txj.txdata->>'propertyidforsale' as numeric) = %s and cast(txj.txdata->>'propertyiddesired' as numeric) = %s",
+                       [propertyid_selling,propertyid_desired])
+    response = [
+      {
             "propertyid_desired":cancel[0],
             "propertyid_selling":cancel[1],
             "desired_amount" : str(cancel[2]),
@@ -192,4 +290,7 @@ def get_orders_by_market(propertyid_desired, propertyid_selling):
             "seller" : str(cancel[5]),
             "time" : str(cancel[6]),
             "txhash" : str(order[7])
-        } for cancel in cancels]}
+      } for cancel in cancels]
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,600)
+  return response

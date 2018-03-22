@@ -4,6 +4,7 @@ from bitcoin_tools import *
 from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
 from property_service import getpropertyraw, getpropdistraw
+from omnidex import get_orders_by_market_book_oe, get_last_price_raw
 from common import raw_revision
 from debug import *
 
@@ -114,7 +115,7 @@ def ask_aspx():
   elif api=="getlastblockprocessed":
     return json.dumps(raw_revision()['last_block'])
 
-#gethistory	address	Requests the historical transactions for a given address
+  #gethistory	address	Requests the historical transactions for a given address
   elif api=="gethistory":
     if 'address' not in args:
       return jsonify({"error":"invalid request"})
@@ -187,8 +188,34 @@ def ask_aspx():
 #getdexorderbook	-	Requests the order book for the Omni token via the Basic Distributed Exchange
 #getdexvolume24hr	-	Requests the volume of Omni token trading within the last 24 hours via the Basic Distributed Exchange
 #getdexhistory24hr	-	Requests the trading history for Omni token trading within the last 24 hours via the Basic Distributed Exchange
-#getmetadexlastprice	prop, desprop	Requests the last price for a given trading pair via the Meta Distributed Exchange
-#getmetadexorderbook	prop, desprop	Requests the order book for a given trading pair via the Meta Distributed Exchange
+
+  #getmetadexlastprice	prop, desprop	Requests the last price for a given trading pair via the Meta Distributed Exchange
+  elif api=="getmetadexlastprice":
+    if 'prop' not in args or 'desprop' not in args:
+      return jsonify({"error":"invalid request"})
+
+    try:
+      prop=int(args['prop'])
+      desprop=int(args['desprop'])
+      response=get_last_price_raw(desprop,prop)
+      return response
+    except:
+      return jsonify({"error":"invalid request. property id must be int"})
+
+  #getmetadexorderbook	prop, desprop	Requests the order book for a given trading pair via the Meta Distributed Exchange
+  elif api=="getmetadexorderbook":
+    if 'prop' not in args or 'desprop' not in args:
+      return jsonify({"error":"invalid request"})
+
+    try:
+      prop=int(args['prop'])
+      desprop=int(args['desprop'])
+      response=get_orders_by_market_book_oe(desprop,prop)
+    except:
+      response={"error":"invalid request. property id must be int"}
+    return jsonify(response)
+
+
 #getmetadexvolume24hr	prop, desprop	Requests the volume for a given trading pair within the last 24 hours via the Meta Distributed Exchange
 #getmetadexhistory24hr	prop, desprop	Requests the trading history for a given trading pair within the last 24 hours via the Meta Distributed Exchange
 #gettxcount24hr	prop(optional)	Requests the total number of transactions within the last 24 hours for the Omni Layer or a given property ID
