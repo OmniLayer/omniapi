@@ -4,7 +4,7 @@ from bitcoin_tools import *
 from get_balance import balance_propid
 from transaction_service import gettxjson, getblocktxjson, getaddrhist
 from property_service import getpropertyraw, getpropdistraw
-from omnidex import get_orders_by_market_book_oe, get_last_price_raw
+from omnidex import get_orders_by_market_book_oe, get_last_price_raw, get_24hr_hist_raw
 from common import raw_revision
 from debug import *
 
@@ -216,8 +216,31 @@ def ask_aspx():
     return jsonify(response)
 
 
-#getmetadexvolume24hr	prop, desprop	Requests the volume for a given trading pair within the last 24 hours via the Meta Distributed Exchange
-#getmetadexhistory24hr	prop, desprop	Requests the trading history for a given trading pair within the last 24 hours via the Meta Distributed Exchange
+  #getmetadexvolume24hr	prop     Request the volume for a propertyid within last 24 hours via the Meta Distributed Exchange
+  elif api=="getmetadexhistory24hr":
+    if 'prop' not in args:
+      return jsonify({"error":"invalid request"})
+
+    try:
+      prop=int(args['prop'])
+      response=get_24hr_vol_raw(prop)
+    except:
+      response={"error":"invalid request. property id must be int"}
+    return jsonify(response)
+
+  #getmetadexhistory24hr	prop, desprop	Requests the trading history for a given trading pair within the last 24 hours via the Meta Distributed Exchange
+  elif api=="getmetadexhistory24hr":
+    if 'prop' not in args or 'desprop' not in args:
+      return jsonify({"error":"invalid request"})
+
+    try:
+      prop=int(args['prop'])
+      desprop=int(args['desprop'])
+      response=get_24hr_hist_raw(desprop,prop)
+    except:
+      response={"error":"invalid request. property id must be int"}
+    return jsonify(response)
+
 #gettxcount24hr	prop(optional)	Requests the total number of transactions within the last 24 hours for the Omni Layer or a given property ID
 
   else:

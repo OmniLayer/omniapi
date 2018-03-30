@@ -2,6 +2,7 @@
 from flask_rate_limit import *
 import re
 import time
+from decimal import Decimal
 from sqltools import *
 from math import ceil
 from debug import *
@@ -16,6 +17,22 @@ def fixDecimal(value):
       return str(ceil(float(value)*(1e8))/1e8)
     except Exception as e:
       print_debug(("couldn't convert ",value,"got error: ",e),2)
+
+
+def getMarker(time=24):
+    #get txdbserialnum marker for timelimit specified
+    ckey="data:omnidex:txmarker:"+str(time)
+    try:
+      response=int(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
+    except:
+      print_debug(("cache looked failed",ckey),7)
+      ROW=dbSelect("select txdbserialnum from transactions where txrecvtime > NOW() - '%s hour'::INTERVAL and txdbserialnum > 0 limit 1",[time])
+      response=int(ROW[0][0])
+      lSet(ckey,response)
+      lExpire(ckey,600)
+    return response
+
 
 #@app.route('/book')
 def getOrderbook(lasttrade=0, lastpending=0):
@@ -142,6 +159,84 @@ def get_OHLCV(propertyid_desired, propertyid_selling):
             "volume": order[5], #if order[5] is not None else 34.5 + (11.2 * orderbook.index(order)),
             "adjustment":(order[2] + order[3]) /2
         } for order in orderbook]})
+
+
+def get_24hr_vol_raw(propertyid):
+  try:
+    propertyid = int(propertyid)
+  except:
+    return {"total": 0, "markets":{}}
+  ckey="data:omnidex:24hr:volume:"+str(propertyid)
+  try:
+    response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    txmarker=getMarker()
+    ROWS=dbSelect("select propertyidsold,propertyidreceived,sum(amountsold::DECIMAl),sum(amountreceived::DECIMAL) "
+                  "from matchedtrades where txdbserialnum > %s and propertyidsold = %s or propertyidreceived=%s group by propertyidsold,propertyidreceived "
+                  "order by propertyidsold,propertyidreceived",(txmarker,propertyid,propertyid))
+    total=0
+    markets={}
+    for mkt in ROWS:
+      propertyidsold = int(mkt[0])
+      propertyidreceived = int(mkt[1])
+      if propertyidsold==propertyid:
+        tvol=Decimal(mkt[2])
+        mkid = propertyidreceived
+      else:
+        tvol=Decimal(mkt[3])
+        mkid = propertyidsold
+      total += tvol
+      if mkid in markets:
+        markets[mkid] = str(Decimal(markets[mkid])+tvol)
+      else:
+        markets[mkid] = str(tvol)
+    response={"total": str(total), "markets":markets}
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey, 600)
+  return response
+
+def get_24hr_hist_raw(propertyid_desired, propertyid_selling):
+  try:
+    propertyid_desired = int(propertyid_desired)
+    propertyid_selling = int(propertyid_selling)
+  except:
+    return []
+
+  if propertyid_desired == propertyid_selling:
+    return []
+
+  #cache/order keys based on smallest id first
+  if propertyid_desired < propertyid_selling:
+    ckey="data:omnidex:24hr:hist:"+str(propertyid_desired)+":"+str(propertyid_selling)
+  else:
+    ckey="data:omnidex:24hr:hist:"+str(propertyid_selling)+":"+str(propertyid_desired)
+
+  try:
+    response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    txmarker=getMarker()
+    ROWS=dbSelect("select txhash, propertyidsold, amountsold, propertyidreceived, amountreceived, block, tradingfee, matchedtxhash "
+                  "from matchedtrades where txdbserialnum > %s and (propertyidsold =%s and propertyidreceived=%s) "
+                  "or (propertyidsold =%s and propertyidreceived=%s) order by txdbserialnum desc",
+                  (txmarker, propertyid_selling, propertyid_desired, propertyid_desired, propertyid_selling ))
+    response=[]
+    for trade in ROWS:
+      response.append({ "tradetxid": trade[0],
+                        "propertyidsold": trade[1],
+                        "amountsold": trade[2],
+                        "propertyidreceived": trade[3],
+                        "amountreceived": trade[4],
+                        "block": trade[5],
+                        "tradingfee": trade[6],
+                        "matchedtxhash": trade[7] })
+
+    lSet(ckey,response)
+    lExpire(ckey,600)
+  return response
 
 
 
