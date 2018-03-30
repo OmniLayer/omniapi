@@ -174,7 +174,7 @@ def get_24hr_vol_raw(propertyid):
     print_debug(("cache looked failed",ckey),7)
     txmarker=getMarker()
     ROWS=dbSelect("select propertyidsold,propertyidreceived,sum(amountsold::DECIMAl),sum(amountreceived::DECIMAL) "
-                  "from matchedtrades where txdbserialnum > %s and propertyidsold = %s or propertyidreceived=%s group by propertyidsold,propertyidreceived "
+                  "from matchedtrades where txdbserialnum > %s and (propertyidsold = %s or propertyidreceived=%s) group by propertyidsold,propertyidreceived "
                   "order by propertyidsold,propertyidreceived",(txmarker,propertyid,propertyid))
     total=0
     markets={}
@@ -220,8 +220,8 @@ def get_24hr_hist_raw(propertyid_desired, propertyid_selling):
     print_debug(("cache looked failed",ckey),7)
     txmarker=getMarker()
     ROWS=dbSelect("select txhash, propertyidsold, amountsold, propertyidreceived, amountreceived, block, tradingfee, matchedtxhash "
-                  "from matchedtrades where txdbserialnum > %s and (propertyidsold =%s and propertyidreceived=%s) "
-                  "or (propertyidsold =%s and propertyidreceived=%s) order by txdbserialnum desc",
+                  "from matchedtrades where txdbserialnum > %s and ((propertyidsold =%s and propertyidreceived=%s) "
+                  "or (propertyidsold =%s and propertyidreceived=%s)) order by txdbserialnum desc",
                   (txmarker, propertyid_selling, propertyid_desired, propertyid_desired, propertyid_selling ))
     response=[]
     for trade in ROWS:
