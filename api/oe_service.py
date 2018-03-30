@@ -190,7 +190,7 @@ def ask_aspx():
 #getdexhistory24hr	-	Requests the trading history for Omni token trading within the last 24 hours via the Basic Distributed Exchange
 
   #getmetadexlastprice	prop, desprop	Requests the last price for a given trading pair via the Meta Distributed Exchange
-  elif api=="getmetadexlastprice":
+  elif api=="getmetadexlastprice" or api=="getomnidexlastprice":
     if 'prop' not in args or 'desprop' not in args:
       return jsonify({"error":"invalid request"})
 
@@ -203,7 +203,7 @@ def ask_aspx():
       return jsonify({"error":"invalid request. property id must be int"})
 
   #getmetadexorderbook	prop, desprop	Requests the order book for a given trading pair via the Meta Distributed Exchange
-  elif api=="getmetadexorderbook":
+  elif api=="getmetadexorderbook" or api=="getomnidexorderbook":
     if 'prop' not in args or 'desprop' not in args:
       return jsonify({"error":"invalid request"})
 
@@ -217,7 +217,7 @@ def ask_aspx():
 
 
   #getmetadexvolume24hr	prop     Request the volume for a propertyid within last 24 hours via the Meta Distributed Exchange
-  elif api=="getmetadexvolume24hr":
+  elif api=="getmetadexvolume24hr" or api=="getomnidexvolume24hr":
     if 'prop' not in args:
       return jsonify({"error":"invalid request"})
 
@@ -229,7 +229,7 @@ def ask_aspx():
     return jsonify(response)
 
   #getmetadexhistory24hr	prop, desprop	Requests the trading history for a given trading pair within the last 24 hours via the Meta Distributed Exchange
-  elif api=="getmetadexhistory24hr":
+  elif api=="getmetadexhistory24hr" or api=="getomnidexhistory24hr":
     if 'prop' not in args or 'desprop' not in args:
       return jsonify({"error":"invalid request"})
 
