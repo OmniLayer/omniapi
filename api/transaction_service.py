@@ -756,7 +756,14 @@ def gettransaction_OLD(hash_id):
 
 def addName(txjson, list):
   #list=getpropnamelist()
-  type=txjson['type_int']
+  try:
+    type=txjson['type_int']
+  except:
+    try:
+      type=get_TxType(txjson['type'])
+    except:
+      type=-1
+
   if type in[0,3,20,22,53,55,56,70,185,186]:
     txjson['propertyname']=list[str(txjson['propertyid'])]
   elif type==4:
@@ -773,3 +780,45 @@ def addName(txjson, list):
     pass
 
   return txjson
+
+
+
+def get_TxType(text_type):
+  try:
+    convert={"Simple Send": 0 ,
+             "Restricted Send": 2,
+             "Send To Owners": 3,
+             "Send All": 4,
+             "Savings": -1,
+             "Savings COMPROMISED": -1,
+             "Rate-Limiting": -1,
+             "Automatic Dispensary":-1,
+             "DEx Sell Offer": 20,
+             "MetaDEx: Offer/Accept one Master Protocol Coins for another": 21,
+             "MetaDEx: Offer/Accept one Master Protocol Tokens for another": 21,
+             "MetaDEx token trade": 21,
+             "DEx Accept Offer": 22,
+             "DEx Purchase": -22,
+             "MetaDEx trade": 25,
+             "MetaDEx cancel-price": 26,
+             "MetaDEx cancel-pair": 27,
+             "MetaDEx cancel-ecosystem": 28,
+             "Create Property - Fixed": 50,
+             "Create Property - Variable": 51,
+             "Crowdsale Purchase": -51,
+             "Promote Property": 52,
+             "Close Crowdsale": 53,
+             "Create Property - Manual": 54,
+             "Grant Property Tokens": 55,
+             "Revoke Property Tokens": 56,
+             "Change Issuer Address": 70,
+             "Freeze Property Tokens": 185,
+             "Unfreeze Property Tokens": 186,
+             "Notification": -1,
+             "Feature Activation": 65534,
+             "ALERT": 65535
+           }
+    return convert[text_type]
+  except KeyError:
+    return -1
+
