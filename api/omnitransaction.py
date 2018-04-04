@@ -41,6 +41,9 @@ class OmniTransaction:
 
     def get_unsigned(self):
       try:
+        if 'memo' not in self.rawdata:
+          self.rawdata['memo']=''
+
         # get payload
         payload = self.__generate_payload()
         if 'error' in payload:
