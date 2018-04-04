@@ -157,11 +157,16 @@ def listbyowner():
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' AND issuer= ANY(%s) ORDER BY PropertyName,PropertyID", (addresses,))
-    data = [data[0] for data in ROWS]
+    ROWS= dbSelect("select txj.txdata,sp.PropertyData from txjson txj, smartproperties sp  where txj.txdbserialnum=sp.createtxdbserialnum and sp.Protocol != 'Fiat' AND sp.issuer= ANY(%s) ORDER BY PropertyName,PropertyID", (addresses,))
+    #ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' AND issuer= ANY(%s) ORDER BY PropertyName,PropertyID", (addresses,))
+    ret=[]
+    for data in ROWS:
+      x=data[0].copy()
+      x.update(data[1])
+      ret.append(x)
     response = {
                 'status' : 'OK',
-                'properties' : data
+                'properties' : ret
                 }
     #cache 30 min
     lSet(ckey,json.dumps(response))
