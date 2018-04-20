@@ -767,12 +767,18 @@ def addName(txjson, list):
   if type in[0,3,20,22,53,55,56,70,185,186]:
     txjson['propertyname']=list[str(txjson['propertyid'])]
   elif type==4:
-    for ss in txjson['subsends']:
-      ss['propertyname']=list[str(ss['propertyid'])]
+    if 'subsends' in txjson:
+      for ss in txjson['subsends']:
+        ss['propertyname']=list[str(ss['propertyid'])]
+    else:
+      print_debug(("Subsend lookup error",txjson),3)
   elif type==-22:
-    for p in txjson['purchases']:
-      p['propertyname']=list[str(p['propertyid'])]
-      txjson['valid']=p['valid']
+    if 'purchases' in txjson:
+      for p in txjson['purchases']:
+        p['propertyname']=list[str(p['propertyid'])]
+        txjson['valid']=p['valid']
+    else:
+      print_debug(("Purchases lookup error",txjson),3)
   elif type in [25,26]:
     txjson['propertyiddesiredname']=list[str(txjson['propertyiddesired'])]
     txjson['propertyidforsalename']=list[str(txjson['propertyidforsale'])]
