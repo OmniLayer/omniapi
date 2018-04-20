@@ -85,7 +85,7 @@ def generate_unsigned():
 def get_raw():
   """Converts a signed tx from armory's offline format to a raw hex tx that bitcoind can broadcast/use"""
 
-  signed_tx_ascii = request.form['signed_hex']
+  signed_tx_ascii = request.form['armory_tx']
   print("\nArmoryService: REQUEST(convert_signed_tx_to_raw_hex) -- signed_tx_ascii:\n'%s'\n" % (signed_tx_ascii,))
 
   try:
