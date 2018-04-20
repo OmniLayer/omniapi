@@ -4,13 +4,15 @@ from flask_rate_limit import *
 #import pybitcointools
 from decimal import Decimal
 from rpcclient import *
+import re
 
 app = Flask(__name__)
 app.debug = True
 
-@app.route('/<rawhex>', methods=['GET','POST'])
+@app.route('/', methods=['POST'])
 @ratelimit(limit=15, per=60)
-def decode_handler(rawhex):
+def decode_handler():
+  rawhex = str(re.sub(r'\W+', '', request.form['hex'] ) )
   return jsonify(decode(rawhex))
 
 
@@ -19,7 +21,7 @@ def getinputs(rawtx):
   for input in rawtx['vin']:
       prevtx=getrawtransaction(input['txid'])
       if prevtx['result']['vout'][input['vout']]['scriptPubKey']['type'] not in ['pubkeyhash','scripthash']:
-        #Valid MP tx's only have pubkeyhash and scripthash as inputs
+        #Valid Omni tx's only have pubkeyhash and scripthash as inputs
         retval['invalid']=True
       inputamount= int(Decimal(str( prevtx['result']['vout'][input['vout']]['value']))*Decimal(1e8))
       for addr in prevtx['result']['vout'][input['vout']]['scriptPubKey']['addresses']:
@@ -55,9 +57,9 @@ def decode(rawhex):
         print sia
 
   if sender == "":
-    error = "Can\'t decode MP TX. No valid sending address found."
+    error = "Can\'t decode Omni TX. No valid sending address found."
   else:
     error = "None"
 
-  print {'Sender':sender,'Reference':reference,'BTC':rawBTC, 'MP':rawOMNI,'inputs':inputs, 'error':error}
-  return {'Sender':sender,'Reference':reference,'BTC':rawBTC, 'MP':rawOMNI,'inputs':inputs, 'error':error}
+  print {'Sender':sender,'Reference':reference,'BTC':rawBTC, 'OMNI':rawOMNI,'inputs':inputs, 'error':error}
+  return {'Sender':sender,'Reference':reference,'BTC':rawBTC, 'OMNI':rawOMNI,'inputs':inputs, 'error':error}
