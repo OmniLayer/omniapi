@@ -403,10 +403,19 @@ def getrawpending():
             except:
               pass
           data.append(res)
+          #index by sending address
+          try:
+            index[res['sendingaddress']].append(res)
+          except:
+            index[res['sendingaddress']]=[res]
+          #index by receiving address if exists
           try:
             index[res['referenceaddress']].append(res)
           except:
-            index[res['referenceaddress']]=[res]
+            try:
+              index[res['referenceaddress']]=[res]
+            except:
+              pass
       response={'data':data,'index':index}
       #cache for 5 min
       lSet(ckey,json.dumps(response))
