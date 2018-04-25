@@ -16,7 +16,7 @@ def bc_getutxo(address, ramount, page=1, retval=None, avail=0):
   if retval==None:
     retval=[]
   try:
-    r = requests.get('https://api.btc.com/v3/address/'+address+'/unspent?pagesize=50&page='+str(page))
+    r = requests.get('https://chain.api.btc.com/v3/address/'+address+'/unspent?pagesize=50&page='+str(page))
     if r.status_code == 200:
       response = r.json()['data']
       unspents = response['list']
@@ -26,7 +26,7 @@ def bc_getutxo(address, ramount, page=1, retval=None, avail=0):
         isUsed = ('result' in txUsed and txUsed['result']==None)
         #coinbaseHold = (tx['is_coinbase'] and tx['confirmations'] < 100)
         coinbaseHold = False
-        if not isUsed and not coinbaseHold and txUsed['result']['confirmations'] > 0 and tx['multisig']==None:
+        if not isUsed and not coinbaseHold and txUsed['result']['confirmations'] > 0:
           avail += tx['value']
           retval.append([ tx['tx_hash'], tx['tx_output_n'], tx['value'] ])
           if avail >= ramount:
