@@ -196,8 +196,16 @@ def listcrowdsales():
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
+    pnl=getpropnamelist()
     ROWS= dbSelect("select PropertyData from smartproperties where PropertyData::json->>'fixedissuance'='false' AND PropertyData::json->>'active'='true' AND ecosystem=%s ORDER BY PropertyName,PropertyID", [ecosystem])
-    data=[row[0] for row in ROWS]
+    data=[]
+    for row in ROWS:
+      csdata=row[0]
+      try:
+        csdata['propertyiddesiredname']=pnl[str(csdata['propertyiddesired'])]
+      except:
+        csdata['propertyiddesiredname']=''
+      data.append(csdata)
 
     response = {
                 'status' : 'OK',
