@@ -6,6 +6,8 @@ import re
 from debug import *
 from bitcoin_tools import *
 from balancehelper import *
+from common import *
+from cacher import *
 from transaction_service import getaddresshistraw
 #from flask import Flask, request, Response, jsonify, abort, json, make_response
 from flask_rate_limit import *
@@ -49,10 +51,23 @@ def addressDetails():
     return jsonify(txdata)
 
 def balance_full(addr):
+  rev=raw_revision()
+  cblock=rev['last_block']
+
   addr = re.sub(r'\W+', '', addr) #check alphanumeric
-  #Use new balance function call
-  #return (json.dumps( get_balancedata(addr) ), None)
-  return get_balancedata(addr)
+  ckey="data:addrbal:"+str(addr)+":"+str(cblock)
+  try:
+    #check cache
+    baldata = json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    #Use new balance function call
+    baldata=get_balancedata(addr)
+    lSet(ckey,json.dumps(baldata))
+    lExpire(ckey,30)
+    #cache for 30seconds
+  return baldata
 
 
 def balance_propid(addr,pid):
