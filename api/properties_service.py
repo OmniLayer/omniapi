@@ -197,7 +197,7 @@ def listcrowdsales():
   except:
     print_debug(("cache looked failed",ckey),7)
     pnl=getpropnamelist()
-    ROWS= dbSelect("select PropertyData from smartproperties where PropertyData::json->>'fixedissuance'='false' AND PropertyData::json->>'active'='true' AND ecosystem=%s ORDER BY PropertyName,PropertyID", [ecosystem])
+    ROWS= dbSelect("select PropertyData from smartproperties where PropertyData->>'active'='true' AND ecosystem=%s ORDER BY PropertyID", [ecosystem])
     data=[]
     for row in ROWS:
       csdata=row[0]
@@ -309,24 +309,3 @@ def prinfo():
 
     #DEBUG print response
     return jsonify(response)
-
-# refactor this to be compatible with mastercored
-def filterProperties( properties ):
-    import glob
-
-    addresses = glob.glob(data_dir_root + '/addr/*')
-    addresses_data = []
-    for prop in properties:
-        for address_file in addresses:
-            #print address[-5:]
-            if address_file[-5:] == '.json':
-                with open( address_file , 'r' ) as f:
-                  try:
-                    addr = json.loads(f.readline())
-
-                    if str(prop) in addr:
-                      addresses_data.append({ 'address': address_file.split('/')[-1][:-5], 'data': addr[str(prop)] })
-                  except ValueError:
-                    print_debug(('Error decoding JSON', address_file.split('/')[-1][:-5]),2)
-
-    return ['OK',addresses_data]

@@ -62,7 +62,7 @@ def raw_stats():
     ROWS=dbSelect("select count(walletid) from wallets where walletstate='Active'")
     wallets=ROWS[0][0]
 
-    ROWS=dbSelect("select count(*) from transactions where txrecvtime >= NOW() - '1 day'::INTERVAL")
+    ROWS=dbSelect("select txcount from txstats order by blocknumber desc limit 1;")
     txs=ROWS[0][0]
 
     opc=len(rawecolist(1)['properties'])

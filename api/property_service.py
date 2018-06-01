@@ -83,8 +83,8 @@ def getpropertyraw(prop_id):
 
   return ret
 
-@app.route('/leg/<prop_id>')
-@ratelimit(limit=11, per=60)
+#@app.route('/leg/<prop_id>')
+#@ratelimit(limit=11, per=60)
 def getpropertyleg(prop_id):
     try:
         property_ = int(re.sub(r'\D+', '', prop_id.split('.')[0] ) ) #check alphanumeric
