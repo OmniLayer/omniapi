@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/estimatefee/<addr>', methods=['GET','POST'])
-@ratelimit(limit=20, per=60)
+@ratelimit(limit=10, per=60)
 def estimatefees(addr):
     try:
       address = str(re.sub(r'\W+', '', addr ) ) #check alphanumeric
@@ -182,7 +182,8 @@ def getaddresshistraw(address,page):
         print_debug(("getaddresshistraw pending inject failed",e),2)
         pass
 
-      ROWS=dbSelect("select txj.txdata from txjson txj, (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0) q where q.txdbserialnum=txj.txdbserialnum order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
+      #ROWS=dbSelect("select txj.txdata from txjson txj, (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0) q where q.txdbserialnum=txj.txdbserialnum order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
+      ROWS=dbSelect("select txdata from txjson where (txdata->>'sendingaddress'=%s or txdata->>'referenceaddress'=%s) and txdbserialnum > 0 order by txdbserialnum desc limit %s offset %s",(address,address,limit,offset))
       #set and cache data for 7 min
       pnl=getpropnamelist()
       txlist=[]
@@ -251,7 +252,7 @@ def getpagecounttxjson(limit=10):
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS=dbSelect("select count(txdbserialnum) from txjson;")
+    ROWS=dbSelect("select max(id) from txjson;")
     count=int(ROWS[0][0])
     #cache 10 min
     lSet(ckey,count)
@@ -291,7 +292,7 @@ def getaddresstxcount(address,limit=10):
 def getrecenttx():
   return getrecenttxpages()
 
-@app.route('/general/<page>')
+@app.route('/general/<page>', methods=['GET','POST'])
 @ratelimit(limit=20, per=60)
 def getrecenttxpages(page=1):
     #pagination starts at 1 so adjust accordingly to treat page 0 and 1 the same
@@ -310,11 +311,29 @@ def getrecenttxpages(page=1):
       offset=0
       page=0
 
+    filters = {
+      0 : [0],
+      3 : [3],
+      20: [20,22,-21],
+      25: [25,26,27,28],
+      50: [50,51,54],
+      55: [55],
+      56: [56]
+    }
+
+    try:
+      filter=int(request.form['tx_type'])
+      tx_type=filters[filter]
+    except:
+      filter=9999
+      tx_type=None
+
     rev=raw_revision()
     cblock=rev['last_block']
     toadd=[]
     limit=10
 
+    #ckey="data:tx:general:"+str(cblock)+":"+str(filter)+":"+str(page)
     ckey="data:tx:general:"+str(cblock)+":"+str(page)
     try:
       response=json.loads(lGet(ckey))
@@ -343,8 +362,12 @@ def getrecenttxpages(page=1):
         print_debug(("getgeneral pending inject failed",e),2)
         pass
 
-
+      #if filter==9999:
       ROWS=dbSelect("select txdata from txjson txj where protocol = 'Omni' and txdbserialnum > 0 order by txdbserialnum DESC offset %s limit %s;",(offset,limit))
+      #else:
+      #  ROWS=dbSelect("select txdata from txjson where cast(txdata->>'type_int' as numeric) = ANY(%s) and "
+      #                "protocol = 'Omni' and txdbserialnum > 0 order by txdbserialnum DESC offset %s limit %s;",(tx_type,offset,limit))
+
       data = []
       pnl=getpropnamelist()
       if len(ROWS) > 0:
@@ -780,8 +803,10 @@ def addName(txjson, list):
       for ss in txjson['subsends']:
         ss['propertyname']=list[str(ss['propertyid'])]
     else:
-      if txjson['valid']:
+      if 'valid' in txjson and txjson['valid']:
         print_debug(("Subsend lookup error",txjson),3)
+      else:
+        txjson['subsends']=[]
   elif type==-22:
     if 'purchases' in txjson:
       for p in txjson['purchases']:
