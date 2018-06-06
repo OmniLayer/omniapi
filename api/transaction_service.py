@@ -179,9 +179,9 @@ def getaddresshistraw(address,page):
             offset -= count
             if offset < 0:
               offset = 0
-        except Exception as e:
-          print_debug(("getaddresshistraw pending inject failed",e),2)
-          pass
+      except Exception as e:
+        print_debug(("getaddresshistraw pending inject failed",e),2)
+        pass
 
       #ROWS=dbSelect("select txj.txdata from txjson txj, (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0) q where q.txdbserialnum=txj.txdbserialnum order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
       ROWS=dbSelect("select txdata from txjson where (txdata->>'sendingaddress'=%s or txdata->>'referenceaddress'=%s) and txdbserialnum > 0 order by txdbserialnum desc limit %s offset %s",(address,address,limit,offset))
