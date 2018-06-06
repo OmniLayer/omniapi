@@ -456,7 +456,7 @@ def gettxjson(hash_id):
 
     ckey="data:tx:"+str(transaction_)
     try:
-      txJson=lGet(json.loads(ckey))
+      txJson=json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
@@ -488,7 +488,7 @@ def gettxjson(hash_id):
         if txJson['confirmations'] == 0:
           lExpire(ckey,300)
       except:
-        lExpire(ckey,300)
+        lExpire(ckey,100)
 
     try:
       if 'type_int' not in txJson and txJson['type']=="DEx Purchase":
