@@ -275,7 +275,7 @@ def getaddresstxcount(address,limit=10):
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS=dbSelect("select count(txdbserialnum) from addressesintxs where address=%s;",[address])
+    ROWS=dbSelect("select count(distinct txdbserialnum) from addressesintxs where address=%s;",[address])
     count=int(ROWS[0][0])
     lSet(ckey,count)
     lExpire(ckey,600)
@@ -463,24 +463,25 @@ def gettxjson(hash_id):
       #ROWS=dbSelect("select txj.txdata, extract(epoch from t.txrecvtime) from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
       ROWS=dbSelect("select txdata,txdbserialnum from txjson where txdata->>'txhash'=%s", [transaction_])
       if len(ROWS) < 1:
-        return json.dumps([])
-      try:
-        txj = json.loads(ROWS[0][0])
-      except TypeError:
-        txj = ROWS[0][0]
-      try:
-        if 'type_int' not in txj and txj['type']=="DEx Purchase":
-          txj['type_int']=-22
-      except:
-        pass
-      txJson=addName(txj,getpropnamelist())
-      if 'blocktime' not in txJson:
+        txJson={'error':'tx not found'}
+      else:
         try:
-          txdbserial=ROWS[0][1]
-          blk_time=dbSelect("select extract(epoch from txrecvtime) from transactions where txdbserialnum = %s", [txdbserial])
-          txJson['blocktime']=int(blk_time[0][0])
-        except: 
+          txj = json.loads(ROWS[0][0])
+        except TypeError:
+          txj = ROWS[0][0]
+        try:
+          if 'type_int' not in txj and txj['type']=="DEx Purchase":
+            txj['type_int']=-22
+        except:
           pass
+        txJson=addName(txj,getpropnamelist())
+        if 'blocktime' not in txJson:
+          try:
+            txdbserial=ROWS[0][1]
+            blk_time=dbSelect("select extract(epoch from txrecvtime) from transactions where txdbserialnum = %s", [txdbserial])
+            txJson['blocktime']=int(blk_time[0][0])
+          except: 
+            pass
       lSet(ckey,json.dumps(txJson))
       try:
         #check if tx is unconfirmed and expire cache after 5 min if it is
@@ -499,9 +500,12 @@ def gettxjson(hash_id):
     except:
       pass
 
-    #if cblock hasn't caught up make sure we don't return negative weirdness
-    if txJson['confirmations'] < 0:
-      txJson['confirmations'] = 0
+    try:
+      #if cblock hasn't caught up make sure we don't return negative weirdness
+      if txJson['confirmations'] < 0:
+        txJson['confirmations'] = 0
+    except:
+      pass
 
     return txJson
 
