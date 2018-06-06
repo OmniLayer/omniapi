@@ -461,7 +461,7 @@ def gettxjson(hash_id):
     except:
       print_debug(("cache looked failed",ckey),7)
       #ROWS=dbSelect("select txj.txdata, extract(epoch from t.txrecvtime) from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
-      ROWS=dbSelect("select txdata from txjson where txdata->>'txhash'=%s", [transaction_])
+      ROWS=dbSelect("select txdata,txdbserialnum from txjson where txdata->>'txhash'=%s", [transaction_])
       if len(ROWS) < 1:
         return json.dumps([])
       try:
@@ -476,7 +476,9 @@ def gettxjson(hash_id):
       txJson=addName(txj,getpropnamelist())
       if 'blocktime' not in txJson:
         try:
-          txJson['blocktime']=int(ROWS[0][1])
+          txdbserial=ROWS[0][1]
+          blk_time=dbSelect("select extract(epoch from txrecvtime) from transactions where txdbserialnum = %s", [txdbserial])
+          txJson['blocktime']=int(blk_time[0][0])
         except: 
           pass
       lSet(ckey,json.dumps(txJson))
