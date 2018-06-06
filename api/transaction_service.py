@@ -464,7 +464,7 @@ def gettxjson(hash_id):
 
       if len(transaction_) == 64:
         #ROWS=dbSelect("select txj.txdata, extract(epoch from t.txrecvtime) from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
-        ROWS=dbSelect("select txdata,txdbserialnum from txjson where txdata->>'txhash'=%s", [transaction_])
+        ROWS=dbSelect("select txdata,txdbserialnum from txjson where txdata->>'txid'=%s", [transaction_])
       else:
         ROWS=[]
 
