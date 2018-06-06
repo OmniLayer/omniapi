@@ -461,10 +461,15 @@ def gettxjson(hash_id):
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      #ROWS=dbSelect("select txj.txdata, extract(epoch from t.txrecvtime) from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
-      ROWS=dbSelect("select txdata,txdbserialnum from txjson where txdata->>'txhash'=%s", [transaction_])
+
+      if len(transaction_) == 64:
+        #ROWS=dbSelect("select txj.txdata, extract(epoch from t.txrecvtime) from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
+        ROWS=dbSelect("select txdata,txdbserialnum from txjson where txdata->>'txhash'=%s", [transaction_])
+      else:
+        ROWS=[]
+
       if len(ROWS) < 1:
-        txJson={'error':'tx not found'}
+        txJson={'txid':transaction_,'type':'Error - Not Found'}
       else:
         try:
           txj = json.loads(ROWS[0][0])
