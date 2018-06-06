@@ -163,24 +163,25 @@ def getaddresshistraw(address,page):
 
       raw=getrawpending()
       try:
-        pending=raw['index'][address]
-        count=len(pending)
+        if address in raw['index']:
+          pending=raw['index'][address]
+          count=len(pending)
 
-        if count > 0:
-          max=offset+10
-          if max > count:
-            max = count
+          if count > 0:
+            max=offset+10
+            if max > count:
+              max = count
 
-          for x in range(offset,max):
-            toadd.append(pending[x])
+            for x in range(offset,max):
+              toadd.append(pending[x])
 
-          limit-=len(toadd)
-          offset -= count
-          if offset < 0:
-            offset = 0
-      except Exception as e:
-        print_debug(("getaddresshistraw pending inject failed",e),2)
-        pass
+            limit-=len(toadd)
+            offset -= count
+            if offset < 0:
+              offset = 0
+        except Exception as e:
+          print_debug(("getaddresshistraw pending inject failed",e),2)
+          pass
 
       #ROWS=dbSelect("select txj.txdata from txjson txj, (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0) q where q.txdbserialnum=txj.txdbserialnum order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
       ROWS=dbSelect("select txdata from txjson where (txdata->>'sendingaddress'=%s or txdata->>'referenceaddress'=%s) and txdbserialnum > 0 order by txdbserialnum desc limit %s offset %s",(address,address,limit,offset))
