@@ -634,7 +634,9 @@ def gettransaction_OLD(hash_id):
     except ValueError:
         abort(make_response('This endpoint only consumes valid input', 400))
 
-    ROWS=dbSelect("select * from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
+    ROWS=dbSelect("select t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                  "t.txblocknumber,t.txseqinblock,txj.txdbserialnum,txj.protocol,txj.txdata "
+                  "from transactions t, txjson txj where t.txdbserialnum = txj.txdbserialnum and t.protocol != 'Bitcoin' and t.txhash=%s", [transaction_])
 
     if len(ROWS) < 1:
       return json.dumps([])
@@ -697,7 +699,9 @@ def gettransaction_OLD(hash_id):
       # category, amountraised, closedearly, propertyiddesired, maxtokens, percenttoissuer, earlybonus, active, data, url,  tokensissued, starttime
       # 54 - Create Property Manual - propertyname, (getgrants), category, totaltokens, url, [issuances], subcategory, data
 
-      ROWS=dbSelect("select * from transactions t, smartproperties sp where t.txhash=%s and t.txdbserialnum = sp.createtxdbserialnum", [transaction_])
+      ROWS=dbSelect("select t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                    "t.txblocknumber,t.txseqinblock,sp.* "
+                    "from transactions t, smartproperties sp where t.txhash=%s and t.txdbserialnum = sp.createtxdbserialnum", [transaction_])
       try:
         mpData = json.loads(ROWS[0][-1])
       except TypeError:
@@ -736,7 +740,9 @@ def gettransaction_OLD(hash_id):
         cancel = True if txJson[action] == 'cancel' else False
 
         if not cancel:
-          ROWS=dbSelect("select * from transactions t, activeoffers ao, txjson txj where t.txhash=%s "
+          ROWS=dbSelect("select t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                        "t.txblocknumber,t.txseqinblock,ao.*,txj.txdbserialnum,txj.protocol,txj.txdata "
+                        "from transactions t, activeoffers ao, txjson txj where t.txhash=%s "
                         "and t.txdbserialnum = ao.createtxdbserialnum and t.txdbserialnum=txj.txdbserialnum", [transaction_])
           row = ROWS[0]
           try:
@@ -762,7 +768,9 @@ def gettransaction_OLD(hash_id):
           ret['tx_type_str'] = 'Sell cancel'
 
       if txType == 22:
-        ROWS=dbSelect("select * from transactions t, offeraccepts oa, txjson txj where t.txhash=%s "
+        ROWS=dbSelect("select t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                      "t.txblocknumber,t.txseqinblock,oa.*,txj.txdbserialnum,txj.protocol,txj.txdata " 
+                      "from transactions t, offeraccepts oa, txjson txj where t.txhash=%s "
                       "and t.txdbserialnum = oa.linkedtxdbserialnum and t.txdbserialnum=txj.txdbserialnum", [transaction_])
         try:
           mpData = json.loads(ROWS[0][-1])

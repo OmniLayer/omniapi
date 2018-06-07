@@ -32,8 +32,10 @@ def filterOffersByTime( currency_type , time_seconds):
 
     atleast_now = int( str( int(time.time() - time_seconds) ) + '000' )
 
-    ROWS=dbSelect("select * from activeoffers ao, transactions t, txjson tj where ao.propertyidselling=%s and ao.propertyiddesired='0' and "
-                  "ao.createtxdbserialnum=t.txdbserialnum and ao.createtxdbserialnum=tj.txdbserialnum", [currency])
+    ROWS=dbSelect("select ao.*,t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                  "t.txblocknumber,t.txseqinblock,txj.txdbserialnum,txj.protocol,txj.txdata "
+                  "from activeoffers ao, transactions t, txjson txj where ao.propertyidselling=%s and ao.propertyiddesired='0' and "
+                  "ao.createtxdbserialnum=t.txdbserialnum and ao.createtxdbserialnum=txj.txdbserialnum", [currency])
 
     response = [ mapSchema(row) for row in ROWS if int(mapSchema(row)['tx_time']) > atleast_now ]
 
@@ -115,7 +117,9 @@ def getcolor(c):
 
 def getsell(txdbserialnum):
 
-    ROWS=dbSelect("select * from activeoffers ao, transactions t, txjson txj where ao.createtxdbserialnum=%s "
+    ROWS=dbSelect("select ao.*,t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                  "t.txblocknumber,t.txseqinblock,txj.txdbserialnum,txj.protocol,txj.txdata "
+                  "from activeoffers ao, transactions t, txjson txj where ao.createtxdbserialnum=%s "
                   "and t.txdbserialnum=%s  and txj.txdbserialnum=%s ",(txdbserialnum,txdbserialnum,txdbserialnum))
 
     return ROWS[0]
@@ -134,7 +138,9 @@ def filterOffers(addresses):
     #Query all active offers
     qs = genQs('or', 'ao', 'seller', addresses)
 
-    ROWS=dbSelect("select * from activeoffers ao, transactions t, txjson txj where " + qs + \
+    ROWS=dbSelect("select ao.*,t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                  "t.txblocknumber,t.txseqinblock,txj.txdbserialnum,txj.protocol,txj.txdata "
+                  "from activeoffers ao, transactions t, txjson txj where " + qs + \
                   " and offerstate='active' and ao.propertyiddesired='0' and ao.createtxdbserialnum=t.txdbserialnum "
                   "and ao.createtxdbserialnum=txj.txdbserialnum")
 
@@ -158,7 +164,9 @@ def filterOffers(addresses):
     #Query all active accepts
     qs = genQs('or', 'oa', 'buyer', addresses)
 
-    ROWS=dbSelect("select * from offeraccepts oa, transactions t, txjson txj where " + qs + \
+    ROWS=dbSelect("select oa.*,t.txhash,t.protocol,t.txdbserialnum,t.txtype,t.txversion,t.ecosystem,t.txrecvtime,t.txstate,t.txerrorcode,"
+                  "t.txblocknumber,t.txseqinblock,txj.txdbserialnum,txj.protocol,txj.txdata "
+                  "from offeraccepts oa, transactions t, txjson txj where " + qs + \
                   " and expiredstate='f' and oa.linkedtxdbserialnum=t.txdbserialnum "
                   "and oa.linkedtxdbserialnum=txj.txdbserialnum")
 

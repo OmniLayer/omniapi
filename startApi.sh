@@ -47,7 +47,7 @@ do
       else
         echo "Starting uwsgi daemon..."
         cd $APPDIR/api
-        uwsgi -s 127.0.0.1:1088 -p 8 -M --vhost --enable-threads --log-x-forwarded-for --logto $LOGDIR/apps.log --pidfile /tmp/omniapi.pid &
+        uwsgi -s 127.0.0.1:1088 -p 10 -M --vhost --enable-threads --log-x-forwarded-for --logto $LOGDIR/apps.log --pidfile /tmp/omniapi.pid --stats /tmp/stats.socket &
         #get snapshot of directory files
         APISHA=`ls -lR $APPDIR/api/*.py | sha1sum`
     fi
