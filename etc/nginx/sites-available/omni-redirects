@@ -3,6 +3,9 @@
         #Re-route nested routed through index
         location / {
             try_files $uri $uri/ /index.html =404;
+            add_header Cache-Control "";
+            add_header Pragma "";
+            add_header Expires "";
         }
 
         #Limit Perl Access per phil's recommendation
