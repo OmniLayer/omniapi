@@ -398,9 +398,11 @@ def cachetxs(txlist):
       ckey="data:tx:"+str(tx['txid'])
       lSet(ckey,json.dumps(tx))
       try:
-        #check if tx is unconfirmed and expire cache after 5 min if it is
+        #check if tx is unconfirmed and expire cache after 5 min if it is, otherwise 4 weeks
         if tx['confirmations'] == 0:
           lExpire(ckey,300)
+	else:
+	  lExpire(ckey,2419200)
       except:
         print_debug(("error expiring",ckey,tx),2)
         lExpire(ckey,300)
@@ -490,9 +492,11 @@ def gettxjson(hash_id):
             pass
       lSet(ckey,json.dumps(txJson))
       try:
-        #check if tx is unconfirmed and expire cache after 5 min if it is
+        #check if tx is unconfirmed and expire cache after 5 min if it is otherwise 4 weeks
         if txJson['confirmations'] == 0:
           lExpire(ckey,300)
+        else:
+          lExpire(ckey,2419200)
       except:
         lExpire(ckey,100)
 
