@@ -2,6 +2,7 @@
 from flask_rate_limit import *
 from sqltools import *
 import commands
+import datetime
 from properties_service import rawecolist
 from values_service import getCurrentPriceRaw
 from cacher import *
@@ -65,18 +66,48 @@ def raw_stats():
     ROWS=dbSelect("select txcount from txstats order by blocknumber desc limit 1;")
     txs=ROWS[0][0]
 
+    txdaily=raw_txdaily()
+
     opc=len(rawecolist(1)['properties'])
     topc=len(rawecolist(2)['properties'])
 
     obtc = getCurrentPriceRaw('OMNI')['price']
     ousd = getCurrentPriceRaw('BTC')['price'] * obtc
 
-    response = {'amount_of_wallets': wallets, 'txcount_24hr':txs, 'properties_count':opc, 'test_properties_count':topc, 'omni_btc':obtc, 'omni_usd':ousd}
+    response = {'amount_of_wallets': wallets, 'txcount_24hr':txs, 'txdaily':txdaily, 'properties_count':opc, 'test_properties_count':topc, 'omni_btc':obtc, 'omni_usd':ousd}
     #cache 20min
     lSet(ckey,json.dumps(response))
     lExpire(ckey,1200)
 
   return response
+
+
+def raw_txdaily():
+  ckey="info:stats:txdaily"
+  try:
+    ret=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    ROWS=dbSelect("select ft.bkt,tx.txcount from txstats tx, "
+                  "(select CAST(blocktime as DATE) as bkt, max(id) as id from txstats group by CAST(blocktime as date) order by bkt desc limit 15) ft "
+                  "where tx.id=ft.id")
+    ret=[]
+    #remove first element because current day is always incomplete/invalid until tomorrow
+    curday=ROWS.pop(0)
+    for x in ROWS:
+      ret.append({'date':str(x[0]),'count':x[1]})
+    #cache until end of day
+    dt = datetime.datetime.now()
+    if curday[0].day == dt.day:
+      #check if the newest data received is updated for today, if so cache data until end of day
+      exptime=((24 - dt.hour - 1) * 60 * 60) + ((60 - dt.minute - 1) * 60) + (60 - dt.second)
+    else:
+      #dataset hasn't updated for the new day yet, cache for 30min to give new blocks time to come in
+      exptime=1800
+    lSet(ckey,json.dumps(ret))
+    lExpire(ckey,exptime)
+  return ret
 
 
 @app.route('/commits')
