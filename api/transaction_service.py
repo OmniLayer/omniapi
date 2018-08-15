@@ -289,12 +289,12 @@ def getaddresstxcount(address,limit=10):
 
 
 @app.route('/general/')
-@ratelimit(limit=20, per=60)
+@ratelimit(limit=10, per=10)
 def getrecenttx():
   return getrecenttxpages()
 
 @app.route('/general/<page>', methods=['GET','POST'])
-@ratelimit(limit=20, per=60)
+@ratelimit(limit=10, per=10)
 def getrecenttxpages(page=1):
     #pagination starts at 1 so adjust accordingly to treat page 0 and 1 the same
     try:

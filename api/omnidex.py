@@ -91,12 +91,19 @@ def getDesignatingCurrencies():
     except ValueError:
         abort(make_response('Field \'ecosystem\' invalid value, request failed', 400))
 
-    #designating_currencies = dbSelect("select distinct ao.propertyiddesired as propertyid, sp.propertyname from activeoffers ao "
-    #                                  "inner join SmartProperties sp on ao.propertyiddesired = sp.propertyid and sp.ecosystem = %s "
-                                      #"where (ao.propertyidselling not in (1, 2, 31)) or (ao.propertyidselling = 1 and ao.propertyiddesired = 31) "
-    #                                  "where ao.offerstate='active' "
-    #                                  "order by ao.propertyiddesired ",[ecosystem])
-    designating_currencies = dbSelect("select distinct propertyiddesired,desiredname from markets where "
+    try:
+      filter = request.form['filter'] in ['True','true',True]
+    except:
+      filter = True
+
+    ckey="data:omnidex:designating_currencies:"+str(ecosystem)+":"+str(filter)
+
+    try:
+      response=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
+    except:
+      print_debug(("cache looked failed",ckey),7)
+      designating_currencies = dbSelect("select distinct propertyiddesired,desiredname from markets where "
                                       "CASE WHEN %s='Production' THEN "
                                       "propertyiddesired > 0 and propertyiddesired < 2147483648 and propertyiddesired !=2 "
                                       "ELSE propertyiddesired > 2147483650 or propertyiddesired=2 END "
@@ -107,16 +114,36 @@ def getDesignatingCurrencies():
                                         "ELSE propertyidselling > 2147483650 or propertyidselling=2 END "
                                         " and supply >0)) "
                                       "order by propertyiddesired",(ecosystem,ecosystem))
-    return jsonify({"status" : 200, "currencies": [
+      if filter:
+        listfilter=dbSelect("select propertyid from smartproperties where (flags->>'scam')::boolean or (flags->>'duplicate')::boolean")
+        dc=(x for x in designating_currencies if [x[0]] not in listfilter )
+      else:
+        listfilter=[]
+        dc=designating_currencies
+      response={"status" : 200, "currencies": [
 	{
 	 "propertyid":currency[0], "propertyname" : currency[1], "displayname" : str(currency[1])+" #"+str(currency[0])
-	} for currency in designating_currencies]})
+	} for currency in dc],
+        "filter": [id for pid in listfilter for id in pid] }
+
+      #cache dex markets list for 10min
+      lSet(ckey,json.dumps(response))
+      lExpire(ckey,600)
+
+    return jsonify(response)
 
 
 @app.route('/<int:denominator>')
 @ratelimit(limit=20, per=60)
 def get_markets_by_denominator(denominator):
-    markets = dbSelect("select ma.propertyidselling as marketid, ma.sellingname as marketname, "
+    ckey="data:omnidex:marketsbydenom:"+str(denominator)
+    try:
+      response=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
+    except:
+      print_debug(("cache looked failed",ckey),7)
+
+      markets = dbSelect("select ma.propertyidselling as marketid, ma.sellingname as marketname, "
                         "CASE WHEN mb.unitprice=0 THEN 0 ELSE cast(1/mb.unitprice as numeric(27,8)) END as bidprice, "
                        "ma.unitprice as askprice, ma.supply, ma.lastprice, ma.marketpropertytype "
                        "from markets ma left outer join markets mb on ma.propertyidselling=mb.propertyiddesired "
@@ -124,7 +151,7 @@ def get_markets_by_denominator(denominator):
                        "( ma.supply>0 or ma.propertyidselling in "
                         "(select propertyiddesired as marketid from markets where propertyidselling=%s and supply>0) "
                        " ) order by ma.propertyidselling",(denominator,denominator))
-    return jsonify({"status" : 200, "markets": [
+      response={"status" : 200, "markets": [
 	{
 	 "propertyid":currency[0],
 	 "propertyname" : currency[1],
@@ -133,22 +160,34 @@ def get_markets_by_denominator(denominator):
 	 "supply" : currency[4],
 	 "lastprice" : float(currency[5]),
          "propertytype" : currency[6]
-	} for currency in markets]})
+	} for currency in markets]}
+      #cache markets for 4 min
+      lSet(ckey,json.dumps(response))
+      lExpire(ckey,240)
+
+    return jsonify(response)
 
 
 
 @app.route('/ohlcv/<int:propertyid_desired>/<int:propertyid_selling>')
 @ratelimit(limit=20, per=60)
 def get_OHLCV(propertyid_desired, propertyid_selling):
-    orderbook = dbSelect("SELECT timeframe.date,FIRST(offers.unitprice) ,MAX(offers.unitprice), MIN(offers.unitprice), "
-                         "LAST(offers.unitprice), SUM(offers.totalselling) FROM generate_series('2016-01-01 00:00'::timestamp,current_date, '1 day') "
-                         "timeframe(date) INNER JOIN (SELECT ao.totalselling, ao.unitprice, createtx.TXRecvTime as createdate, "
-                         "COALESCE(lasttx.TXRecvTime,createtx.TXRecvTime) as solddate from ActiveOffers ao inner join Transactions createtx "
-                         "on ao.CreateTXDBSerialNum = createtx.TxDBSerialNum left outer join Transactions lasttx on ao.LastTXDBSerialNum = lasttx.TxDBSerialNum "
-                         "where (ao.OfferState = 'sold' or ao.OfferState = 'active')  and ao.unitprice > 0 and ao.PropertyIdSelling = %s and "
-                         "ao.PropertyIdDesired = %s ORDER BY createtx.TXRecvTime DESC) offers on DATE(offers.createdate) <= timeframe.date and "
-                         "DATE(offers.solddate) >= timeframe.date group by timeframe.date order by timeframe.date",[propertyid_selling, propertyid_desired])
-    return jsonify({"status" : 200, "orderbook": [
+    ckey="data:omnidex:ohlcv:"+str(propertyid_desired)+":"+str(propertyid_selling)
+    try:
+      response=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
+    except:
+      print_debug(("cache looked failed",ckey),7)
+
+      orderbook = dbSelect("SELECT timeframe.date,FIRST(offers.unitprice) ,MAX(offers.unitprice), MIN(offers.unitprice), "
+                           "LAST(offers.unitprice), SUM(offers.totalselling) FROM generate_series('2016-01-01 00:00'::timestamp,current_date, '1 day') "
+                           "timeframe(date) INNER JOIN (SELECT ao.totalselling, ao.unitprice, createtx.TXRecvTime as createdate, "
+                           "COALESCE(lasttx.TXRecvTime,createtx.TXRecvTime) as solddate from ActiveOffers ao inner join Transactions createtx "
+                           "on ao.CreateTXDBSerialNum = createtx.TxDBSerialNum left outer join Transactions lasttx on ao.LastTXDBSerialNum = lasttx.TxDBSerialNum "
+                           "where (ao.OfferState = 'sold' or ao.OfferState = 'active')  and ao.unitprice > 0 and ao.PropertyIdSelling = %s and "
+                           "ao.PropertyIdDesired = %s ORDER BY createtx.TXRecvTime DESC) offers on DATE(offers.createdate) <= timeframe.date and "
+                           "DATE(offers.solddate) >= timeframe.date group by timeframe.date order by timeframe.date",[propertyid_selling, propertyid_desired])
+      response={"status" : 200, "orderbook": [
         {
             "date_int":int((time.mktime(order[0].timetuple()) + order[0].microsecond/1000000.0)/86400),
             "date":str(order[0]).split(' ')[0],
@@ -158,8 +197,11 @@ def get_OHLCV(propertyid_desired, propertyid_selling):
             "close" : order[4], #if order[4] is not None else 160 + (0.01 * orderbook.index(order)),
             "volume": order[5], #if order[5] is not None else 34.5 + (11.2 * orderbook.index(order)),
             "adjustment":(order[2] + order[3]) /2
-        } for order in orderbook]})
-
+        } for order in orderbook]}
+      #cache for 2 min
+      lSet(ckey,json.dumps(response))
+      lExpire(ckey,120)
+    return jsonify(response)
 
 def get_24hr_vol_raw(propertyid):
   try:
