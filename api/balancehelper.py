@@ -45,7 +45,8 @@ def get_balancedata(address):
         res = { 'symbol' : sym_t, 'divisible' : divi, 'id' : cID }
         #inject property details but remove issuanecs
         res['propertyinfo'] = getpropertyraw(cID)
-        res['propertyinfo'].pop('issuances')
+        if 'issuances' in res['propertyinfo']:
+          res['propertyinfo'].pop('issuances')
         res['pendingpos'] = str(long(balrow[3]))
         res['pendingneg'] = str(long(balrow[4]))
         res['reserved'] = str(long(balrow[5]))
@@ -165,7 +166,8 @@ def get_bulkbalancedata(addresses):
         res = { 'symbol' : sym_t, 'divisible' : divi, 'id' : cID }
         #inject property details but remove issuanecs
         res['propertyinfo'] = getpropertyraw(cID)
-        res['propertyinfo'].pop('issuances')
+        if 'issuances' in res['propertyinfo']:
+          res['propertyinfo'].pop('issuances')
         res['pendingpos'] = str(long(balrow[3]))
         res['pendingneg'] = str(long(balrow[4]))
         res['reserved'] = str(long(balrow[5]))
