@@ -33,13 +33,13 @@ def search():
 
     if query.isdigit():
       if int(query) == 1:
-        asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where ecosystem='Production' and protocol='Omni' order by propertyid")
+        asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where ecosystem='Production' and protocol='Omni' order by propertyid")
       elif int(query) == 2:
-        asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where ecosystem='Test' and protocol='Omni' order by propertyid")
+        asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where ecosystem='Test' and protocol='Omni' order by propertyid")
       else:
-        asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
+        asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
     else:
-      asset=dbSelect("select PropertyID, propertyname,Issuer from smartproperties where (LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') or LOWER(issuer) like LOWER(\'%" + str(query) + "%\')) and protocol='Omni' order by propertyid limit 10")
+      asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where (LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') or LOWER(issuer) like LOWER(\'%" + str(query) + "%\')) and protocol='Omni' order by propertyid limit 10")
       if 25 < len(query) < 45 :
         adrbal=balance_full(query)
       elif len(query) == 64:
