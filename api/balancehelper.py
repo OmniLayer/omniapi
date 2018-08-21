@@ -43,7 +43,9 @@ def get_balancedata(address):
         #1 = new indivisible property, 2=new divisible property (per spec)
         divi = True if int(balrow[1]) == 2 else False
         res = { 'symbol' : sym_t, 'divisible' : divi, 'id' : cID }
+        #inject property details but remove issuanecs
         res['propertyinfo'] = getpropertyraw(cID)
+        res['propertyinfo'].pop('issuances')
         res['pendingpos'] = str(long(balrow[3]))
         res['pendingneg'] = str(long(balrow[4]))
         res['reserved'] = str(long(balrow[5]))
@@ -161,7 +163,9 @@ def get_bulkbalancedata(addresses):
         #1 = new indivisible property, 2=new divisible property (per spec)
         divi = True if int(balrow[1]) == 2 else False
         res = { 'symbol' : sym_t, 'divisible' : divi, 'id' : cID }
+        #inject property details but remove issuanecs
         res['propertyinfo'] = getpropertyraw(cID)
+        res['propertyinfo'].pop('issuances')
         res['pendingpos'] = str(long(balrow[3]))
         res['pendingneg'] = str(long(balrow[4]))
         res['reserved'] = str(long(balrow[5]))
