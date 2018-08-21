@@ -201,7 +201,7 @@ def listcrowdsales():
     for row in ROWS:
       csdata=row[0]
       try:
-        csdata['propertyiddesiredname']=pnl[str(csdata['propertyiddesired'])]
+        csdata['propertyiddesiredname']=pnl[str(csdata['propertyiddesired'])]['name']
       except:
         csdata['propertyiddesiredname']=''
       data.append(csdata)
