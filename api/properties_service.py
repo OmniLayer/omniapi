@@ -96,14 +96,13 @@ def getpropnamelist(refresh=False):
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS= dbSelect("select PropertyName,PropertyID from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
+    ROWS= dbSelect("select PropertyName,PropertyID,flags from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
     response={}
     for x in ROWS:
-      response[str(x[1])]=x[0]
+      response[str(x[1])]={'name': x[0], 'flags':x[2]}
     #cache property list for 60min
     lSet(ckey,json.dumps(response))
     lExpire(ckey,3600)
-
   return response
 
 

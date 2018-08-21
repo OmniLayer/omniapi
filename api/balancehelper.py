@@ -1,6 +1,7 @@
 import json
 from sqltools import *
 from blockchain_utils import *
+from property_service import getpropertyraw
 
 def get_balancedata(address):
     addr = re.sub(r'\W+', '', address) #check alphanumeric
@@ -42,6 +43,7 @@ def get_balancedata(address):
         #1 = new indivisible property, 2=new divisible property (per spec)
         divi = True if int(balrow[1]) == 2 else False
         res = { 'symbol' : sym_t, 'divisible' : divi, 'id' : cID }
+        res['propertyinfo'] = getpropertyraw(cID)
         res['pendingpos'] = str(long(balrow[3]))
         res['pendingneg'] = str(long(balrow[4]))
         res['reserved'] = str(long(balrow[5]))
@@ -159,6 +161,7 @@ def get_bulkbalancedata(addresses):
         #1 = new indivisible property, 2=new divisible property (per spec)
         divi = True if int(balrow[1]) == 2 else False
         res = { 'symbol' : sym_t, 'divisible' : divi, 'id' : cID }
+        res['propertyinfo'] = getpropertyraw(cID)
         res['pendingpos'] = str(long(balrow[3]))
         res['pendingneg'] = str(long(balrow[4]))
         res['reserved'] = str(long(balrow[5]))
