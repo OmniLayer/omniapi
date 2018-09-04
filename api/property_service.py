@@ -218,8 +218,8 @@ def getpropdistraw(prop_id):
       else:
         resp={'address' : row[0], 'balance' : frz, 'reserved' : resv, 'frozen' : True}
       response.append(resp)
-    #cache 10 min
+    #cache 60 min
     lSet(ckey,json.dumps(response))
-    lExpire(ckey,600)
+    lExpire(ckey,3600)
   return response
 
