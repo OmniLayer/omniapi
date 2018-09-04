@@ -18,11 +18,11 @@ def getproperty(prop_id):
 
 def getpropertyraw(prop_id):
   try:
-    property_ = int(re.sub(r'\D+', '', prop_id.split('.')[0] ) ) #check alphanumeric
+    property_ = int(re.sub(r'\D+', '', str(prop_id).split('.')[0] ) ) #check alphanumeric
   except ValueError:
     abort(make_response('This endpoint only consumes valid input', 400))
 
-  ckey="data:prop:"+str(prop_id)
+  ckey="data:prop:"+str(property_)
   try:
     ret=json.loads(lGet(ckey))
     print_debug(("cache looked success",ckey),7)
@@ -186,7 +186,7 @@ def getpropdist(prop_id):
 
 def getpropdistraw(prop_id):
   try:
-    property_ = int(re.sub(r'\D+', '', prop_id.split('.')[0] ) ) #check alphanumeric
+    property_ = int(re.sub(r'\D+', '', str(prop_id).split('.')[0] ) ) #check alphanumeric
   except ValueError:
     abort(make_response('This endpoint only consumes valid input', 400))
 
