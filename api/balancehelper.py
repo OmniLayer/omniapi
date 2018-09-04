@@ -89,7 +89,7 @@ def get_balancedata(address):
         addbtc=False
 
     if addbtc:
-      btc_balance = { 'symbol': 'BTC', 'divisible': True, 'id' : 0, 'error' : False }
+      btc_balance = { 'symbol': 'BTC', 'divisible': True, 'id' : '0', 'error' : False }
       if err != None or out == '':
         #btc_balance[ 'value' ] = str(long(-555))
         btc_balance[ 'value' ] = str(long(0))
@@ -105,6 +105,7 @@ def get_balancedata(address):
           btc_balance[ 'error' ] = True
       btc_balance['pendingpos'] = str(long(0))
       btc_balance['pendingneg'] = str(long(0))
+      btc_balance['propertyinfo'] = getpropertyraw(btc_balance['id'])
       balance_data['balance'].append(btc_balance)
 
     return balance_data
@@ -208,7 +209,7 @@ def get_bulkbalancedata(addresses):
           addbtc=False
 
       if addbtc:
-        btc_balance = { 'symbol': 'BTC', 'divisible': True, 'id' : 0 ,'error' : False}
+        btc_balance = { 'symbol': 'BTC', 'divisible': True, 'id' : '0' ,'error' : False}
         if err != None or out == '':
           #btc_balance[ 'value' ] = str(long(-555))
           btc_balance[ 'value' ] = str(long(0))
@@ -223,6 +224,7 @@ def get_bulkbalancedata(addresses):
             btc_balance[ 'error' ] = True
         btc_balance['pendingpos'] = str(long(0))
         btc_balance['pendingneg'] = str(long(0))
+        btc_balance['propertyinfo'] = getpropertyraw(btc_balance['id'])
         balance_data['balance'].append(btc_balance)
 
       retval[address]=balance_data
