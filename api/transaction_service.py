@@ -841,6 +841,9 @@ def addName(txjson, list):
       if txjson['valid']:
         print_debug(("Purchases lookup error",txjson),3)
   elif type in [25,26]:
+    txjson['propertydesired']={'name':list[str(txjson['propertyiddesired'])]['name'],'flags':list[str(txjson['propertyiddesired'])]['flags']}
+    txjson['propertyforsale']={'name':list[str(txjson['propertyidforsale'])]['name'],'flags':list[str(txjson['propertyidforsale'])]['flags']}
+    #deprecated after next release
     txjson['propertyiddesiredname']=list[str(txjson['propertyiddesired'])]['name']
     txjson['propertyidforsalename']=list[str(txjson['propertyidforsale'])]['name']
   else:
