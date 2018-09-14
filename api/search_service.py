@@ -37,9 +37,9 @@ def search():
       elif int(query) == 2:
         asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where ecosystem='Test' and protocol='Omni' order by propertyid")
       else:
-        asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where PropertyID = " + str(query) + " and protocol='Omni' order by propertyid limit 10")
+        asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where PropertyID = %s and protocol='Omni' order by propertyid limit 10",[str(query)])
     else:
-      asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where (LOWER(PropertyName) like LOWER(\'%" + str(query) + "%\') or LOWER(issuer) like LOWER(\'%" + str(query) + "%\')) and protocol='Omni' order by propertyid limit 10")
+      asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where (LOWER(PropertyName) like LOWER(\'%%%s%%\') or LOWER(issuer) like LOWER(\'%%%s%%\')) and protocol='Omni' order by propertyid limit 10",(query,query))
       if 25 < len(query) < 45 :
         adrbal=balance_full(query)
       elif len(query) == 64:
@@ -59,7 +59,7 @@ def legsearch():
       query = re.sub(r'\W+', '0', request.args.get('query') ) # strip and get query
   else:
       return jsonify({ 'status': 400, 'data': 'No query found in request' })
-  ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txhash ~* \'" + str(query) + "\' and t.txdbserialnum=txj.txdbserialnum limit 10")
+  ROWS=dbSelect("select txj.txdata from transactions t, txjson txj where t.txhash ~* %s and t.txdbserialnum=txj.txdbserialnum limit 10",[str(query)])
 
   response = []
   if len(ROWS) > 0:
