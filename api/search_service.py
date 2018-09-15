@@ -39,7 +39,8 @@ def search():
       else:
         asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where PropertyID = %s and protocol='Omni' order by propertyid limit 10",[str(query)])
     else:
-      asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where (LOWER(PropertyName) like LOWER(\'%%%s%%\') or LOWER(issuer) like LOWER(\'%%%s%%\')) and protocol='Omni' order by propertyid limit 10",(query,query))
+      wq='%'+str(query)+'%'
+      asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where (LOWER(PropertyName) like LOWER(%s) or LOWER(issuer) like LOWER(%s)) and protocol='Omni' order by propertyid limit 10",(wq,wq))
       if 25 < len(query) < 45 :
         adrbal=balance_full(query)
       elif len(query) == 64:
