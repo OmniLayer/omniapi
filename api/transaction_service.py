@@ -146,14 +146,17 @@ def getaddresshistraw(address,page):
     except:
       page=1
 
-    page-=1
-    if page<0:
-      page=0
+    pcount=getaddresstxcount(address)
+    adjpage-=1
+    if adjpage<0:
+      adjpage=0
+    if adjpage>pcount:
+      adjpage=pcount
 
     toadd=[]
     limit=10
-    offset=page*10
-    ckey="data:addrhist:"+str(address)+":"+str(page)
+    offset=adjpage*10
+    ckey="data:addrhist:"+str(address)+":"+str(adjpage)
     try:
       #check cache
       txlist = json.loads(lGet(ckey))
@@ -179,12 +182,17 @@ def getaddresshistraw(address,page):
             offset -= count
             if offset < 0:
               offset = 0
+            if limit < 0:
+              limit = 0
       except Exception as e:
         print_debug(("getaddresshistraw pending inject failed",e),2)
         pass
 
-      #ROWS=dbSelect("select txj.txdata from txjson txj, (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0) q where q.txdbserialnum=txj.txdbserialnum order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
-      ROWS=dbSelect("select txdata from txjson where (txdata->>'sendingaddress'=%s or txdata->>'referenceaddress'=%s) and txdbserialnum > 0 order by txdbserialnum desc limit %s offset %s",(address,address,limit,offset))
+      ROWS=[]
+      if limit > 0:
+        #ROWS=dbSelect("select txj.txdata from txjson txj, (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0) q where q.txdbserialnum=txj.txdbserialnum order by txj.txdbserialnum desc limit %s offset %s",(address,limit,offset))
+        #ROWS=dbSelect("select txdata from txjson where (txdata->>'sendingaddress'=%s or txdata->>'referenceaddress'=%s) and txdbserialnum > 0 order by txdbserialnum desc limit %s offset %s",(address,address,limit,offset))
+        ROWS=dbSelect("with temp as (select distinct(txdbserialnum) as txdbserialnum from addressesintxs where address=%s and txdbserialnum > 0 order by txdbserialnum desc limit %s offset %s) select txj.txdata from txjson txj, temp where txj.txdbserialnum=temp.txdbserialnum",(address,limit,offset))
       #set and cache data for 7 min
       pnl=getpropnamelist()
       txlist=[]
@@ -202,8 +210,7 @@ def getaddresshistraw(address,page):
       pass
 
     cachetxs(txlist)
-    pcount=getaddresstxcount(address)
-    response = { 'address': address, 'transactions': txlist , 'pages': pcount}
+    response = { 'address': address, 'transactions': txlist , 'pages': pcount, 'current_page': page }
 
     return response
 
@@ -276,10 +283,19 @@ def getaddresstxcount(address,limit=10):
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS=dbSelect("select count(distinct txdbserialnum) from addressesintxs where address=%s;",[address])
-    count=int(ROWS[0][0])
+    ROWS=dbSelect("select txcount from addressstats where address=%s",[address])
+    PROWS=dbSelect("select count(*) from (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum<0) as temp;",[address])
+    try:
+      lc=int(ROWS[0][0])
+    except:
+      lc=0
+    try:
+      pc=int(PROWS[0][0])
+    except:
+      pc=0
+    count=lc+pc
     lSet(ckey,count)
-    lExpire(ckey,600)
+    lExpire(ckey,180)
 
   ret=(count/limit)
   if (count % limit > 0):
@@ -443,9 +459,9 @@ def getrawpending():
             except:
               pass
       response={'data':data,'index':index}
-      #cache for 5 min
+      #cache for 3 min
       lSet(ckey,json.dumps(response))
-      lExpire(ckey,300)
+      lExpire(ckey,180
     return response
 
 def gettxjson(hash_id):
