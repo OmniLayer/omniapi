@@ -147,6 +147,7 @@ def getaddresshistraw(address,page):
       page=1
 
     pcount=getaddresstxcount(address)
+    adjpage=page
     adjpage-=1
     if adjpage<0:
       adjpage=0
@@ -461,7 +462,7 @@ def getrawpending():
       response={'data':data,'index':index}
       #cache for 3 min
       lSet(ckey,json.dumps(response))
-      lExpire(ckey,180
+      lExpire(ckey,180)
     return response
 
 def gettxjson(hash_id):
