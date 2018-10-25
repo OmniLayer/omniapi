@@ -568,7 +568,7 @@ def getblockslisthelper():
   return getblockslist()
 
 
-@app.route('/blocks/<lastblock>', methods=['GET','POST')
+@app.route('/blocks/<lastblock>', methods=['GET','POST'])
 @ratelimit(limit=10, per=10)
 def getblockslist(lastblock=0):
   try:
@@ -597,7 +597,7 @@ def getblockslist(lastblock=0):
   return jsonify(response)
 
 
-@app.route('/block/<block>', methods=['GET','POST')
+@app.route('/block/<block>', methods=['GET','POST'])
 @ratelimit(limit=10, per=10)
 def getblocktx(block):
   return getblocktxjson(block)
