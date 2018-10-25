@@ -555,11 +555,52 @@ def getblockhash(blocknumber):
       bhash="error: block not available."
     else:
       bhash=ROWS[0][0]
-    #cache for 1 min
+    #cache for 10 min
     lSet(ckey,bhash)
-    lExpire(ckey,60)
+    lExpire(ckey,600)
 
   return bhash
+
+
+@app.route('/blocks/')
+@ratelimit(limit=10, per=10)
+def getblockslisthelper():
+  return getblockslist()
+
+
+@app.route('/blocks/<lastblock>', methods=['GET','POST')
+@ratelimit(limit=10, per=10)
+def getblockslist(lastblock=0):
+  try:
+    block=int(lastblock)
+  except:
+    block=0
+  rev=raw_revision()
+  cblock=rev['last_block']
+  if block==0:
+    block=cblock
+  ckey="data:tx:blocks:"+str(block)
+  try:
+    response=json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    ROWS=dbSelect("select t.blocknumber,extract(epoch from t.blocktime),t.blockcount,b.blockhash from txstats t, blocks b where t.blocknumber=b.blocknumber and t.blocknumber <= %s order by t.blocknumber desc limit 10;",[block])
+    response={}
+    for r in ROWS:
+      bnum=r[0]
+      ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3]}
+      response[bnum]=ret
+    #cache block list for 6 hours
+    lSet(ckey,json.dumps(response))
+    lExpire(ckey,21600)
+  return jsonify(response)
+
+
+@app.route('/block/<block>', methods=['GET','POST')
+@ratelimit(limit=10, per=10)
+def getblocktx(block):
+  return getblocktxjson(block)
 
 def getblocktxjson(block):
   bhash=getblockhash(block)
@@ -588,9 +629,9 @@ def getblocktxjson(block):
       ret.append(addName(txJson,pnl))
 
     response = {"block":block_, "blockhash":bhash, "transactions": ret}
-    #cache for 30 min
+    #cache for 6 hours
     lSet(ckey,json.dumps(response))
-    lExpire(ckey,1800)
+    lExpire(ckey,21600)
   return response
 
 def getaddrhist(address,direction='both',page=1):
@@ -838,12 +879,18 @@ def addName(txjson, list):
     except:
       type=-1
   if type in[0,3,20,22,53,55,56,70,185,186]:
-    txjson['propertyname']=list[str(txjson['propertyid'])]['name']
-    txjson['flags']=list[str(txjson['propertyid'])]['flags']
+    try:
+      txjson['propertyname']=list[str(txjson['propertyid'])]['name']
+      txjson['flags']=list[str(txjson['propertyid'])]['flags']
+    except:
+      pass
   elif type==4:
     if 'subsends' in txjson:
       for ss in txjson['subsends']:
-        ss['propertyname']=list[str(ss['propertyid'])]['name']
+        try:
+          ss['propertyname']=list[str(ss['propertyid'])]['name']
+        except:
+          pass
     else:
       if 'valid' in txjson and txjson['valid']:
         print_debug(("Subsend lookup error",txjson),3)
@@ -852,17 +899,23 @@ def addName(txjson, list):
   elif type==-22:
     if 'purchases' in txjson:
       for p in txjson['purchases']:
-        p['propertyname']=list[str(p['propertyid'])]['name']
-        txjson['valid']=p['valid']
+        try:
+          p['propertyname']=list[str(p['propertyid'])]['name']
+          txjson['valid']=p['valid']
+        except:
+          pass
     else:
       if txjson['valid']:
         print_debug(("Purchases lookup error",txjson),3)
   elif type in [25,26]:
-    txjson['propertydesired']={'name':list[str(txjson['propertyiddesired'])]['name'],'flags':list[str(txjson['propertyiddesired'])]['flags']}
-    txjson['propertyforsale']={'name':list[str(txjson['propertyidforsale'])]['name'],'flags':list[str(txjson['propertyidforsale'])]['flags']}
-    #deprecated after next release
-    txjson['propertyiddesiredname']=list[str(txjson['propertyiddesired'])]['name']
-    txjson['propertyidforsalename']=list[str(txjson['propertyidforsale'])]['name']
+    try:
+      txjson['propertydesired']={'name':list[str(txjson['propertyiddesired'])]['name'],'flags':list[str(txjson['propertyiddesired'])]['flags']}
+      txjson['propertyforsale']={'name':list[str(txjson['propertyidforsale'])]['name'],'flags':list[str(txjson['propertyidforsale'])]['flags']}
+      #deprecated after next release
+      #txjson['propertyiddesiredname']=list[str(txjson['propertyiddesired'])]['name']
+      #txjson['propertyidforsalename']=list[str(txjson['propertyidforsale'])]['name']
+    except:
+      pass
   else:
     pass
   return txjson
