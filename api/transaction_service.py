@@ -600,7 +600,7 @@ def getblockslist(lastblock=0):
 @app.route('/block/<block>', methods=['GET','POST'])
 @ratelimit(limit=10, per=10)
 def getblocktx(block):
-  return getblocktxjson(block)
+  return jsonify(getblocktxjson(block))
 
 def getblocktxjson(block):
   bhash=getblockhash(block)
