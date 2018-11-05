@@ -112,7 +112,7 @@ def getpropertyleg(prop_id):
     except TypeError:
       txJson=dbtxJson[-1]
 
-    ROWS = [ ROWS[0][3:] ]
+    ROWS = [ ROWS[0][3:-2] ]
 
     txData = ROWS[0][:-1]
     try:
@@ -206,9 +206,16 @@ def getpropdistraw(prop_id):
     for row in ROWS:
       frozen=row[3]
       if(divisible):
+        test=['.','E','e']
         bal = str( Decimal(row[1]) / Decimal(1e8) )
+        if not any(elem in bal for elem in test):
+          bal=bal+'.0'
         resv = str( Decimal(row[2]) / Decimal(1e8) )
+        if not any(elem in resv for elem in test):
+          resv=resv+'.0'
         frz = str( Decimal(row[3]) / Decimal(1e8) )
+        if not any(elem in frz for elem in test):
+          frz=frz+'.0'
       else:
         bal = str(row[1])
         resv = str(row[2])
