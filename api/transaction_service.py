@@ -323,6 +323,9 @@ def getrecenttxpages(page=1):
     if page < 0:
       page=0
 
+    if page>100:
+      page=100
+
     try:
       offset=int(page)*10
     except:
@@ -593,7 +596,7 @@ def getblockslist(lastblock=0):
         value=json.loads(r[4])
       except:
         value={'error':True, 'msg':'calculations missing'}
-      ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3]}
+      ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3], 'value':value}
       response[bnum]=ret
     #cache block list for 6 hours
     lSet(ckey,json.dumps(response))
