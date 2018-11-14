@@ -585,10 +585,14 @@ def getblockslist(lastblock=0):
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS=dbSelect("select t.blocknumber,extract(epoch from t.blocktime),t.blockcount,b.blockhash from txstats t, blocks b where t.blocknumber=b.blocknumber and t.blocknumber <= %s order by t.blocknumber desc limit 10;",[block])
+    ROWS=dbSelect("select t.blocknumber,extract(epoch from t.blocktime),t.blockcount,b.blockhash,t.value from txstats t, blocks b where t.blocknumber=b.blocknumber and t.blocknumber <= %s order by t.blocknumber desc limit 10;",[block])
     response={}
     for r in ROWS:
       bnum=r[0]
+      try:
+        value=json.loads(r[4])
+      except:
+        value={'error':True, 'msg':'calculations missing'}
       ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3]}
       response[bnum]=ret
     #cache block list for 6 hours
