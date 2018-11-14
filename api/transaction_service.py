@@ -593,9 +593,13 @@ def getblockslist(lastblock=0):
     for r in ROWS:
       bnum=r[0]
       try:
-        value=json.loads(r[4])
+        value=r[4]
+        q=value['total_usd']
       except:
-        value={'error':True, 'msg':'calculations missing'}
+        try:
+          value=json.loads(r[4])
+        except:
+          value={'error':True, 'msg':'calculations missing'}
       ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3], 'value':value}
       response[bnum]=ret
     #cache block list for 6 hours
