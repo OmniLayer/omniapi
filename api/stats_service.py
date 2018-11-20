@@ -89,14 +89,18 @@ def raw_txdaily():
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS=dbSelect("select ft.bkt,tx.txcount from txstats tx, "
+    ROWS=dbSelect("select ft.bkt,tx.txcount,tx.value from txstats tx, "
                   "(select CAST(blocktime as DATE) as bkt, max(id) as id from txstats group by CAST(blocktime as date) order by bkt desc limit 15) ft "
                   "where tx.id=ft.id")
     ret=[]
     #remove first element because current day is always incomplete/invalid until tomorrow
     curday=ROWS.pop(0)
     for x in ROWS:
-      ret.append({'date':str(x[0]),'count':x[1]})
+      try:
+        val=x[2]['value_24hr']
+      except:
+        val='Calculation Missing'
+      ret.append({'date':str(x[0]),'count':x[1], 'value_24hr':val})
     #cache until end of day
     dt = datetime.datetime.now()
     if curday[0].day == dt.day:
