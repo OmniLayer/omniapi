@@ -618,6 +618,9 @@ def getblocktxjson(block):
   if "error" in bhash:
     return bhash
 
+  rev=raw_revision()
+  cblock=rev['last_block']
+
   ckey="data:block:txjson:"+str(block)
   try:
     response=json.loads(lGet(ckey))
@@ -639,10 +642,20 @@ def getblocktxjson(block):
         txJson = x[0]
       ret.append(addName(txJson,pnl))
 
-    response = {"block":block_, "blockhash":bhash, "transactions": ret}
+    response = {"block":block_, "blockhash":bhash, "transactions": ret, "count": len(ret)}
     #cache for 6 hours
     lSet(ckey,json.dumps(response))
     lExpire(ckey,21600)
+
+  for res in response['transactions']:
+    try:
+      res['confirmations'] = cblock - res['block'] + 1
+    except:
+      pass
+    #if cblock hasn't caught up make sure we don't return negative weirdness
+    if res['confirmations'] < 0:
+      res['confirmations'] = 0
+
   return response
 
 def getaddrhist(address,direction='both',page=1):
