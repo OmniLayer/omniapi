@@ -574,13 +574,16 @@ def getblockslisthelper():
 @app.route('/blocks/<lastblock>', methods=['GET','POST'])
 @ratelimit(limit=10, per=10)
 def getblockslist(lastblock=0):
+  return jsonify(getblockslistraw(lastblock))
+
+def getblockslistraw(lastblock=0):
   try:
     block=int(lastblock)
   except:
     block=0
   rev=raw_revision()
   cblock=rev['last_block']
-  if block==0:
+  if block<1 or block>cblock:
     block=cblock
   ckey="data:tx:blocks:"+str(block)
   try:
@@ -605,7 +608,7 @@ def getblockslist(lastblock=0):
     #cache block list for 6 hours
     lSet(ckey,json.dumps(response))
     lExpire(ckey,21600)
-  return jsonify(response)
+  return response
 
 
 @app.route('/block/<block>', methods=['GET','POST'])
