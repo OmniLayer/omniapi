@@ -427,6 +427,12 @@ def cachetxs(txlist):
         print_debug(("error expiring",ckey,tx),2)
         lExpire(ckey,300)
 
+@app.route('/unconfirmed')
+@ratelimit(limit=20, per=60)
+def getpending():
+    return jsonify(getrawpending())
+
+
 def getrawpending():
     rev=raw_revision()
     cblock=rev['last_block']
@@ -463,9 +469,9 @@ def getrawpending():
             except:
               pass
       response={'data':data,'index':index}
-      #cache for 3 min
+      #cache for 1 min
       lSet(ckey,json.dumps(response))
-      lExpire(ckey,180)
+      lExpire(ckey,60)
     return response
 
 def gettxjson(hash_id):
@@ -614,7 +620,16 @@ def getblockslistraw(lastblock=0):
 @app.route('/block/<block>', methods=['GET','POST'])
 @ratelimit(limit=10, per=10)
 def getblocktx(block):
-  return jsonify(getblocktxjson(block))
+  rev=raw_revision()
+  cblock=rev['last_block']
+  try:
+    _block=int(block)
+    if _block<1 or _block>cblock:
+      raise "invalid block"
+    ret=getblocktxjson(_block)
+  except:
+    ret={"error": "This endpoint only consumes valid input. Invalid/Unknown blocknumber"}
+  return jsonify(ret)
 
 def getblocktxjson(block):
   bhash=getblockhash(block)
