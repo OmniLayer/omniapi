@@ -598,7 +598,7 @@ def getblockslistraw(lastblock=0):
   except:
     print_debug(("cache looked failed",ckey),7)
     ROWS=dbSelect("select t.blocknumber,extract(epoch from t.blocktime),t.blockcount,b.blockhash,t.value from txstats t, blocks b where t.blocknumber=b.blocknumber and t.blocknumber <= %s order by t.blocknumber desc limit 10;",[block])
-    response={'latest':cblock, 'blocks':{}}
+    response={'latest':cblock, 'blocks':[]}
     for r in ROWS:
       bnum=r[0]
       try:
@@ -610,7 +610,7 @@ def getblockslistraw(lastblock=0):
         except:
           value={'error':True, 'msg':'calculations missing'}
       ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3], 'value':value}
-      response['blocks'][bnum]=ret
+      response['blocks'].append(ret)
     #cache block list for 6 hours
     lSet(ckey,json.dumps(response))
     lExpire(ckey,21600)
