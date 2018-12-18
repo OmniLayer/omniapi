@@ -59,14 +59,10 @@ def get_balancedata(address):
             btc_balance[ 'error' ] = True
           else:
             try:
-              if balrow[4] < 0:
-                #res['value'] = str(long( json.loads( out )[0][ 'paid' ]) + str(long(balrow[4]))
-                #res['value'] = str(long( json.loads( out )['data']['balance']*1e8) + str(long(balrow[4]))
-                res['value'] = str(long( out ) + long(balrow[4]))
-              else:
-                #res['value'] = str(long( json.loads( out )[0][ 'paid' ]))
-                #res['value'] = str(long( json.loads( out )['data']['balance']*1e8))
-                res['value'] = str(long( out ))
+              #if balrow[4] < 0:
+              #  res['value'] = str(long( out ) + long(balrow[4]))
+              #else:
+              res['value'] = str(long( out ))
             except ValueError:
               #btc_balance[ 'value' ] = str(long(-555))
               btc_balance[ 'value' ] = str(long(0))
@@ -181,12 +177,10 @@ def get_bulkbalancedata(addresses):
             btc_balance[ 'error' ] = True
           else:
             try:
-              if balrow[4] < 0:
-                #res['value'] = str(long( json.loads( out )[0][ 'paid' ]) + str(long(balrow[4]))
-                res['value'] = str(long( out ) + long(balrow[4]))
-              else:
-                #res['value'] = str(long( json.loads( out )[0][ 'paid' ]))
-                res['value'] = str(long( out ))
+              #if balrow[4] < 0:
+              #  res['value'] = str(long( out ) + long(balrow[4]))
+              #else:
+              res['value'] = str(long( out ))
             except ValueError:
               #btc_balance[ 'value' ] = str(long(-555))
               btc_balance[ 'value' ] = str(long(0))
