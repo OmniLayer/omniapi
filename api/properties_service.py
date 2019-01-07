@@ -196,10 +196,26 @@ def listcrowdsales():
   except:
     print_debug(("cache looked failed",ckey),7)
     pnl=getpropnamelist()
-    ROWS= dbSelect("select PropertyData from smartproperties where PropertyData->>'active'='true' AND ecosystem=%s ORDER BY PropertyID", [ecosystem])
+    ROWS= dbSelect("select PropertyData,registrationdata,flags from smartproperties where PropertyData->>'active'='true' AND ecosystem=%s ORDER BY PropertyID", [ecosystem])
     data=[]
     for row in ROWS:
       csdata=row[0]
+      rdata=row[1]
+      try:
+        flags=json.loads(row[2])
+      except TypeError:
+        flags=row[2]
+
+      if flags in ['None',None]:
+        flags={}
+
+      if 'registered' in flags:
+        csdata['registered']=flags['registered']
+      else:
+        csdata['registered']=False
+      csdata['flags']=flags
+      csdata['rdata']=rdata
+
       try:
         csdata['propertydesired']=pnl[str(csdata['propertyiddesired'])]
 	#remove in next release
@@ -246,6 +262,8 @@ def gethistory(property_id):
       page=0
     offset = page * 10
 
+    rev=raw_revision()
+    cblock=rev['last_block']
 
     transactions_query = "select txjson.txdata as data from propertyhistory ph, txjson where ph.txdbserialnum =txjson.txdbserialnum and ph.propertyid=%s order by ph.txdbserialnum LIMIT 10 OFFSET %s;"
     total_query = "select count(*) as total from propertyhistory where propertyid =%s group by propertyid"
@@ -273,6 +291,12 @@ def gethistory(property_id):
       #cache 10 min
       lSet(ckey,json.dumps(transactions))
       lExpire(ckey,600)
+
+    try:
+      for tx in transactions:
+        tx['confirmations'] = cblock - tx['block'] + 1
+    except:
+      pass
 
     response = {
                 "total" : total,
