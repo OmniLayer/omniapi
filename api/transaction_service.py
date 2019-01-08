@@ -599,6 +599,7 @@ def getblockslistraw(lastblock=0):
     print_debug(("cache looked failed",ckey),7)
     ROWS=dbSelect("select t.blocknumber,extract(epoch from t.blocktime),t.blockcount,b.blockhash,t.value from txstats t, blocks b where t.blocknumber=b.blocknumber and t.blocknumber <= %s order by t.blocknumber desc limit 10;",[block])
     response={'latest':cblock, 'blocks':[]}
+    pnl=getpropnamelist()
     for r in ROWS:
       bnum=r[0]
       try:
@@ -609,6 +610,12 @@ def getblockslistraw(lastblock=0):
           value=json.loads(r[4])
         except:
           value={'error':True, 'msg':'calculations missing'}
+      try:
+        for pid in value['details']:
+          value['details'][pid]['name']=pnl[str(pid)]['name']
+          value['details'][pid]['flags']=pnl[str(pid)]['flags']
+      except:
+        pass
       ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3], 'value':value}
       response['blocks'].append(ret)
     #cache block list for 6 hours
