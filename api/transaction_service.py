@@ -204,11 +204,11 @@ def getaddresshistraw(address,page):
       lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
 
-    try:
-      for tx in txlist:
+    for tx in txlist:
+      try:
         tx['confirmations'] = cblock - tx['block'] + 1
-    except:
-      pass
+      except:
+        pass
 
     cachetxs(txlist)
     response = { 'address': address, 'transactions': txlist , 'pages': pcount, 'current_page': page }
