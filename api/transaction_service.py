@@ -621,6 +621,7 @@ def getblockslistraw(lastblock=0):
     #cache block list for 6 hours
     lSet(ckey,json.dumps(response))
     lExpire(ckey,21600)
+  response['latest']=cblock
   return response
 
 
