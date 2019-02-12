@@ -305,13 +305,13 @@ def getaddresstxcount(address,limit=10):
   return ret
 
 
-@app.route('/general/')
-@ratelimit(limit=10, per=10)
+#@app.route('/general/')
+#@ratelimit(limit=10, per=10)
 def getrecenttx():
   return getrecenttxpages()
 
-@app.route('/general/<page>', methods=['GET','POST'])
-@ratelimit(limit=10, per=10)
+#@app.route('/general/<page>', methods=['GET','POST'])
+#@ratelimit(limit=10, per=10)
 def getrecenttxpages(page=1):
     #pagination starts at 1 so adjust accordingly to treat page 0 and 1 the same
     try:
@@ -426,6 +426,22 @@ def cachetxs(txlist):
       except:
         print_debug(("error expiring",ckey,tx),2)
         lExpire(ckey,300)
+
+
+@app.route('/unconfirmed/<addr>')
+@ratelimit(limit=10, per=10)
+def getaddrpending(addr):
+  try:
+    addr_ = str(re.sub(r'\W+', '', addr.split('.')[0] ) ) #check alphanumeric
+  except ValueError:
+    abort(make_response('This endpoint only consumes valid input', 400))
+  rawpend=getrawpending()
+  try:
+    ret=rawpend['index'][addr_]
+  except:
+    ret=[]
+  return jsonify({'data':ret,'address':addr_})
+
 
 @app.route('/unconfirmed')
 @ratelimit(limit=20, per=60)
