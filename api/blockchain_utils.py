@@ -16,7 +16,7 @@ def bc_getutxo(address, ramount, page=1, retval=None, avail=0):
   if retval==None:
     retval=[]
   try:
-    r = requests.get('https://chain.api.btc.com/v3/address/'+address+'/unspent?pagesize=50&page='+str(page))
+    r = requests.get('https://chain.api.btc.com/v3/address/'+address+'/unspent?pagesize=50&page='+str(page), timeout=2)
     if r.status_code == 200:
       response = r.json()['data']
       unspents = response['list']
@@ -44,7 +44,7 @@ def bc_getutxo_blocktrail(address, ramount, page=1, retval=None, avail=0):
   if retval==None:
     retval=[]
   try:
-    r = requests.get('https://api.blocktrail.com/v1/btc/address/'+address+'/unspent-outputs?api_key='+str(BTAPIKEY)+'&limit=200&sort_dir=desc&page='+str(page))
+    r = requests.get('https://api.blocktrail.com/v1/btc/address/'+address+'/unspent-outputs?api_key='+str(BTAPIKEY)+'&limit=200&sort_dir=desc&page='+str(page), timeout=2)
     if r.status_code == 200:
       response = r.json()
       unspents = response['data']
@@ -70,7 +70,7 @@ def bc_getutxo_blocktrail(address, ramount, page=1, retval=None, avail=0):
 
 def bc_getutxo_blockcypher(address, ramount):
   try:
-    r = requests.get('https://api.blockcypher.com/v1/btc/main/addrs/'+address+'?unspentOnly=true')
+    r = requests.get('https://api.blockcypher.com/v1/btc/main/addrs/'+address+'?unspentOnly=true', timeout=2)
 
     if r.status_code == 200:
       unspents = r.json()['txrefs']
@@ -107,7 +107,7 @@ def bc_getutxo_blockcypher(address, ramount):
 
 def bc_getpubkey(address):
   try:
-    r = requests.get('https://blockchain.info/q/pubkeyaddr/'+address)
+    r = requests.get('https://blockchain.info/q/pubkeyaddr/'+address, timeout=2)
 
     if r.status_code == 200:
       return str(r.text)
@@ -131,7 +131,7 @@ def bc_getbalance(address):
 
 def bc_getbalance_bitgo(address):
   try:
-    r= requests.get('https://www.bitgo.com/api/v1/address/'+address)
+    r= requests.get('https://www.bitgo.com/api/v1/address/'+address, timeout=2)
     if r.status_code == 200:
       #balance = int(r.json()['confirmedBalance'])
       balance = int(r.json()['balance'])
@@ -143,7 +143,7 @@ def bc_getbalance_bitgo(address):
 
 def bc_getbalance_blockcypher(address):
   try:
-    r= requests.get('https://api.blockcypher.com/v1/btc/main/addrs/'+address+'/balance')
+    r= requests.get('https://api.blockcypher.com/v1/btc/main/addrs/'+address+'/balance', timeout=2)
     if r.status_code == 200:
       balance = int(r.json()['balance'])
       return {"bal":balance , "error": None}
@@ -239,7 +239,7 @@ def bc_getbulkbalance_blockchain(addresses):
     else:
       formatted=formatted+"|"+address
   try:
-    r= requests.get('https://blockchain.info/balance?active='+formatted)
+    r= requests.get('https://blockchain.info/balance?active='+formatted, timeout=2)
     if r.status_code == 200:
       balances = r.json()
       retval = {}

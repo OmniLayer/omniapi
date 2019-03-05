@@ -27,7 +27,7 @@ def getlast():
       except:
         print_debug(("cache looked failed",ckey),7)
         try:
-          data = requests.get('https://blockchain.info/latestblock', timeout=10)
+          data = requests.get('https://blockchain.info/latestblock', timeout=2)
           block = data.json()
           #cache for 1 min
           lSet(ckey,json.dumps(block))

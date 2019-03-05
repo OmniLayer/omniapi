@@ -16,7 +16,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/', methods=['POST'])
-@ratelimit(limit=20, per=60)
+@ratelimit(limit=5, per=30)
 def get_balance_response():
   request_dict=request.form
   print_debug(("get_balance_response(request_dict)",request_dict),4)
@@ -32,7 +32,7 @@ def get_balance_response():
   return jsonify(balance_full(addrs_list))
 
 @app.route('/details/', methods=['POST'])
-@ratelimit(limit=20, per=60)
+@ratelimit(limit=5, per=30)
 def addressDetails():
     try:
         address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
