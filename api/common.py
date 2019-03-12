@@ -48,7 +48,8 @@ def raw_revision():
   except:
     print_debug(("cache looked failed",ckey),7)
     ROWS=dbSelect("select blocknumber, blocktime from blocks order by blocknumber desc limit 1")
-    response = {'last_block': ROWS[0][0], 'last_parsed': str(ROWS[0][1])}
+    ROWT=dbSelect("select updated_at from settings where key='parserLastRun'")
+    response = {'last_block': ROWS[0][0], 'block_time': str(ROWS[0][1]), 'last_parsed':str(ROWT[0][0])}
     #cache 1 min
     lSet(ckey,json.dumps(response))
     lExpire(ckey,60)
