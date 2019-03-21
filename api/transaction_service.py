@@ -154,7 +154,7 @@ def getaddresshistraw(address,page):
     if adjpage>pcount:
       adjpage=pcount
 
-    toadd=[]
+    #toadd=[]
     limit=10
     offset=adjpage*10
     ckey="data:addrhist:"+str(address)+":"+str(adjpage)
@@ -165,29 +165,29 @@ def getaddresshistraw(address,page):
     except:
       print_debug(("cache looked failed",ckey),7)
 
-      raw=getrawpending()
-      try:
-        if address in raw['index']:
-          pending=raw['index'][address]
-          count=len(pending)
+      #raw=getrawpending()
+      #try:
+      #  if address in raw['index']:
+      #    pending=raw['index'][address]
+      #    count=len(pending)
 
-          if count > 0:
-            max=offset+10
-            if max > count:
-              max = count
+      #    if count > 0:
+      #      max=offset+10
+      #      if max > count:
+      #        max = count
 
-            for x in range(offset,max):
-              toadd.append(pending[x])
+      #      for x in range(offset,max):
+      #        toadd.append(pending[x])
 
-            limit-=len(toadd)
-            offset -= count
-            if offset < 0:
-              offset = 0
-            if limit < 0:
-              limit = 0
-      except Exception as e:
-        print_debug(("getaddresshistraw pending inject failed",e),2)
-        pass
+      #      limit-=len(toadd)
+      #      offset -= count
+      #      if offset < 0:
+      #        offset = 0
+      #      if limit < 0:
+      #        limit = 0
+      #except Exception as e:
+      #  print_debug(("getaddresshistraw pending inject failed",e),2)
+      #  pass
 
       ROWS=[]
       if limit > 0:
@@ -200,7 +200,7 @@ def getaddresshistraw(address,page):
       for r in ROWS:
         txJson=addName(r[0],pnl)
         txlist.append(txJson)
-      txlist = toadd+txlist
+      #txlist = toadd+txlist
       lSet(ckey,json.dumps(txlist))
       lExpire(ckey,420)
 
