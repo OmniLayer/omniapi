@@ -44,10 +44,23 @@ def addressDetails():
     except:
       page=0
 
-    baldata=get_balancedata(address)
-    txdata = getaddresshistraw(address,page)
+    rev=raw_revision()
+    cblock=rev['last_block']
+    ckey="data:addrdetails:"+str(address)+":"+str(page)":"+str(cblock)
+    #TODO: add checker to expire cache when new pending tx detected
+    try:
+      #check cache
+      txdata = json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
+    except:
+      print_debug(("cache looked failed",ckey),7)
+      baldata=get_balancedata(address)
+      txdata = getaddresshistraw(address,page)
+      txdata['balance'] = baldata['balance']
+      #cache result for 1 min
+      lSet(ckey,json.dumps(txdata))
+      lExpire(ckey,60)
 
-    txdata['balance'] = baldata['balance']
     return jsonify(txdata)
 
 def balance_full(addr):
@@ -65,8 +78,8 @@ def balance_full(addr):
     #Use new balance function call
     baldata=get_balancedata(addr)
     lSet(ckey,json.dumps(baldata))
-    lExpire(ckey,30)
-    #cache for 30seconds
+    lExpire(ckey,60)
+    #cache for 1 min
   return baldata
 
 
