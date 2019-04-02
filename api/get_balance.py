@@ -46,7 +46,7 @@ def addressDetails():
 
     rev=raw_revision()
     cblock=rev['last_block']
-    ckey="data:addrdetails:"+str(address)+":"+str(page)":"+str(cblock)
+    ckey="data:addrdetails:"+str(address)+":"+str(page)+":"+str(cblock)
     #TODO: add checker to expire cache when new pending tx detected
     try:
       #check cache
