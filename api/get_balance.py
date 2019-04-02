@@ -88,7 +88,6 @@ def balance_propid(addr,pid):
   try:
     for x in bal['balance']:
      if x['id']==pid:
-       print_debug(x,4)
        if x['divisible']:
          return from_satoshi(x['value'])
        else:
