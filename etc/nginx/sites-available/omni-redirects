@@ -61,11 +61,11 @@
                 uwsgi_pass   127.0.0.1:$PORT;
         }
 
-        location /v2/address/addr/ {
-                add_header Access-Control-Allow-Origin *;
-                set   $app   get_balance_v2;
-                uwsgi_pass   127.0.0.1:$PORT;
-        }
+        #location /v2/address/addr/ {
+        #        add_header Access-Control-Allow-Origin *;
+        #        set   $app   get_balance_v2;
+        #        uwsgi_pass   127.0.0.1:$PORT;
+        #}
 
         #location /v1/address/addr/ {
         #        add_header Access-Control-Allow-Origin *;
@@ -91,6 +91,17 @@
                 include uwsgi_params;
                 uwsgi_param SCRIPT_NAME /v1/address/addr;
                 uwsgi_param UWSGI_MODULE get_balance;
+                uwsgi_param UWSGI_CALLABLE app;
+                uwsgi_modifier1 30;
+                uwsgi_pass 127.0.0.1:$PORT;
+        }
+
+        location /v2/address/addr { rewrite ^ /v2/address/addr/; }
+        location /v2/address/addr/ { try_files $uri @flask_address_service_v2; }
+        location @flask_address_service_v2{
+                include uwsgi_params;
+                uwsgi_param SCRIPT_NAME /v2/address/addr;
+                uwsgi_param UWSGI_MODULE get_balance_v2;
                 uwsgi_param UWSGI_CALLABLE app;
                 uwsgi_modifier1 30;
                 uwsgi_pass 127.0.0.1:$PORT;
