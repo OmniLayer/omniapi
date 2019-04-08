@@ -14,10 +14,10 @@ app.debug = True
 @ratelimit(limit=5, per=60)
 def get_balance_v2_response():
   request_dict=request.form
-  print_debug(("get_balance_response(request_dict)",request_dict),4)
+  print_debug(("get_balance_v2_response(request_dict)",request_dict),4)
 
   try:
-      addrs_list=request_dict['addr']
+      addrs_list=request_dict.getlist('addr')
   except KeyError:
       return jsonify({"error":"'addr' field not supplied"})
 
