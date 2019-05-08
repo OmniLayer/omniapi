@@ -189,7 +189,7 @@ def bc_getbulkbalance(addresses):
     try:
       data=bc_getbulkbalance_blockonomics(split)
       if data['error']:
-        raise Exception("issue getting blockonomics baldata",data)
+        raise Exception("issue getting blockonomics baldata",data,split)
       else:
         retval={'bal':dict(data['bal'],**cbdata), 'fresh':split}
     except Exception as e:
@@ -197,7 +197,7 @@ def bc_getbulkbalance(addresses):
       try:
         data=bc_getbulkbalance_blockchain(split)
         if data['error']:
-          raise Exception("issue getting blockchain baldata",data)
+          raise Exception("issue getting blockchain baldata",data,split)
         else:
           retval={'bal':dict(data['bal'],**cbdata), 'fresh':split}
       except Exception as e:
