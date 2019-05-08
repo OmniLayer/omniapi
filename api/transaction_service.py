@@ -446,7 +446,8 @@ def getaddrpending(addr):
 @app.route('/unconfirmed')
 @ratelimit(limit=20, per=60)
 def getpending():
-    return jsonify(getrawpending())
+    ret=getrawpending()
+    return jsonify({'data':ret['data']})
 
 
 def getrawpending():

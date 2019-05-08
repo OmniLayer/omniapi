@@ -6,6 +6,7 @@ from config import BTAPIKEY
 from rpcclient import gettxout
 from cacher import *
 from debug import *
+from common import *
 
 try:
   expTime=config.BTCBAL_CACHE
@@ -117,16 +118,19 @@ def bc_getpubkey(address):
     return "error"
 
 def bc_getbalance(address):
+  rev=raw_revision()
+  cblock=rev['last_block']
+  ckey="omniwallet:balances:address:"+str(address)+":"+str(cblock)
   try:
-    balance=rGet("omniwallet:balances:address:"+str(address))
+    balance=rGet(ckey)
     balance=json.loads(balance)
     if balance['error']:
       raise LookupError("Not cached")
   except Exception as e:
     balance = bc_getbalance_bitgo(address)
-    #cache btc balance for 2.5 minutes
-    rSet("omniwallet:balances:address:"+str(address),json.dumps(balance))
-    rExpire("omniwallet:balances:address:"+str(address),expTime)
+    #cache btc balances for block
+    rSet(ckey,json.dumps(balance))
+    rExpire(ckey,expTime)
   return balance
 
 def bc_getbalance_bitgo(address):
@@ -158,9 +162,12 @@ def bc_getbulkbalance(addresses):
   counter=0
   retval={}
   cbdata={}
+  rev=raw_revision()
+  cblock=rev['last_block']
   for a in addresses:
+    ckey="omniwallet:balances:address:"+str(a)+":"+str(cblock)
     try:
-      cb=rGet("omniwallet:balances:address:"+str(a))
+      cb=rGet(ckey)
       cb=json.loads(cb)
       if cb['error']:
         raise LookupError("Not cached")
@@ -201,7 +208,7 @@ def bc_getbulkbalance(addresses):
           retval={'bal':{}, 'fresh':None}
 
 
-  rSetNotUpdateBTC(retval)
+  rSetNotUpdateBTC(retval,cblock)
   if len(recurse)>0:
     rdata=bc_getbulkbalance(recurse)
   else:
