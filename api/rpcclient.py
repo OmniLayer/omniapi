@@ -35,7 +35,7 @@ class RPCHost():
         self._headers = {'content-type': 'application/json'}
     def call(self, rpcMethod, *params):
         payload = json.dumps({"method": rpcMethod, "params": list(params), "jsonrpc": "2.0"})
-        tries = 10
+        tries = 2
         hadConnectionFailures = False
         while True:
             try:
@@ -46,7 +46,7 @@ class RPCHost():
                     raise Exception('Failed to connect for remote procedure call.')
                 hadFailedConnections = True
                 print("Couldn't connect for remote procedure call, will sleep for ten seconds and then try again ({} more tries)".format(tries))
-                time.sleep(10)
+                time.sleep(1)
             else:
                 if hadConnectionFailures:
                     print('Connected for remote procedure call after retry.')
