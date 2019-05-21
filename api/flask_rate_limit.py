@@ -21,13 +21,14 @@ redis = lInit(1)
 class RateLimit(object):
     expiration_window = 10
 
-    def __init__(self, key_prefix, limit, per, send_x_headers):
+    def __init__(self, key_prefix, limit, per, send_x_headers, ipaddress):
         self.reset = (int(time.time()) // per) * per + per
         self.key = key_prefix + str(self.reset)
         self.key_prefix = key_prefix
         self.limit = limit
         self.per = per
         self.send_x_headers = send_x_headers
+        self.ip = ipaddress
         p = redis.pipeline()
         p.incr(self.key)
         p.expireat(self.key, self.reset + self.expiration_window)
@@ -41,9 +42,12 @@ def get_view_rate_limit():
 
 def on_over_limit(limit):
     akey='triggered/'+limit.key_prefix+time.strftime("%Y-%m-%d", time.gmtime())
-    redis.incr(akey)
+    if redis.incr(akey) > 50:
+      #abuse blocked for 24 hours
+      gkey='global/pending/'+str(limit.ip)
+      redis.incr(gkey)
     print_debug(('Rate Limit Reached: ',str(limit.key)),3)
-    return jsonify({'error':True, 'msg':'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit-10)+' every '+str(limit.per)+'s.'}), 400
+    return jsonify({'error':True, 'msg':'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit)+' every '+str(limit.per)+'s.'}), 400
 
 def ratelimit(limit, per=300, send_x_headers=True,
               over_limit=on_over_limit,
@@ -52,10 +56,11 @@ def ratelimit(limit, per=300, send_x_headers=True,
     def decorator(f):
         def rate_limited(*args, **kwargs):
             #endpoint name/ipaddress
-            key = 'rate-limit/%s/%s/' % (key_func(), scope_func())
+            ipaddress = scope_func()
+            key = 'rate-limit/%s/%s/' % (key_func(), ipaddress)
             #just use ipaddress for
             #key = 'rate-limit/%s/' % (scope_func())
-            rlimit = RateLimit(key, limit, per, send_x_headers)
+            rlimit = RateLimit(key, limit, per, send_x_headers, ipaddress)
             g._view_rate_limit = rlimit
             if over_limit is not None and rlimit.over_limit:
                 return over_limit(rlimit)
