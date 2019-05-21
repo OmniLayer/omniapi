@@ -45,6 +45,7 @@ def checkExpiring():
         id = redis.get(entry)
         if cffunblock(id):
           printmsg("Removing expired block ID:"+str(id)+" on "+str(ip))
+          redis.delete(entry)
         else:
           printmsg("ERROR: Could not expire block "+str(id)+" on "+str(ip))
     except Exception as e:
