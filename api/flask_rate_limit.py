@@ -42,12 +42,12 @@ def get_view_rate_limit():
 
 def on_over_limit(limit):
     akey='triggered/'+limit.key_prefix+time.strftime("%Y-%m-%d", time.gmtime())
-    if redis.incr(akey) > 50:
-      #abuse blocked for 24 hours
+    if redis.incr(akey) > 75:
+      #abuse blocked bf cf for mfactor * 12 hours
       gkey='global/pending/'+str(limit.ip)
       redis.incr(gkey)
     print_debug(('Rate Limit Reached: ',str(limit.key)),3)
-    return jsonify({'error':True, 'msg':'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit)+' every '+str(limit.per)+'s.'}), 400
+    return jsonify({'error':True, 'msg':'Rate Limit Reached. Please limit consecutive requests to no more than '+str(limit.limit)+' every '+str(limit.per)+'s. Repetitive abuse will be banned'}), 400
 
 def ratelimit(limit, per=300, send_x_headers=True,
               over_limit=on_over_limit,

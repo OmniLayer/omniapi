@@ -8,7 +8,8 @@ redis = lInit(1)
 pSpace = "global/pending/"
 #blocked nameSpace
 bSpace = "global/blocked/"
-
+#tracking nameSpace
+tSpace = "global/offenders/"
 
 def printmsg(msg):
     print str(datetime.datetime.now())+str(" ")+str(msg)
@@ -25,8 +26,10 @@ def updateCFFirewall():
         if ret['success']:
           printmsg("Blocked Address "+str(ip))
           redis.delete(entry)
-          #expire 24 hours from now
-          eTime=int(time.time()) + 86400
+          #repeat offenders get longer bans
+          mfactor = int(redis.incr(tSpace+str(ip)))
+          #expire 12 * mfactor hours from now
+          eTime=int(time.time()) + int(43200 * mfactor)
           redis.set(bSpace+str(ip)+"/"+str(eTime),ret['id'])
       else:
         redis.delete(entry)
