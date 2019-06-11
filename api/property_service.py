@@ -182,9 +182,12 @@ def getpropertyleg(prop_id):
 @app.route('/distribution/<prop_id>', methods=['GET'])
 @ratelimit(limit=20, per=60)
 def getpropdist(prop_id):
-  return jsonify(getpropdistraw(prop_id))
+  frozen=False
+  if request.args['frozen'] in ['True','true',True,1,'1']:
+    frozen=True
+  return jsonify(getpropdistraw(prop_id,frozen))
 
-def getpropdistraw(prop_id):
+def getpropdistraw(prop_id,frozen=False):
   try:
     property_ = int(re.sub(r'\D+', '', str(prop_id).split('.')[0] ) ) #check alphanumeric
   except ValueError:
@@ -193,13 +196,16 @@ def getpropdistraw(prop_id):
   rev=raw_revision()
   cblock=rev['last_block']
 
-  ckey="data:property:dist:"+str(cblock)+":"+str(property_)
+  ckey="data:property:dist:"+str(cblock)+":"+str(property_)+":"+str(frozen)
   try:
     response=json.loads(lGet(ckey))
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni' and (balanceavailable>0 or balancereserved>0 or balancefrozen>0)", [property_])
+    if (frozen):
+      ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni' and (balancefrozen>0)", [property_])
+    else:
+      ROWS= dbSelect("select address, balanceavailable, balancereserved, balancefrozen from addressbalances where propertyid=%s and protocol='Omni' and (balanceavailable>0 or balancereserved>0 or balancefrozen>0)", [property_])
 
     response=[]
     divisible=getpropertyraw(str(property_))['divisible']
