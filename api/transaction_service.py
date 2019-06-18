@@ -435,7 +435,7 @@ def getaddrpending(addr):
     addr_ = str(re.sub(r'\W+', '', addr.split('.')[0] ) ) #check alphanumeric
   except ValueError:
     abort(make_response('This endpoint only consumes valid input', 400))
-  rawpend=getrawpending()
+  rawpend=getrawpending(addr_)
   try:
     ret=rawpend['index'][addr_]
   except:
@@ -450,16 +450,21 @@ def getpending():
     return jsonify({'data':ret['data']})
 
 
-def getrawpending():
+def getrawpending(addr=None):
     rev=raw_revision()
     cblock=rev['last_block']
     ckey="data:tx:pendinglist:"+str(cblock)
+    if addr is not None:
+      ckey = ckey+":"+str(addr)
     try:
       response=json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      ROWS=dbSelect("select txj.txdata, extract(epoch from tx.txrecvtime) from txjson txj,transactions tx where tx.txdbserialnum=txj.txdbserialnum and txj.protocol = 'Omni' and txj.txdbserialnum < 0 order by txj.txdbserialnum ASC;")
+      if addr is not None:
+        ROWS=dbSelect("select txj.txdata, extract(epoch from tx.txrecvtime) from txjson txj,transactions tx,addressesintxs atx where tx.txdbserialnum=txj.txdbserialnum and atx.txdbserialnum=txj.txdbserialnum and atx.address=%s and txj.protocol = 'Omni' and txj.txdbserialnum < 0 order by txj.txdbserialnum ASC limit 25;",[addr])
+      else:
+        ROWS=dbSelect("select txj.txdata, extract(epoch from tx.txrecvtime) from txjson txj,transactions tx where tx.txdbserialnum=txj.txdbserialnum and txj.protocol = 'Omni' and txj.txdbserialnum < 0 order by txj.txdbserialnum ASC limit 25;")
       data = []
       index = {}
       pnl=getpropnamelist()

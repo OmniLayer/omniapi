@@ -92,6 +92,7 @@
                 uwsgi_param SCRIPT_NAME /v1/address/addr;
                 uwsgi_param UWSGI_MODULE get_balance;
                 uwsgi_param UWSGI_CALLABLE app;
+                uwsgi_read_timeout 30;
                 uwsgi_modifier1 30;
                 uwsgi_pass 127.0.0.1:$PORT;
         }
@@ -103,6 +104,7 @@
                 uwsgi_param SCRIPT_NAME /v2/address/addr;
                 uwsgi_param UWSGI_MODULE get_balance_v2;
                 uwsgi_param UWSGI_CALLABLE app;
+                uwsgi_read_timeout 30;
                 uwsgi_modifier1 30;
                 uwsgi_pass 127.0.0.1:$PORT;
         }
