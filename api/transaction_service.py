@@ -285,16 +285,17 @@ def getaddresstxcount(address,limit=10):
   except:
     print_debug(("cache looked failed",ckey),7)
     ROWS=dbSelect("select txcount from addressstats where address=%s",[address])
-    PROWS=dbSelect("select count(*) from (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum<0) as temp;",[address])
+    #PROWS=dbSelect("select count(*) from (select distinct txdbserialnum from addressesintxs where address=%s and txdbserialnum<0) as temp;",[address])
     try:
       lc=int(ROWS[0][0])
     except:
       lc=0
-    try:
-      pc=int(PROWS[0][0])
-    except:
-      pc=0
-    count=lc+pc
+    #try:
+    #  pc=int(PROWS[0][0])
+    #except:
+    #  pc=0
+    #count=lc+pc
+    count=lc
     lSet(ckey,count)
     lExpire(ckey,180)
 
