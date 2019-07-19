@@ -36,3 +36,10 @@ def cffunblock(id):
     if response['success']:
       success = response['success']
   return success
+
+def cffgetAll():
+   url = 'https://api.cloudflare.com/client/v4/accounts/'+str(CFID)+'/firewall/access_rules/rules?per_page=1000'
+   header = getHeaders()
+   r = requests.get(url,headers=header)
+   response = r.json()
+   return response

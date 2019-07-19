@@ -54,6 +54,26 @@ def checkExpiring():
     except Exception as e:
       printmsg("error checking expired entries: "+str(e))
 
+def backfillFromCFF():
+  x=cffgetAll()
+  for y in x['result']:
+    if y['mode']=='block':
+      id = y['id']
+      if y['configuration']['target'] in ['ip','ip6']:
+        ip = y['configuration']['value']
+        if len( redis.keys(bSpace+str(ip)+"*") ) == 0:
+          mfactor = int(redis.incr(tSpace+str(ip)))
+          eTime=int(time.time()) + int(43200 * mfactor)
+          redis.set(bSpace+str(ip)+"/"+str(eTime),id)
+
+def importFromFile(fn):
+  f = open(fn,"r")
+  fl = f.readlines()
+  for x in fl:
+    sd = x.split("|")
+    key = sd[0]
+    value = sd[1]
+    redis.set(key,value)
 
 def main():
   while True:
