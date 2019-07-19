@@ -57,9 +57,12 @@ def checkExpiring():
 
 def main():
   while True:
-    updateCFFirewall()
-    checkExpiring()
-    time.sleep(30)
+    try:
+      updateCFFirewall()
+      checkExpiring()
+      time.sleep(30)
+    except Exception as e:
+      printmsg("error running main loop: "+str(e))
 
 
 if __name__ == "__main__":main() ## with if
