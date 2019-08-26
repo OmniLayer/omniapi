@@ -14,11 +14,11 @@ def isvalid(address):
         try:
           return b58decode_check(address) != None
         except:
-          return false
+          return False
       else:
-        return false
+        return False
     except:
-      return false
+      return False
 
 def scrub_input(v):
     if isinstance(v, str) and not isinstance(v, bytes):
