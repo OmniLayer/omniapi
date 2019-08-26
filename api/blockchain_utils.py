@@ -118,7 +118,10 @@ def bc_getpubkey(address):
   except:
     return "error"
 
-def bc_getbalance(address):
+def bc_getbalance(address, override=False):
+  if not override:
+    return {'balance':'Please use external api'}
+
   rev=raw_revision()
   cblock=rev['last_block']
   ckey="omniwallet:balances:address:"+str(address)+":"+str(cblock)
@@ -178,7 +181,10 @@ def bc_getbalance_blockchain(address):
     print_debug(("Exception getting balance blockchain", e),4)
     return {"bal": 0 , "error": "Couldn't get balance"}
 
-def bc_getbulkbalance(addresses):
+def bc_getbulkbalance(addresses, override=False):
+  if not override:
+    return {}
+
   split=[]
   recurse=[]
   counter=0
