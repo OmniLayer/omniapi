@@ -141,8 +141,10 @@ def bc_getbalance_bitgo(address):
       balance = int(r.json()['balance'])
       return {"bal":balance , "error": None}
     else:
+      print_debug(("Error code getting balance bitgo", r.text),4)
       return bc_getbalance_blockcypher(address)
   except:
+    print_debug(("Exception getting balance bitgo", e),4)
     return bc_getbalance_blockcypher(address)
 
 def bc_getbalance_blockcypher(address):
@@ -152,11 +154,24 @@ def bc_getbalance_blockcypher(address):
       balance = int(r.json()['balance'])
       return {"bal":balance , "error": None}
     else:
-      print_debug(("Error getting balance", r),4)
+      print_debug(("Error code getting balance bcypher", r.text),4)
+      return bc_getbalance_blockchain(address)
+  except Exception as e:
+    print_debug(("Exception getting balance bcypher", e),4)
+    return bc_getbalance_blockchain(address)
+
+def bc_getbalance_blockchain(address):
+  try:
+    r= requests.get('https://blockchain.info/balance?active='+address, timeout=2)
+    if r.status_code == 200:
+      balance = int(r.json()[address]['final_balance'])
+      return {"bal":balance , "error": None}
+    else:
+      print_debug(("Error code getting balance blockchain", r.text),4)
       return {"bal": 0 , "error": "Couldn't get balance"}
   except Exception as e:
-      print_debug(("Error getting balance", e),4)
-      return {"bal": 0 , "error": "Couldn't get balance"}
+    print_debug(("Exception getting balance blockchain", e),4)
+    return {"bal": 0 , "error": "Couldn't get balance"}
 
 def bc_getbulkbalance(addresses):
   split=[]
