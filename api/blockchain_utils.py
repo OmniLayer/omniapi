@@ -152,8 +152,10 @@ def bc_getbalance_blockcypher(address):
       balance = int(r.json()['balance'])
       return {"bal":balance , "error": None}
     else:
+      print_debug(("Error getting balance", r),4)
       return {"bal": 0 , "error": "Couldn't get balance"}
-  except:
+  except Exception as e:
+      print_debug(("Error getting balance", e),4)
       return {"bal": 0 , "error": "Couldn't get balance"}
 
 def bc_getbulkbalance(addresses):
@@ -189,19 +191,19 @@ def bc_getbulkbalance(addresses):
     try:
       data=bc_getbulkbalance_blockonomics(split)
       if data['error']:
-        raise Exception("issue getting blockonomics baldata",data,split)
+        raise Exception("issue getting blockonomics baldata","data",data,"split",split)
       else:
         retval={'bal':dict(data['bal'],**cbdata), 'fresh':split}
     except Exception as e:
-      print e
+      print_debug((e),4)
       try:
         data=bc_getbulkbalance_blockchain(split)
         if data['error']:
-          raise Exception("issue getting blockchain baldata",data,split)
+          raise Exception("issue getting blockchain baldata","data",data,"split",split)
         else:
           retval={'bal':dict(data['bal'],**cbdata), 'fresh':split}
       except Exception as e:
-        print e
+        print_debug((e),4)
         if len(cbdata) > 0:
           retval={'bal':cbdata, 'fresh':None}
         else:
@@ -234,7 +236,8 @@ def bc_getbulkbalance_blockonomics(addresses):
       return {"bal": retval, "error": None}
     else:
       return {"bal": None , "error": True}
-  except:
+  except Exception as e:
+    print_debug(("error getting blockonomics bulk",e),4)
     return {"bal": None , "error": True}
 
 
@@ -255,5 +258,6 @@ def bc_getbulkbalance_blockchain(addresses):
       return {"bal": retval, "error": None}
     else:
       return {"bal": None , "error": True}
-  except:
+  except Exception as e:
+    print_debug(("error getting blockchain bulk",e),4)
     return {"bal": None , "error": True}

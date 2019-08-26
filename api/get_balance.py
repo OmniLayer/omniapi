@@ -25,7 +25,7 @@ def get_balance_response():
       addrs_list=request_dict['addr']
   except KeyError:
       return jsonify({"error":"'addr' field not supplied"})
-  print_debug(addrs_list,4)
+  #print_debug(addrs_list,4)
 
   if len(request_dict.getlist('addr'))!=1:
       return jsonify({"error":"This endpoint accepts single address lookups. For multiple addresses use the v2 endpoint"})
