@@ -1,4 +1,5 @@
 import requests
+import datetime
 from config import CFID,CFKEY
 
 def getHeaders():
@@ -8,7 +9,7 @@ def getHeaders():
 def cffblock(ip):
   url = 'https://api.cloudflare.com/client/v4/accounts/'+str(CFID)+'/firewall/access_rules/rules'
   header = getHeaders()
-  payload = '{"mode":"block","configuration":{"target":"ip","value":"'+str(ip)+'"},"notes":"API Abuse"}'
+  payload = '{"mode":"block","configuration":{"target":"ip","value":"'+str(ip)+'"},"notes":"API Abuse '+str(datetime.datetime.now())+'"}'
   r = requests.post(url,headers=header,data=payload)
   id = 0
   success = False
