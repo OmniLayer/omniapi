@@ -9,12 +9,15 @@ else:  # python3
 
 
 def isvalid(address):
-    if int(address[0]) in [1,3]:
-      try:
-        return b58decode_check(address) != None
-      except:
+    try:
+      if int(address[0]) in [1,3]:
+        try:
+          return b58decode_check(address) != None
+        except:
+          return false
+      else:
         return false
-    else:
+    except:
       return false
 
 def scrub_input(v):
