@@ -7,6 +7,7 @@ from rpcclient import gettxout
 from cacher import *
 from debug import *
 from common import *
+import random
 
 try:
   expTime=config.BTCBAL_CACHE
@@ -127,7 +128,12 @@ def bc_getbalance(address):
     if balance['error']:
       raise LookupError("Not cached")
   except Exception as e:
-    balance = bc_getbalance_bitgo(address)
+    apilist=[bc_getbalance_bitgo,bc_getbalance_blockcypher,bc_getbalance_blockchain]
+    random.shuffle(apilist)
+    for endpoint in apilist:
+      balance = endpoint(address)
+      if balance['error']==None:
+        break
     #cache btc balances for block
     rSet(ckey,json.dumps(balance))
     rExpire(ckey,expTime)
@@ -137,15 +143,14 @@ def bc_getbalance_bitgo(address):
   try:
     r= requests.get('https://www.bitgo.com/api/v1/address/'+address, timeout=2)
     if r.status_code == 200:
-      #balance = int(r.json()['confirmedBalance'])
       balance = int(r.json()['balance'])
       return {"bal":balance , "error": None}
     else:
       print_debug(("Error code getting balance bitgo", r.text),4)
-      return bc_getbalance_blockcypher(address)
+      return {"bal": 0 , "error": "Couldn't get balance"}
   except:
     print_debug(("Exception getting balance bitgo", e),4)
-    return bc_getbalance_blockcypher(address)
+    return {"bal": 0 , "error": "Couldn't get balance"}
 
 def bc_getbalance_blockcypher(address):
   try:
@@ -155,10 +160,10 @@ def bc_getbalance_blockcypher(address):
       return {"bal":balance , "error": None}
     else:
       print_debug(("Error code getting balance bcypher", r.text),4)
-      return bc_getbalance_blockchain(address)
+      return {"bal": 0 , "error": "Couldn't get balance"}
   except Exception as e:
     print_debug(("Exception getting balance bcypher", e),4)
-    return bc_getbalance_blockchain(address)
+    return {"bal": 0 , "error": "Couldn't get balance"}
 
 def bc_getbalance_blockchain(address):
   try:

@@ -1,11 +1,9 @@
-#import urlparse
-#import os, sys
-#import json
 import re
 from debug import *
 from balancehelper import *
 from common import *
 from flask_rate_limit import *
+from validator import isvalid
 
 app = Flask(__name__)
 app.debug = True
@@ -28,7 +26,9 @@ def get_balance_v2_response():
 
   clean_list=[]
   for addr in addrs_list:
-    clean_list.append(re.sub(r'\W+', '', addr)) #check alphanumeric
+    a = re.sub(r'\W+', '', addr) #check alphanumeric
+    if isvalid(a):
+      clean_list.append(a)
 
   return jsonify( get_bulkbalancedata(clean_list) )
 

@@ -4,12 +4,15 @@ from blockchain_utils import *
 from property_service import getpropertyraw
 from cacher import *
 from common import *
-
+from validator import isvalid
 
 def get_balancedata(address):
     addr = re.sub(r'\W+', '', address) #check alphanumeric
-    btcdata = bc_getbalance(addr)
-    return getBalanceData(address,btcdata)
+    if isvalid(addr):
+      btcdata = bc_getbalance(addr)
+      return getBalanceData(address,btcdata)
+    else:
+      return {'balance':'Error, invalid address'}
 
 def get_bulkbalancedata(addresses):
     btclist=bc_getbulkbalance(addresses)
