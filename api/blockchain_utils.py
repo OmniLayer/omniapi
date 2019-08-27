@@ -120,7 +120,7 @@ def bc_getpubkey(address):
 
 def bc_getbalance(address, override=False):
   if not override:
-    return {'bal':'Please use external api'}
+    return {'bal':'Please use external api', 'error':'Please use external api'}
 
   rev=raw_revision()
   cblock=rev['last_block']
