@@ -24,7 +24,7 @@ def get_bulkbalancedata(addresses):
           err = None
         else:
           out = ''
-          err = "Missing"
+          err = "Please use external api"
       except TypeError:
         out = ''
         err = "Missing"
@@ -59,6 +59,7 @@ def getBalanceData(address,btcdata):
         if brow['id']==0:
           brow['value']=btc_bal
           brow['error']=btc_bal_err
+          brow['errormsg']=btcdata['error']
     except:
       print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("""select
@@ -111,6 +112,7 @@ def getBalanceData(address,btcdata):
             #btc_balance[ 'value' ] = str(long(-555))
             btc_balance[ 'value' ] = str(long(0))
             btc_balance[ 'error' ] = True
+            btc_balance[ 'errormsg' ] = btcdata['error']
           else:
             try:
               #if balrow[4] < 0:
