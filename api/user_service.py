@@ -87,19 +87,35 @@ def create():
   uuid = str(validate_uuid)
   session = ws.hashlib.sha256(config.SESSION_SECRET + uuid).hexdigest()
 
+  #check for recaptcha
   try:
-    recaptcha_challenge=request.form['recaptcha_challenge_field']
-    recaptcha_response=request.form['recaptcha_response_field']
+    recaptcha_challenge = request.form['recaptcha_challenge_field']
+    recaptcha_response = request.form['recaptcha_response_field']
     recaptcha_configured = config.RECAPTCHA_PRIVATE is not None
   except:
     recaptcha_configured=False
-  ## validate reCaptcha
+
+  #check for api token
+  try:
+    tokenid = request.form['tokenid']
+    rhash = request.form['rhash']
+    valid_token_hash = validate_token_hash(tokenid,rhash,uuid)
+  except:
+    valid_token_hash=False
+    try: tokenid
+    except NameError: tokenid = None
+
+  ## validate reCaptcha / Token
   if recaptcha_configured:
     captcha_response = captcha.submit(recaptcha_challenge,recaptcha_response,config.RECAPTCHA_PRIVATE,request.remote_addr)
 
-    if not captcha_response.is_valid:
-      print 'reCaptcha not valid'
-      return jsonify({"status": "ERROR", "error":"InvalidCaptcha"})
+    if not captcha_response.is_valid and not valid_token_hash:
+      if tokenid is None:
+        print 'reCaptcha not valid'
+        return jsonify({"status": "ERROR", "error":"InvalidCaptcha"})
+      else
+        print 'token hash not valid'
+        return jsonify({"status": "ERROR", "error":"InvalidTokenHash"})
 
   email = request.form['email'] if 'email' in request.form else None
   nonce = request.form['nonce']
@@ -526,6 +542,13 @@ def exists(uuid):
     else:
       return True
 
+def validate_token_hash(tokenid,rhash,uuid):
+  try:
+    token_key = config.tokenLookup(tokenid)
+    valid_token_hash = ws.hashlib.sha256(token_key + uuid).hexdigest() == rhash
+  except:
+    valid_token_hash=False
+  return valid_token_hash
 
 def welcome_email(user_email, wallet, uuid):
   if user_email is not None:

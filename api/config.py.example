@@ -43,3 +43,11 @@ DEBUG_LEVEL=3
 CFID = None
 CFKEY = None
 
+def apiLookup(id):
+  try:
+    convert={"tokenid":""
+            }
+    return convert[id]
+  except KeyError:
+    return -1
+
