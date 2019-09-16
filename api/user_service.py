@@ -113,7 +113,7 @@ def create():
       if tokenid is None:
         print 'reCaptcha not valid'
         return jsonify({"status": "ERROR", "error":"InvalidCaptcha"})
-      else
+      else:
         print 'token hash not valid'
         return jsonify({"status": "ERROR", "error":"InvalidTokenHash"})
 
