@@ -26,7 +26,7 @@ ACCOUNT_CREATION_DIFFICULTY = '0400'
 LOGIN_DIFFICULTY = '0400'
 
 if config.LOCALDEVBYPASSDB:
-  data_dir_root = os.environ.get('DATADIR')
+  data_dir_root = config.LOCALDATADIR
   store_dir = data_dir_root + '/sessions/'
   session_store = FilesystemStore(store_dir) # TODO: Need to roll this into a SessionInterface so multiple services can hit it easily
 

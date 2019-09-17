@@ -7,8 +7,9 @@ from common import *
 from property_service import getpropertyraw
 from cacher import *
 from debug import *
+import config
 
-data_dir_root = os.environ.get('DATADIR')
+data_dir_root = config.LOCALDATADIR
 
 app = Flask(__name__)
 app.debug = True

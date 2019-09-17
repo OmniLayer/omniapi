@@ -10,6 +10,8 @@ WELCOMECID = None #mailgun campaign id for welcome email stats
 
 #For wallets and session store you can switch between disk and the database
 LOCALDEVBYPASSDB = 0    #Set to 1 to use local storage/file system, Set to 0 to use database
+#local data dir if not using db
+LOCALDATADIR = '../data'
 
 #Used to generate challange/response hash
 SERVER_SECRET = 'SoSecret!'
@@ -42,6 +44,7 @@ DEBUG_LEVEL=3
 #Cloudflare acct id and apikey
 CFID = None
 CFKEY = None
+
 
 def apiLookup(id):
   try:
