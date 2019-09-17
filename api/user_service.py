@@ -515,11 +515,14 @@ def read_wallet(uuid):
     ROWS=dbSelect("select walletblob from wallets where walletid=%s",[uuid])
     #check if the wallet is in the database and if not insert it
     if len(ROWS)==0:
-      filename = data_dir_root + '/wallets/' + uuid + '.json'
-      with open(filename, 'r') as f:
-        blob= f.read()
-      write_wallet(uuid,blob)
-      return blob
+      try:
+        filename = data_dir_root + '/wallets/' + uuid + '.json'
+        with open(filename, 'r') as f:
+          blob= f.read()
+        write_wallet(uuid,blob)
+        return blob
+      except:
+        return None
     else:
       return ROWS[0][0]
 
@@ -537,8 +540,11 @@ def exists(uuid):
     ROWS=dbSelect("select walletid from wallets where walletid=%s",[uuid])
     #check the database first then filesystem
     if len(ROWS)==0:
-      filename = data_dir_root + '/wallets/' + uuid + '.json'
-      return os.path.exists(filename)
+      try:
+        filename = data_dir_root + '/wallets/' + uuid + '.json'
+        return os.path.exists(filename)
+      except:
+        return False
     else:
       return True
 
