@@ -110,9 +110,9 @@ def getBalanceData(address,btcdata):
           #get btc balance from bc api's
           if err != None or out == '':
             #btc_balance[ 'value' ] = str(long(-555))
-            btc_balance[ 'value' ] = str(long(0))
-            btc_balance[ 'error' ] = True
-            btc_balance[ 'errormsg' ] = btcdata['error']
+            res[ 'value' ] = str(long(0))
+            res[ 'error' ] = True
+            res[ 'errormsg' ] = btcdata['error']
           else:
             try:
               #if balrow[4] < 0:
@@ -121,8 +121,8 @@ def getBalanceData(address,btcdata):
               res['value'] = str(long( out ))
             except ValueError:
               #btc_balance[ 'value' ] = str(long(-555))
-              btc_balance[ 'value' ] = str(long(0))
-              btc_balance[ 'error' ] = True
+              res[ 'value' ] = str(long(0))
+              res[ 'error' ] = True
         else:
           #get regular balance from db 
           #if balrow[4] < 0 and not balrow[6] > 0:
