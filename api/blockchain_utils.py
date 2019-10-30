@@ -75,7 +75,11 @@ def bc_getutxo_blockcypher(address, ramount):
     r = requests.get('https://api.blockcypher.com/v1/btc/main/addrs/'+address+'?unspentOnly=true', timeout=2)
 
     if r.status_code == 200:
-      unspents = r.json()['txrefs']
+      try:
+        unspents = r.json()['txrefs']
+      except Exception as e:
+        print "no txrefs in bcypher json response"
+        unspents = []
       print "got unspent list (bcypher)", unspents
 
       retval = []
