@@ -12,6 +12,6 @@ pyOpenSSL==18.0.0
 simplekv==0.11.7
 recaptcha-client==1.0.6
 pycoin==0.80
-ecdsa==0.13
+ecdsa==0.13.3
 gevent==1.2.2
 Flask-SocketIO==2.9.3
