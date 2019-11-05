@@ -15,6 +15,22 @@ def printmsg(msg):
     print str(datetime.datetime.now())+str(" ")+str(msg)
     sys.stdout.flush()
 
+def checkipstatus(cip):
+  pList = redis.keys(pSpace+"*")
+  bList = redis.keys(bSpace+"*")
+  tList = redis.keys(tSpace+"*")
+  lists={'p': pList, 'b': bList, 't': tList}
+  retval={}
+  for list in lists:
+    for entry in lists[list]:
+      try:
+        ip = entry.split('/')[2]
+        if ip==cip:
+          retval[list]=entry
+      except:
+        pass
+  return retval
+
 def updateCFFirewall():
   printmsg("Checking for new entries")
   for entry in redis.keys(pSpace+"*"):
