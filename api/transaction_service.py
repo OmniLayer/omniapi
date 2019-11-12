@@ -160,7 +160,7 @@ def getaddresshist():
         page=0
       a = re.sub(r'\W+', '', data[0]) #check alphanumeric
       if isvalid(a):
-        clean_list(a)=getaddresshistraw(a,page)
+        clean_list[a]=getaddresshistraw(a,page)
     return jsonify(clean_list)
 
 
