@@ -40,6 +40,8 @@ REDIS_ADDRSPACE=""
 BTCBAL_CACHE=600
 #Debug level (2: errors only,3: 2+ratelimit info 4: 3+general info, 7: 4+cache debugging)
 DEBUG_LEVEL=3
+#CORS config for websocket
+WEBSOCKET_CORS=""
 
 #Cloudflare acct id and apikey
 CFID = None

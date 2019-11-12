@@ -1,5 +1,5 @@
 uWSGI==2.0.15
-Flask==0.12.4
+Flask==1.1.1
 pybitcointools==1.1.15
 bitcoin-python==0.3
 psycopg2==2.7.3.2
@@ -12,6 +12,6 @@ pyOpenSSL==18.0.0
 simplekv==0.11.7
 recaptcha-client==1.0.6
 pycoin==0.80
-ecdsa==0.13
+ecdsa==0.13.3
 gevent==1.2.2
-Flask-SocketIO==2.9.3
+Flask-SocketIO==4.2.1
