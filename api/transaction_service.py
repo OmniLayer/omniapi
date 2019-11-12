@@ -9,6 +9,7 @@ from blockchain_utils import *
 from cacher import *
 from properties_service import getpropnamelist
 from debug import *
+from validator import isvalid
 
 app = Flask(__name__)
 app.debug = True
@@ -135,6 +136,32 @@ def getaddresshist():
     except:
       page=0
     return jsonify(getaddresshistraw(address,page))
+
+
+@app.route('/addresses', methods=['POST'])
+@ratelimit(limit=5, per=30)
+def getaddresshist():
+    try:
+      addrs_list=request_dict.getlist('addr')
+    except KeyError:
+      return jsonify({"error":"'addr' field not supplied"})
+
+    if len(addrs_list)<1:
+      return jsonify({"error":"This endpoint requires at least 1 address."})
+    elif len(addrs_list)>10:
+      return jsonify({"error":"This endpoint accepts at most 10 addresses."})
+
+    clean_list={}
+    for addr in addrs_list:
+      data=addr.split(":")
+      try:
+        page=int(data[1])
+      except:
+        page=0
+      a = re.sub(r'\W+', '', data[0]) #check alphanumeric
+      if isvalid(a):
+        clean_list(a)=getaddresshistraw(a,page)
+    return jsonify(clean_list)
 
 
 def getaddresshistraw(address,page):
