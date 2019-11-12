@@ -142,7 +142,7 @@ def getaddresshist():
 @ratelimit(limit=5, per=30)
 def getaddresseshist():
     try:
-      addrs_list=request_dict.getlist('addr')
+      addrs_list=request.form.getlist('addr')
     except KeyError:
       return jsonify({"error":"'addr' field not supplied"})
 
