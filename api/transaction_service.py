@@ -140,7 +140,7 @@ def getaddresshist():
 
 @app.route('/addresses', methods=['POST'])
 @ratelimit(limit=5, per=30)
-def getaddresshist():
+def getaddresseshist():
     try:
       addrs_list=request_dict.getlist('addr')
     except KeyError:
