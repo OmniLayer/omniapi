@@ -11,16 +11,35 @@ app = Flask(__name__)
 app.debug = True
 
 
-@app.route('/<prop_id>')
+@app.route('/<prop_id>', methods=['GET','POST'])
 @ratelimit(limit=20, per=60)
 def getproperty(prop_id):
-  return jsonify(getpropertyraw(prop_id))
+  if request.method == "POST":
+    try:
+      pids=request.form['prop_ids']
+    except:
+      return jsonify({"error":"'prop_ids' field not supplied"})
+
+    spids=pids.split(",")
+    if len(spids)<1:
+      return jsonify({"error":"This endpoint requires at least 1 property id."})
+    if len(spids)>30:
+      return jsonify({"error":"This endpoint accepts at most 30 property ids."})
+
+    ret={}
+    for id in spids:
+      ret[id]=getpropertyraw(id)
+
+  else:
+    ret=getpropertyraw(prop_id)
+
+  return jsonify(ret)
 
 def getpropertyraw(prop_id):
   try:
     property_ = int(re.sub(r'\D+', '', str(prop_id).split('.')[0] ) ) #check alphanumeric
   except ValueError:
-    abort(make_response('This endpoint only consumes valid input', 400))
+    return {'error':'This endpoint only consumes valid input'}
 
   ckey="data:prop:"+str(property_)
   try:
