@@ -157,7 +157,7 @@ def get_markets_by_denominator(denominator):
 	 "propertyname" : currency[1],
 	 "bidprice" : float(currency[2]),
 	 "askprice" : float(currency[3]),
-	 "supply" : currency[4],
+	 "supply" : float(currency[4]),
 	 "lastprice" : float(currency[5]),
          "propertytype" : currency[6]
 	} for currency in markets]}
