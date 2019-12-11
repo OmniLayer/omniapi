@@ -131,7 +131,9 @@ class OmniTransaction:
         # Add the change
         rawtx = createrawtx_change(rawtx, validnextinputs, self.rawdata['transaction_from'], float(self.fee))['result']
 
-        return { 'status':200, 'unsignedhex': rawtx , 'sourceScript': prevout_script }
+        omni_decoded = omni_decodetransaction(rawtx)
+
+        return { 'status':200, 'unsignedhex': rawtx , 'sourceScript': prevout_script , 'decoded':omni_decoded}
       except Exception as e:
         return { 'status':503, 'error': e.message }
 
