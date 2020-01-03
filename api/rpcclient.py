@@ -66,7 +66,12 @@ host=RPCHost()
 
 #Bitcoin Generic RPC calls
 def getinfo():
-    return host.call("getinfo")
+    try:
+      #support omnicore v0.6+
+      return host.call("getblockchaininfo")
+    except:
+      #support omnicore up to v0.5
+      return host.call("getinfo")
 
 def getrawtransaction(txid):
     return host.call("getrawtransaction", txid , 1)
@@ -96,7 +101,10 @@ def omni_decodetransaction(rawtx):
     return host.call("omni_decodetransaction", rawtx)
 
 def estimateFee(blocks=4):
-    return host.call("estimatefee", blocks)
+    try:
+      return host.call("estimatesmartfee", blocks)
+    except:
+      return host.call("estimatefee", blocks)
 
 def gettxout(txid,vout,unconfirmed=True):
     return host.call("gettxout",txid,vout,unconfirmed)
@@ -138,8 +146,8 @@ def getdivisible_MP(propertyid):
 def getgrants_MP(propertyid):
     return host.call("getgrants_MP", propertyid)
 
-def gettradessince_MP():
-    return host.call("gettradessince_MP")
+#def gettradessince_MP():
+#    return host.call("gettradessince_MP")
 
 def gettrade(txhash):
     return host.call("omni_gettrade", txhash)
@@ -186,7 +194,7 @@ def createrawtx_multisig(payload, seed, pubkey, rawtx=None):
 def createrawtx_input(txhash, index, rawtx=None):
     return host.call("omni_createrawtx_input", rawtx, txhash, index)
 def createrawtx_reference(destination, rawtx=None):
-    return host.call("omni_createrawtx_reference", rawtx, destination, 0.00000546)
+    return host.call("omni_createrawtx_reference", rawtx, destination, "0.00000546")
 def createrawtx_change(rawtx, previnputs, destination, fee):
-    return host.call("omni_createrawtx_change", rawtx, previnputs, destination, fee)
+    return host.call("omni_createrawtx_change", rawtx, previnputs, destination, str(fee))
  
