@@ -103,26 +103,34 @@ def getDesignatingCurrencies():
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      designating_currencies = dbSelect("select distinct propertyiddesired,desiredname from markets where "
+      designating_currencies = dbSelect("select distinct m.propertyiddesired,m.desiredname,sp.propertytype from markets m, smartproperties sp where "
+                                      "m.propertyiddesired=sp.propertyid and sp.protocol='Omni' and "
                                       "CASE WHEN %s='Production' THEN "
-                                      "propertyiddesired > 0 and propertyiddesired < 2147483648 and propertyiddesired !=2 "
-                                      "ELSE propertyiddesired > 2147483650 or propertyiddesired=2 END "
-                                      "and (supply > 0 or propertyiddesired in "
+                                      "m.propertyiddesired > 0 and m.propertyiddesired < 2147483648 and m.propertyiddesired !=2 "
+                                      "ELSE m.propertyiddesired > 2147483650 or m.propertyiddesired=2 END "
+                                      "and (m.supply > 0 or m.propertyiddesired in "
                                         "(select propertyidselling as marketid from markets where "
                                         "CASE WHEN %s='Production' THEN "
                                         "propertyidselling > 0 and propertyidselling < 2147483648 and propertyidselling !=2 "
                                         "ELSE propertyidselling > 2147483650 or propertyidselling=2 END "
                                         " and supply >0)) "
-                                      "order by propertyiddesired",(ecosystem,ecosystem))
+                                      "order by m.propertyiddesired",(ecosystem,ecosystem))
       if filter:
         listfilter=dbSelect("select propertyid from smartproperties where (flags->>'scam')::boolean or (flags->>'duplicate')::boolean")
         dc=(x for x in designating_currencies if [x[0]] not in listfilter )
       else:
         listfilter=[]
         dc=designating_currencies
+      type={ 1: "indivisible",
+             2: "divisible"
+      }
       response={"status" : 200, "currencies": [
 	{
-	 "propertyid":currency[0], "propertyname" : currency[1], "displayname" : str(currency[1])+" #"+str(currency[0])
+	 "propertyid":currency[0],
+         "propertyname" : currency[1],
+         "displayname" : str(currency[1])+" #"+str(currency[0]),
+         "propertytype": type.get(int(currency[2])),
+         "propertytype_int": currency[2]
 	} for currency in dc],
         "filter": [id for pid in listfilter for id in pid] }
 
