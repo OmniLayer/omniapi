@@ -77,6 +77,8 @@ def challenge():
       'challenge': challenge
   }
 
+  print_debug(("DEBUG: challenge: for uuid",uuid,"generated session",session,"and resonse",response),9)
+
   return jsonify(response)
 
 
@@ -111,10 +113,10 @@ def create():
 
     if not captcha_response.is_valid and not valid_token_hash:
       if tokenid is None:
-        print 'reCaptcha not valid'
+        print_debug(('DEBUG: USER_SERVICE: CREATE: reCaptcha not valid'),8)
         return jsonify({"status": "ERROR", "error":"InvalidCaptcha"})
       else:
-        print 'token hash not valid'
+        print_debug(('DEBUG: USER_SERVICE: CREATE: token hash not valid'),8)
         return jsonify({"status": "ERROR", "error":"InvalidTokenHash"})
 
   email = request.form['email'] if 'email' in request.form else None
@@ -125,17 +127,17 @@ def create():
   if config.LOCALDEVBYPASSDB:
     session_pow_challenge = session + "_pow_challenge"
     if session_pow_challenge not in session_store:
-      print 'UUID not in session'
+      print_debug(('DEBUG: USER_SERVICE: CREATE: UUID not in session'),8)
       abort(403)
 
     pow_challenge = session_store.get(session_pow_challenge)
 
     if failed_challenge(pow_challenge, nonce, ACCOUNT_CREATION_DIFFICULTY):
-      print 'Aborting: Challenge was not met'
+      print_debug(('DEBUG: USER_SERVICE: CREATE: Aborting: Challenge was not met'),8)
       abort(403)
 
     if exists(uuid):
-      print 'UUID already exists'
+      print_debug(('DEBUG: USER_SERVICE: CREATE: UUID already exists'),8)
       abort(403)
 
     write_wallet(uuid, wallet)
@@ -145,22 +147,23 @@ def create():
   else:
     ROWS=dbSelect("select pchallenge from sessions where sessionid=%s",[session])
     if len(ROWS)==0 or ROWS[0][0]==None:
-      print 'UUID not in session'
+      print_debug(('DEBUG: USER_SERVICE: CREATE: UUID not in session'),8)
       abort(403)
     else:
       pow_challenge = ROWS[0][0]
 
     if failed_challenge(pow_challenge, nonce, ACCOUNT_CREATION_DIFFICULTY):
-      print 'Aborting: Challenge was not met'
+      print_debug(('DEBUG: USER_SERVICE: CREATE: Aborting: Challenge was not met'),8)
       abort(403)
 
     if exists(uuid):
-      print 'UUID already exists'
+      print_debug(('DEBUG: USER_SERVICE: CREATE: UUID already exists'),8)
       abort(403)
 
     write_wallet(uuid, wallet, email)
     dbExecute("update sessions set pchallenge=NULL, timestamp=DEFAULT, pubkey=%s where sessionid=%s",(public_key, session))
     dbCommit()
+    print_debug(("DEBUG: USER_SERVICE: CREATE: completed for",uuid,"with public key",json.dumps(str(public_key)),"and session",session),9)
 
   welcome_email(email, wallet, uuid)
 
@@ -170,7 +173,7 @@ def create():
 @app.route('/update', methods=['POST'])
 @ratelimit(limit=30, per=60)
 def update():
-  #print "got form",request.form
+  print_debug(("DEBUG: USER_SERVICE: UPDATE: got form",request.form),9)
 
   validate_uuid = UUID(request.form['uuid'])
   uuid = str(validate_uuid)
@@ -191,11 +194,11 @@ def update():
     session_pubkey = session + "_public_key"
 
     if session_challenge not in session_store:
-      print 'Challenge not in session'
+      print_debug(('DEBUG: USER_SERVICE: UPDATE: Challenge not in session'),8)
       abort(403)
 
     if session_pubkey not in session_store:
-      print 'Public key not in session'
+      print_debug(('DEBUG: USER_SERVICE: UPDATE: Public key not in session'),8)
       abort(403)
 
     challenge = session_store.get(session_challenge)
@@ -207,18 +210,18 @@ def update():
     verifier = PKCS1_v1_5.new(key)
 
     if not verifier.verify(h, signature.decode('hex')):
-      print 'Challenge signature not verified'
+      print_debug(('DEBUG: USER_SERVICE: UPDATE: Challenge signature not verified'),8)
       abort(403)
 
     session_store.delete(session_challenge)
   else:
     ROWS=dbSelect("select challenge,pubkey from sessions where sessionid=%s",[session])
     if len(ROWS)==0 or ROWS[0][0]==None:
-      print 'Challenge not in session'
+      print_debug(('DEBUG: USER_SERVICE: UPDATE: Challenge not in session'),8)
       abort(403)
 
     if len(ROWS)==0 or ROWS[0][1]==None:
-      print 'Public key not in session'
+      print_debug(('DEBUG: USER_SERVICE: UPDATE: Public key not in session'),8)
       abort(403)
 
 
@@ -231,11 +234,17 @@ def update():
     verifier = PKCS1_v1_5.new(key)
 
     if not verifier.verify(h, signature.decode('hex')):
-      print 'Challenge signature not verified'
+      print_debug(('DEBUG: USER_SERVICE: UPDATE: Challenge signature not verified'),8)
+      print_debug(("DEBUG: USER_SERVICE: UPDATE: uuid is :",uuid),9)
+      print_debug(("DEBUG: USER_SERVICE: UPDATE: pubkey is :",json.dumps(str(pubkey))),9)
+      print_debug(("DEBUG: USER_SERVICE: UPDATE: challenge is: ",challenge),9)
+      print_debug(("DEBUG: USER_SERVICE: UPDATE: signature is: ",signature),9)
+
       abort(403)
 
     dbExecute("update sessions set challenge=NULL, timestamp=DEFAULT where sessionid=%s",[session])
     dbCommit()
+    print_debug(("DEBUG: USER_SERVICE: UPDATE: completed for uuid",uuid),9)
 
   ret=False
   if wallet != None:
@@ -250,17 +259,16 @@ def update():
       encdata=encrypt_value(json.dumps(data))
       if encdata[0]:
         if not (set_setting(uuid,'asq',encdata[1])):
-          print "Error setting ASQ:",uuid,encdata
+          print_debug(("DEBUG: USER_SERVICE: UPDATE: Error setting ASQ:",uuid,encdata),8)
       else:
-        print "Error setting ASQ:",uuid,data,encdata
+        print_debug(("DEBUG: USER_SERVICE: UPDATE: Error setting ASQ:",uuid,data,encdata),8)
 
   response = {
       'updated': ret
   }
-  print response
+  print_debug(("DEBUG: USER_SERVICE: UPDATE: final response:",ret),9)
 
   return jsonify(response)
-  #return ""
 
 
 @app.route('/login', methods=['POST'])
@@ -276,21 +284,21 @@ def login():
   if config.LOCALDEVBYPASSDB:
     session_pow_challenge = session + "_pow_challenge"
     if session_pow_challenge not in session_store:
-      print 'UUID not in session'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: UUID not in session'),8)
       abort(403)
 
     pow_challenge = session_store.get(session_pow_challenge)
     if failed_challenge(pow_challenge, nonce, LOGIN_DIFFICULTY):
-      print 'Failed login challenge'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: Failed login challenge'),8)
       abort(403)
 
     if not exists(uuid):
-      print 'Wallet not found'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: Wallet not found'),8)
       abort(403)
 
     mfa_verified, mfa = verify_mfa(uuid,mfatoken)
     if not mfa_verified:
-      print 'MFA token incorrect'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: MFA token incorrect'),8)
       abort(403)
 
     wallet_data = read_wallet(uuid)
@@ -300,28 +308,29 @@ def login():
   else:
     ROWS=dbSelect("select pchallenge from sessions where sessionid=%s",[session])
     if len(ROWS)==0 or ROWS[0][0]==None:
-      print 'UUID not in session'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: UUID not in session'),8)
       abort(403)
     else:
       pow_challenge = ROWS[0][0]
 
     if failed_challenge(pow_challenge, nonce, LOGIN_DIFFICULTY):
-      print 'Failed login challenge'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: Failed login challenge'),8)
       abort(403)
 
     if not exists(uuid):
-      print 'Wallet not found'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: Wallet not found'),8)
       abort(403)
 
     mfa_verified,mfa = verify_mfa(uuid,mfatoken)
     if not mfa_verified:
-      print 'MFA token incorrect'
+      print_debug(('DEBUG: USER_SERVICE: LOGIN: MFA token incorrect'),8)
       abort(403)
 
     wallet_data = read_wallet(uuid)
     dbExecute("update sessions set pchallenge=NULL, timestamp=DEFAULT, pubkey=%s where sessionid=%s",(public_key, session))
     dbCommit()
     update_login(uuid)
+    print_debug(("DEBUG: USER_SERVICE: LOGIN: login completed for",uuid,"with public key",json.dumps(str(public_key)),"and session",session),9)
   #end else:
 
   question=None
@@ -332,7 +341,7 @@ def login():
       try:
         question=json.loads(asq[1])['question']
       except Exception as e:
-        print "couldn't load user setting 'ASQ', error:",e
+        print_debug(("DEBUG: USER_SERVICE: LOGIN: couldn't load user setting 'ASQ', error:",e),8)
 
   response = {
       'wallet': wallet_data,
@@ -369,24 +378,31 @@ def generate_mfa():
 # Utility Functions
 def verify_mfa(uuid,token,secret='None'):
   #check totp token for login
-  if secret in ['None',None]:
-    value=get_setting(uuid,'mfasecret')
-    if value not in ['None',None]:
-      encsec=decrypt_value(value)
+  value=get_setting(uuid,'mfasecret')
+  if value not in ['None',None]:
+    encsec=decrypt_value(value)
+    if secret in ['None',None]:
       if encsec[0]:
         secret=encsec[1]
+        print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: MFA Secret loaded",uuid),9)
       else:
-        print "Error decrypting secret from db for ",uuid," got error: ",encsec[1]
+        print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: Error decrypting secret for",uuid,"got error:",encsec[1]),8)
         return False,True
+    else:
+      print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: Error verifying mfa, secret already setup for",uuid),8)
+      return False,True
 
   if secret in ['None',None]:
     if token == 'null':
+      print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: MFA Secret not setup/provided, no token provided, login allowed",uuid),9)
       return True,False
     else:
+      print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: MFA Secret not setup/provided, no token provided, login abort",uuid),9)
       return False,False
   else:
     totp = pyotp.TOTP(secret)
     test=totp.verify(token,None,1)
+     print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: MFA Secret setup/provided, token provided, token validation",test,"for",uuid),9)
     return test,True
 
 def update_mfa(uuid,token,action,secret='None'):
@@ -398,15 +414,14 @@ def update_mfa(uuid,token,action,secret='None'):
        encsec=encrypt_value(secret)
        if encsec[0]:
          secret=encsec[1]
+         set_setting(uuid,'mfasecret',secret)
+         ret=True
        else:
-         print "error trying to encrypt secret, error:",encsec[1]
-         return ret
-
-       set_setting(uuid,'mfasecret',secret)
-       ret=True
+         print_debug(("DEBUG: USER_SERVICE: UPDATE_MFA: Error trying to encrypt secret, error:",encsec[1]),8)
     elif action == 'del' and setup:
        set_setting(uuid,'mfasecret',None)
        ret=True
+  print_debug(("DEBUG: USER_SERVICE: UPDATE_MFA: uuid:",uuid,", action:",action,", verified:",verified,", setup:",setup,", response:",ret),9)
   return ret
 
 def failed_challenge(pow_challenge, nonce, difficulty):
@@ -439,7 +454,7 @@ def get_setting(uuid,key):
     settings=read_settings(uuid)
     ret=settings[key]['value']
   except Exception as e:
-    print "Could not get setting \"",key,"\" for uuid ",uuid," error: ",e
+    print_debug(("DEBUG: USER_SERVICE: Could not get setting \"",key,"\" for uuid",uuid,"error:",e),8)
   return ret
 
 def set_setting(uuid,key,value):
@@ -453,7 +468,7 @@ def set_setting(uuid,key,value):
       settings[key]={'value':value,'updated_at':time,'created_at':time}
     ret=write_settings(uuid,settings)
   except Exception as e:
-    print "Error setting ",key," to value ",value," for uuid ",uuid," error: ",e
+    print_debug(("DEBUG: USER_SERVICE: Error setting",key,"to value",value,"for uuid",uuid,"error:",e),8)
   return ret
 
 def read_settings(uuid):
