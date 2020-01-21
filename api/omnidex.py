@@ -163,10 +163,10 @@ def get_markets_by_denominator(denominator):
 	{
 	 "propertyid":currency[0],
 	 "propertyname" : currency[1],
-	 "bidprice" : float(currency[2]),
-	 "askprice" : float(currency[3]),
-	 "supply" : float(currency[4]),
-	 "lastprice" : float(currency[5]),
+	 "bidprice" : str(currency[2]),
+	 "askprice" : str(currency[3]),
+	 "supply" : str(currency[4]),
+	 "lastprice" : str(currency[5]),
          "propertytype" : currency[6]
 	} for currency in markets]}
       #cache markets for 4 min
@@ -199,12 +199,12 @@ def get_OHLCV(propertyid_desired, propertyid_selling):
         {
             "date_int":int((time.mktime(order[0].timetuple()) + order[0].microsecond/1000000.0)/86400),
             "date":str(order[0]).split(' ')[0],
-            "open":order[1], #if order[1] is not None else 160 - (0.01 * orderbook.index(order)),
-            "high" : order[2], #if order[2] is not None else 160 + (0.01 * orderbook.index(order)),
-            "low" : order[3], #if order[3] is not None else 160 - (0.01 * orderbook.index(order)),
-            "close" : order[4], #if order[4] is not None else 160 + (0.01 * orderbook.index(order)),
-            "volume": order[5], #if order[5] is not None else 34.5 + (11.2 * orderbook.index(order)),
-            "adjustment":(order[2] + order[3]) /2
+            "open":str(order[1]), #if order[1] is not None else 160 - (0.01 * orderbook.index(order)),
+            "high" : str(order[2]), #if order[2] is not None else 160 + (0.01 * orderbook.index(order)),
+            "low" : str(order[3]), #if order[3] is not None else 160 - (0.01 * orderbook.index(order)),
+            "close" : str(order[4]), #if order[4] is not None else 160 + (0.01 * orderbook.index(order)),
+            "volume": str(order[5]), #if order[5] is not None else 34.5 + (11.2 * orderbook.index(order)),
+            "adjustment":str( (order[2] + order[3]) /2)
         } for order in orderbook]}
       #cache for 2 min
       lSet(ckey,json.dumps(response))
