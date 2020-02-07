@@ -12,11 +12,21 @@ def cffblock(ip):
   payload = '{"mode":"block","configuration":{"target":"ip","value":"'+str(ip)+'"},"notes":"API Abuse '+str(datetime.datetime.now())+'"}'
   r = requests.post(url,headers=header,data=payload)
   id = 0
+  success = false
   #if r.status_code == 200:
   response = r.json()
   if response['success']:
     id = response['result']['id']
-  return {'success':response['success'], 'id':id}
+    success = response['success']
+  else:
+    try:
+      for error in response['errors']:
+        if error['message']=='firewallaccessrules.api.duplicate_of_existing':
+          id = findcffID(ip)
+          success=True
+    except:
+      pass
+  return {'success':success, 'id':id}
 
 def cffstatus(id):
   url = 'https://api.cloudflare.com/client/v4/accounts/'+str(CFID)+'/firewall/access_rules/rules/'+str(id)
@@ -41,3 +51,9 @@ def cffgetAll():
    r = requests.get(url,headers=header)
    response = r.json()
    return response
+
+def findcffID(ip):
+   list = cffgetAll()
+   for entry in list['result']:
+     if str(entry['configuration']['value']) == ip:
+       return str(entry['scope']['id'])
