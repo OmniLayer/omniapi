@@ -47,7 +47,7 @@ def updateCFFirewall():
             mfactor = int(redis.incr(tSpace+str(ip)))
             #expire 12 * mfactor hours from now
             eTime=int(time.time()) + int(43200 * mfactor)
-            redis.set(bSpace+str(ip)+"/"+str(eTime),ret['id'])
+            redis.set(bSpace+str(ip)+"/"+str(eTime),response['id'])
           else:
             printmsg("error blocking ip "+str(ip)+" response "+str(response))
         except Exception as e:
