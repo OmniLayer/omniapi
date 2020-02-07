@@ -39,14 +39,19 @@ def updateCFFirewall():
       #check if address is already blocked
       if len( redis.keys(bSpace+str(ip)+"*") ) == 0:
         ret=cffblock(ip)
-        if ret['success']:
-          printmsg("Blocked Address "+str(ip))
-          redis.delete(entry)
-          #repeat offenders get longer bans
-          mfactor = int(redis.incr(tSpace+str(ip)))
-          #expire 12 * mfactor hours from now
-          eTime=int(time.time()) + int(43200 * mfactor)
-          redis.set(bSpace+str(ip)+"/"+str(eTime),ret['id'])
+        try:
+          if ret['success']:
+            printmsg("Blocked Address "+str(ip))
+            redis.delete(entry)
+            #repeat offenders get longer bans
+            mfactor = int(redis.incr(tSpace+str(ip)))
+            #expire 12 * mfactor hours from now
+            eTime=int(time.time()) + int(43200 * mfactor)
+            redis.set(bSpace+str(ip)+"/"+str(eTime),ret['id'])
+          else:
+            printmsg("error blocking ip "+str(ip)+" response "+str(response))
+        except Exception as e:
+          printmsg("error blocking ip "+str(ip)+" response "+str(response)+" error "+str(e))
       else:
         redis.delete(entry)
     except Exception as e:
@@ -62,11 +67,15 @@ def checkExpiring():
       now = int(time.time())
       if eTime < now:
         id = redis.get(entry)
-        if cffunblock(id):
-          printmsg("Removing expired block ID:"+str(id)+" on "+str(ip))
-          redis.delete(entry)
-        else:
-          printmsg("ERROR: Could not expire block "+str(id)+" on "+str(ip))
+        response = cffunblock(id)
+        try:
+          if response['success']:
+            printmsg("Removing expired block ID:"+str(id)+" on "+str(ip))
+            redis.delete(entry)
+          else:
+            printmsg("ERROR: Could not expire block "+str(id)+" on "+str(ip)+" response "+str(response))
+        except Exception as e:
+          printmsg("ERROR: Could not expire block "+str(id)+" on "+str(ip)+" response "+str(response)+" error "+str(e))
     except Exception as e:
       printmsg("error checking expired entries: "+str(e))
 

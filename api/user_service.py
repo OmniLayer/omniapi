@@ -3,7 +3,7 @@ import smtplib
 import os
 import base64
 import werkzeug.security as ws
-import pyotp,time
+import pyotp, time
 import datetime
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA
@@ -28,7 +28,7 @@ LOGIN_DIFFICULTY = '0400'
 if config.LOCALDEVBYPASSDB:
   data_dir_root = config.LOCALDATADIR
   store_dir = data_dir_root + '/sessions/'
-  session_store = FilesystemStore(store_dir) # TODO: Need to roll this into a SessionInterface so multiple services can hit it easily
+  session_store = FilesystemStore(store_dir) 
 
 if config.DOMAIN is None:
   email_domain = socket.gethostname()
@@ -402,7 +402,7 @@ def verify_mfa(uuid,token,secret='None'):
   else:
     totp = pyotp.TOTP(secret)
     test=totp.verify(token,None,1)
-     print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: MFA Secret setup/provided, token provided, token validation",test,"for",uuid),9)
+    print_debug(("DEBUG: USER_SERVICE: VERIFY_MFA: MFA Secret setup/provided, token provided, token validation",test,"for",uuid),9)
     return test,True
 
 def update_mfa(uuid,token,action,secret='None'):
