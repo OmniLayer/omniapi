@@ -12,7 +12,7 @@ def cffblock(ip):
   payload = '{"mode":"block","configuration":{"target":"ip","value":"'+str(ip)+'"},"notes":"API Abuse '+str(datetime.datetime.now())+'"}'
   r = requests.post(url,headers=header,data=payload)
   id = 0
-  success = false
+  success = False
   #if r.status_code == 200:
   response = r.json()
   if response['success']:
