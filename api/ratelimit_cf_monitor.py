@@ -42,12 +42,12 @@ def updateCFFirewall():
         try:
           if response['success']:
             printmsg("Blocked Address "+str(ip))
-            redis.delete(entry)
             #repeat offenders get longer bans
             mfactor = int(redis.incr(tSpace+str(ip)))
             #expire 12 * mfactor hours from now
             eTime=int(time.time()) + int(43200 * mfactor)
             redis.set(bSpace+str(ip)+"/"+str(eTime),response['id'])
+            redis.delete(entry)
           else:
             printmsg("error blocking ip "+str(ip)+" response "+str(response))
         except Exception as e:
