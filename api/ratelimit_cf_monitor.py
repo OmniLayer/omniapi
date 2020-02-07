@@ -38,9 +38,9 @@ def updateCFFirewall():
       ip=entry.split('/')[2]
       #check if address is already blocked
       if len( redis.keys(bSpace+str(ip)+"*") ) == 0:
-        ret=cffblock(ip)
+        response=cffblock(ip)
         try:
-          if ret['success']:
+          if response['success']:
             printmsg("Blocked Address "+str(ip))
             redis.delete(entry)
             #repeat offenders get longer bans
