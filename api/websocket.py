@@ -33,11 +33,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             if sub == 'valuebook':
               if self not in vbs:
                 vbs.append(self)
+                wsemit('subscribed','valuebook',[session])
               else:
                 raise "Already subscribed to Valuebook"
             elif sub == 'orderbook':
               if self not in obs:
                 obs.append(self)
+                wsemit('subscribed','orderbook',[session])
               else:
                 raise "Already subscribed to Orderbook"
             else:
@@ -47,11 +49,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             if sub == 'valuebook':
               if self in vbs:
                 vbs.remove(self)
+                wsemit('unsubscribed','valuebook',[session])
               else:
                 raise "Not subscribed to Valuebook"
             elif sub == 'orderbook':
               if self in obs:
                 obs.remove(self)
+                wsemit('unsubscribed','orderbook',[session])
               else:
                 raise "Not subscribed to Orderbook"
             else:

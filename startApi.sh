@@ -4,7 +4,7 @@ PYTHONBIN=python
 kill_child_processes() {
   #kill $SERVER_PID
   uwsgi --stop /tmp/omniapi.pid
-  #kill $WEBSOCKET_PID
+  kill $WEBSOCKET_PID
   rm -f $LOCK_FILE
   exit 1
 }
@@ -61,15 +61,15 @@ do
         echo Api Reloaded
     fi
 
-    #ps a | grep -v grep | grep "python websocket.py" > /dev/null
-    #if [ $? -eq 0 ]; then
-    #    echo "websocket api is running."
-    #  else
-    #    echo "Starting websocket daemon..."
-    #    cd $APPDIR/api
-    #    $PYTHONBIN websocket.py > $LOGDIR/websocket.log 2>&1 &
-    #    WEBSOCKET_PID=$!
-    #fi
+    ps aux | grep -v grep | grep "python websocket.py" > /dev/null
+    if [ $? -eq 0 ]; then
+        echo "websocket api is running."
+      else
+        echo "Starting websocket daemon..."
+        cd $APPDIR/api
+        $PYTHONBIN websocket.py > $LOGDIR/websocket.log 2>&1 &
+        WEBSOCKET_PID=$!
+    fi
 
     # unlock
     rm -f $LOCK_FILE
