@@ -255,7 +255,10 @@ def emitter_thread():
         for addr in abs:
           for session in abs[addr]:
             try:
-              wsemit('address:balance:'+str(addr),balances[addr])
+              if addr in balances:
+                wsemit('address:balance:'+str(addr),balances[addr])
+              else:
+                print_debug((addr,"balance not loaded yet"),4)
             except Exception as e:
               print_debug(("error pushing balance data for",addr,str(e)),4)
         #push valuebook
