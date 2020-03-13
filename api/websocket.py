@@ -1,11 +1,14 @@
-from gevent import monkey
-monkey.patch_all()
-
 import time, datetime
-import json, re
+import json, re, sys
+import uuid
+
+import tornado.httpserver
+import tornado.websocket
+import tornado.ioloop
+import tornado.web
+import socket
 from threading import Thread
-from flask import Flask, render_template, session, request
-from flask_socketio import SocketIO, emit, join_room, leave_room
+
 from common import *
 from balancehelper import *
 from omnidex import getOrderbook
@@ -13,10 +16,75 @@ from values_service import getValueBook
 from cacher import *
 import config
 
-app = Flask(__name__)
-app.debug = True
-app.config['SECRET_KEY'] = config.WEBSOCKET_SECRET
-socketio = SocketIO(app)
+
+class WSHandler(tornado.websocket.WebSocketHandler):
+    def open(self):
+        #print 'new connection'
+        balance_connect(self)
+
+    def on_message(self, message):
+        print 'message received:  %s' % message
+        pmessage=message.split(":")
+        action=pmessage[0].lower()
+
+        try:
+          if action == 'subscribe':
+            sub = pmessage[1].lower()
+            if sub == 'valuebook':
+              if self not in vbs:
+                vbs.append(self)
+              else:
+                raise "Already subscribed to Valuebook"
+            elif sub == 'orderbook':
+              if self not in obs:
+                obs.append(self)
+              else:
+                raise "Already subscribed to Orderbook"
+            else:
+              raise 'unknown command: '+str(sub)
+          elif action == 'unsubscribe':
+            sub = pmessage[1].lower()
+            if sub == 'valuebook':
+              if self in vbs:
+                vbs.remove(self)
+              else:
+                raise "Not subscribed to Valuebook"
+            elif sub == 'orderbook':
+              if self in obs:
+                obs.remove(self)
+              else:
+                raise "Not subscribed to Orderbook"
+            else:
+              raise 'unknown command: '+str(sub)
+          elif action == 'address':
+            sub = pmessage[1].lower()
+            data=pmessage[2]
+            if sub == 'add':
+              add_address(data,self)
+            elif sub == 'del':
+              del_address(data,self)
+            elif sub == 'refresh':
+              refresh_address(data,self)
+            else:
+              raise 'unknown command: '+str(sub)
+          elif action == 'logout':
+            disconnect(self)
+          else:
+            raise 'unknown command: '+str(message)
+        except Exception as e:
+          wsemit('error',str(e))
+
+    def on_close(self):
+        #print 'connection closed'
+        disconnect(self)
+
+    def check_origin(self, origin):
+        return True
+
+application = tornado.web.Application([
+    (r'/ws', WSHandler),
+])
+
 
 #threads
 watchdog = None
@@ -34,11 +102,25 @@ orderbook = {}
 lasttrade = 0
 lastpending = 0
 valuebook = {}
-
+#websocket connections
+users = []
+abs = {} #addressbook subscribers { '<address>':[users]}
+vbs = [] #valuebook subscribers
+obs = [] #orderbook subscribers
 
 def printmsg(msg):
     print str(datetime.datetime.now())+str(" ")+str(msg)
     sys.stdout.flush()
+
+def get_real_address(session):
+  ret=session.request.remote_ip
+  try:
+    if session.request.headers['X-Forwarded-For'] is not None:
+      addr=session.request.headers['X-Forwarded-For'].split(",")
+      ret=addr[0]
+  except Exception as e:
+      print e
+  return ret
 
 def update_balances():
   global addresses, balances
@@ -131,21 +213,34 @@ def watchdog_thread():
         if emitter is None or not emitter.isAlive():
           printmsg("emitter not running")
           emitter = Thread(target=emitter_thread)
+          emitter.daemon = True
           emitter.start()
         if bthread is None or not bthread.isAlive():
           printmsg("balance thread not running")
           bthread = Thread(target=update_balances)
+          bthread.daemon = True
           bthread.start()
         if vthread is None or not vthread.isAlive():
           printmsg("value thread not running")
           vthread = Thread(target=update_valuebook)
+          vthread.daemon = True
           vthread.start()
         if othread is None or not othread.isAlive():
           printmsg("orderbook not running")
           othread = Thread(target=update_orderbook)
+          othread.daemon = True
           othread.start()
       except Exception as e:
         printmsg("error in watchdog: "+str(e))
+
+def wsemit(prefix,data,filter=None):
+    msg = {'prefix':prefix, 'data':data}
+    if filter is None:
+      for user in users:
+        user.write_message(msg)
+    else:
+      for user in filter:
+        user.write_message(msg)
 
 def emitter_thread():
     #Send data for the connected clients
@@ -157,19 +252,26 @@ def emitter_thread():
         count += 1
         printmsg("Tracking "+str(len(addresses))+"/"+str(maxaddresses)+"(max) addresses, for "+str(clients)+"/"+str(maxclients)+"(max) clients, ran "+str(count)+" times")
         #push addressbook
-        socketio.emit('address:book',balances,namespace='/balance')
+        for addr in abs:
+          for session in abs[addr]:
+            try:
+              wsemit('address:balance'+str(addr),balances[addr])
+            except Exception as e:
+              print("error pushing balance data for",addr,str(e))
         #push valuebook
-        socketio.emit('valuebook',valuebook,namespace='/balance')
+        wsemit('valuebook',valuebook,vbs)
         #push orderbook
-        socketio.emit('orderbook',orderbook,namespace='/balance')
+        wsemit('orderbook',orderbook,obs)
       except Exception as e:
         printmsg("emitter error: "+str(e))
 
-@socketio.on('connect', namespace='/balance')
-def balance_connect():
-    printmsg('Client connected')
+#@socketio.on('connect', namespace='/balance')
+def balance_connect(session):
     global watchdog, clients, maxclients
-    session['addresses']=[]
+    session.id = str(uuid.uuid4())
+    session.addresses=[]
+    users.append(session)
+    printmsg('Client connected',session.id)
 
     clients += 1
     if clients > maxclients:
@@ -177,74 +279,115 @@ def balance_connect():
 
     if watchdog is None or not watchdog.isAlive():
         watchdog = Thread(target=watchdog_thread)
+        watchdog.daemon = True
         watchdog.start()
-
+    wsemit('session:connected',session.id,[session])
 
 def endSession(session):
   try:
     global addresses
-    for address in session['addresses']:
+    for address in session.addresses:
       if addresses[address] == 1:
         #addresses.pop(address)
          addresses[address] = -1
       else:
         addresses[address] -= 1
+      try:
+        abs[str(address)].remove(session)
+      except:
+        pass
   except KeyError:
     #addresses not defined
-    printmsg("No addresses list to clean for "+str(session))
+    printmsg("No addresses list to clean for "+str(session.id))
+  try:
+    #remove any valuebook subscribtions
+    vbs.remove(session)
+  except:
+    pass
+  try:
+    #remove any orderbook subscribtions
+    obs.remove(session)
+  except:
+    pass
 
 
-@socketio.on('disconnect', namespace='/balance')
-def disconnect():
-    printmsg('Client disconnected')
+#@socketio.on('disconnect', namespace='/balance')
+def disconnect(session):
+    printmsg('Client disconnected',session.id)
     global clients
     clients -=1
     #make sure we don't screw up the counter if reloading mid connections
     if clients < 0:
       clients=0
     endSession(session)
+    users.remove(session)
 
 
-@socketio.on('session:logout', namespace='/balance')
-def logout():
-    #printmsg('Client logged out')
-    endSession(session)
-
-
-@socketio.on("address:add", namespace='/balance')
-def add_address(message):
+#@socketio.on("address:add", namespace='/balance')
+def add_address(address,session):
   global addresses, maxaddresses
 
-  address = message['data']
-  if str(address) not in session['addresses']:
-    session['addresses'].append(str(address))
-    if str(address) in addresses and addresses[str(address)] > 0:
-      addresses[str(address)] += 1
+  address=str(address)
+  if address not in session.addresses:
+    session.addresses.append(address)
+    if address in addresses and addresses[address] > 0:
+      addresses[address] += 1
     else:
-      addresses[str(address)] = 1
+      addresses[address] = 1
       rSet("omniwallet:balances:addresses"+str(config.REDIS_ADDRSPACE),json.dumps(addresses))
       #speed up initial data load
       balance_data=get_balancedata(address)
-      emit('address:'+address,
-        balance_data,
-        namespace='/balance')
-
+      wsemit('address:'+address, 'subscribed', [session])
+      wsemit('address:balance:'+address, balance_data, [session])
+    try:
+      abs[address].append(session)
+    except:
+      abs[address] = [session]
+  if session not in vbs:
+    vbs.append(session)
   if len(addresses) > maxaddresses:
     maxaddresses=len(addresses)
 
 
-@socketio.on("address:refresh", namespace='/balance')
-def refresh_address(message):
+def del_address(address,session):
   global addresses
 
-  address = message['data']
-  if str(address) in addresses:
+  address=str(address)
+  if address in session.addresses:
+    session.addresses.remove(address)
+    if addresses[address] == 1:
+       addresses[address] = -1
+    else:
+      addresses[address] -= 1
+    try:
+      abs[str(address)].remove(session)
+    except:
+      pass
+    wsemit('address:'+address, 'unsubscribed', [session])
+  else:
+    wsemit('address:'+address, 'not subscibed', [session])
+  if len(session.addresses)==0:
+    if session in vbs:
+      vbs.remove(session)
+
+#@socketio.on("address:refresh", namespace='/balance')
+def refresh_address(address,session):
+  global addresses
+
+  address=str(address)
+  if address in addresses:
     balance_data=get_balancedata(address)
-    emit('address:'+address,
-        balance_data,
-        namespace='/balance')
+    wsemit('address:balance:'+address,balance_data,[session])
   else:
     add_address(message)
 
 if __name__ == '__main__':
-  socketio.run(app, '127.0.0.1',1091)
+    http_server = tornado.httpserver.HTTPServer(application)
+    http_server.listen(1091)
+    myIP = socket.gethostbyname(socket.gethostname())
+    print '*** Websocket Server Started at %s***' % myIP
+    try:
+      tornado.ioloop.IOLoop.instance().start()
+    except (KeyboardInterrupt, SystemExit):
+      tornado.ioloop.IOLoop.instance().stop()
+      sys.exit()
