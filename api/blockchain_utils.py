@@ -16,7 +16,7 @@ except:
 
 try:
   TESTNET = (config.TESTNET == 1)
-else:
+except:
   TESTNET = False
 
 def bc_getutxo(address, ramount):

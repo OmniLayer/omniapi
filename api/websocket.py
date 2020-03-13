@@ -23,7 +23,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         balance_connect(self)
 
     def on_message(self, message):
-        print 'message received:  %s' % message
+        print_debug(('message received:  %s' % message),4)
         pmessage=message.split(":")
         action=pmessage[0].lower()
 
@@ -108,10 +108,6 @@ abs = {} #addressbook subscribers { '<address>':[users]}
 vbs = [] #valuebook subscribers
 obs = [] #orderbook subscribers
 
-def printmsg(msg):
-    print str(datetime.datetime.now())+str(" ")+str(msg)
-    sys.stdout.flush()
-
 def get_real_address(session):
   ret=session.request.remote_ip
   try:
@@ -119,7 +115,7 @@ def get_real_address(session):
       addr=session.request.headers['X-Forwarded-For'].split(",")
       ret=addr[0]
   except Exception as e:
-      print e
+      print_debug(('error getting real address',session.id,e),4)
   return ret
 
 def update_balances():
@@ -127,13 +123,13 @@ def update_balances():
   try:
     while True:
       time.sleep(10)
-      printmsg("updating balances")
+      print_debug(("updating balances"),7)
       balances=rGet("omniwallet:balances:balbook"+str(config.REDIS_ADDRSPACE))
       if balances != None:
-        printmsg("Balances loaded from redis")
+        print_debug(("Balances loaded from redis"),7)
         balances=json.loads(balances)
       else:
-        printmsg("Could not load balances from redis, falling back")
+        print_debug(("Could not load balances from redis, falling back"),7)
         balances=get_bulkbalancedata(addresses)
 
       for addr in list(addresses):
@@ -144,31 +140,31 @@ def update_balances():
           addresses.pop(addr)
       rSet("omniwallet:balances:addresses"+str(config.REDIS_ADDRSPACE),json.dumps(addresses))
   except Exception as e:
-    printmsg("error updating balances: "+str(e))
+    print_debug(("error updating balances:",str(e)),4)
 
 def update_orderbook():
   global orderbook, lasttrade, lastpending
   try:
     while True:
       time.sleep(10)
-      printmsg("updating orderbook")
+      print_debug(("updating orderbook"),4)
       book=rGet("omniwallet:omnidex:book")
       if book != None:
         lasttrade = rGet("omniwallet:omnidex:lasttrade")
         lastpending = rGet("omniwallet:omnidex:lastpending")
-        printmsg("Loading orderbook from redis.")
+        print_debug(("Loading orderbook from redis"),4)
         orderbook=json.loads(book)
-        printmsg("Orderbook Lasttrade: "+str(lasttrade)+" Book length is: "+str(len(orderbook)))
+        print_debug(("Orderbook Lasttrade:",str(lasttrade),"Book length is:",str(len(orderbook))),4)
       else:
         ret=getOrderbook(lasttrade, lastpending)
-        printmsg("Checking for new orderbook updates, last: "+str(lasttrade))
+        print_debug(("Checking for new orderbook updates, last:",str(lasttrade)),4)
         if ret['updated']:
           orderbook=ret['book']
-          printmsg("Orderbook updated. Lasttrade: "+str(lasttrade)+" Newtrade: "+str(ret['lasttrade'])+" Book length is: "+str(len(orderbook)))
+          print_debug(("Orderbook updated. Lasttrade:",str(lasttrade),"Newtrade:",str(ret['lasttrade']),"Book length is:",str(len(orderbook))),4)
           lasttrade=ret['lasttrade']
           lastpending=ret['lastpending']
   except Exception as e:
-    printmsg("error updating orderbook: "+str(e))
+    print_debug(("error updating orderbook:",str(e)),4)
 
 def update_valuebook():
   global valuebook
@@ -176,7 +172,7 @@ def update_valuebook():
     pmaxid=0
     while True:
       time.sleep(30)
-      printmsg("updating valuebook")
+      print_debug(("updating valuebook"),4)
       vbook,maxid=getValueBook(pmaxid)
       if len(vbook)>0:
         pmaxid=maxid
@@ -202,36 +198,36 @@ def update_valuebook():
             symbol=name+str(pid2)
           valuebook[symbol]={"price":rate,"symbol":symbol,"timestamp":tstamp, "source":source}
   except Exception as e:
-    printmsg("error updating valuebook: "+str(e))
+    print_debug(("error updating valuebook:",str(e)),4)
 
 def watchdog_thread():
     global emitter, bthread, vthread, othread
     while True:
       try:
         time.sleep(10)
-        printmsg("watchdog running")
+        print_debug(("watchdog running"),4)
         if emitter is None or not emitter.isAlive():
-          printmsg("emitter not running")
+          print_debug(("emitter not running"),4)
           emitter = Thread(target=emitter_thread)
           emitter.daemon = True
           emitter.start()
         if bthread is None or not bthread.isAlive():
-          printmsg("balance thread not running")
+          print_debug(("balance thread not running"),4)
           bthread = Thread(target=update_balances)
           bthread.daemon = True
           bthread.start()
         if vthread is None or not vthread.isAlive():
-          printmsg("value thread not running")
+          print_debug(("value thread not running"),4)
           vthread = Thread(target=update_valuebook)
           vthread.daemon = True
           vthread.start()
         if othread is None or not othread.isAlive():
-          printmsg("orderbook not running")
+          print_debug(("orderbook not running"),4)
           othread = Thread(target=update_orderbook)
           othread.daemon = True
           othread.start()
       except Exception as e:
-        printmsg("error in watchdog: "+str(e))
+        print_debug(("error in watchdog:",str(e)),4)
 
 def wsemit(prefix,data,filter=None):
     msg = {'prefix':prefix, 'data':data}
@@ -250,20 +246,20 @@ def emitter_thread():
       try:
         time.sleep(15)
         count += 1
-        printmsg("Tracking "+str(len(addresses))+"/"+str(maxaddresses)+"(max) addresses, for "+str(clients)+"/"+str(maxclients)+"(max) clients, ran "+str(count)+" times")
+        print_debug(("Tracking",str(len(addresses)),"/",str(maxaddresses),"(max) addresses, for",str(clients),"/",str(maxclients),"(max) clients, ran",str(count),"times"),4)
         #push addressbook
         for addr in abs:
           for session in abs[addr]:
             try:
               wsemit('address:balance'+str(addr),balances[addr])
             except Exception as e:
-              print("error pushing balance data for",addr,str(e))
+              print_debug(("error pushing balance data for",addr,str(e)),4)
         #push valuebook
         wsemit('valuebook',valuebook,vbs)
         #push orderbook
         wsemit('orderbook',orderbook,obs)
       except Exception as e:
-        printmsg("emitter error: "+str(e))
+        print_debug(("emitter error:",str(e)),4)
 
 #@socketio.on('connect', namespace='/balance')
 def balance_connect(session):
@@ -271,7 +267,7 @@ def balance_connect(session):
     session.id = str(uuid.uuid4())
     session.addresses=[]
     users.append(session)
-    printmsg('Client connected',session.id)
+    print_debug(('Client connected',session.id),4)
 
     clients += 1
     if clients > maxclients:
@@ -298,7 +294,7 @@ def endSession(session):
         pass
   except KeyError:
     #addresses not defined
-    printmsg("No addresses list to clean for "+str(session.id))
+    print_debug(("No addresses list to clean for",str(session.id)),4)
   try:
     #remove any valuebook subscribtions
     vbs.remove(session)
@@ -313,7 +309,7 @@ def endSession(session):
 
 #@socketio.on('disconnect', namespace='/balance')
 def disconnect(session):
-    printmsg('Client disconnected',session.id)
+    print_debug(('Client disconnected',session.id),4)
     global clients
     clients -=1
     #make sure we don't screw up the counter if reloading mid connections
@@ -385,7 +381,7 @@ if __name__ == '__main__':
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(1091)
     myIP = socket.gethostbyname(socket.gethostname())
-    print '*** Websocket Server Started at %s***' % myIP
+    print_debug(('*** Websocket Server Started at %s***' % myIP),4)
     try:
       tornado.ioloop.IOLoop.instance().start()
     except (KeyboardInterrupt, SystemExit):
