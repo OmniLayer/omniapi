@@ -51,7 +51,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                   try:
                     obs[pid1][pid2].append(self)
                   except:
-                    obs[pid1]={pid2:[self]}
+                    try:
+                      obs[pid1][pid2]=[self]
+                    except:
+                      obs[pid1]={pid2:[self]}
                   wsemit('subscribe','orderbook',{'status':'ok','pair':pair},[self])
                 except Exception as e:
                   wsemit('subscribe','orderbook',{'status':'error','pair':pair,'error':str(e)},[self])
