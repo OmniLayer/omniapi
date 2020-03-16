@@ -60,16 +60,21 @@ def getOrderbook(lasttrade=0, lastpending=0):
           if 0 in [pd,ps]:
             #skip dex 1.0 sales
             continue
-          data = get_orders_by_market(pd,ps)
-          data2 = get_orders_by_market(ps,pd)
-          try:
-            book[pd][ps]=data
-          except KeyError:
-            book[pd]={ps: data}
-          try:
-            book[ps][pd]=data2
-          except KeyError:
-            book[ps]={pd: data2}
+          data = get_orders_by_market_raw(pd,ps)
+          data.pop('status')
+          data2 = get_orders_by_market_raw(ps,pd)
+          data2.pop('status')
+          if len(data['orderbook'])>0 or len(data['cancel'])>0):
+            try:
+              book[pd][ps]=data
+            except KeyError:
+              book[pd]={ps: data}
+
+          if len(data2['orderbook'])>0 or len(data2['cancel'])>0):
+            try:
+              book[ps][pd]=data2
+            except KeyError:
+              book[ps]={pd: data2}
         updated=True
 
     ret={"updated":updated ,"book":book, "lasttrade":trade, "lastpending":pending}
