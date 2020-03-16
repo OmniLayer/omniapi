@@ -1,6 +1,7 @@
 import time, datetime
 import json, re, sys
 import uuid
+import yaml
 
 import tornado.httpserver
 import tornado.websocket
@@ -24,59 +25,80 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         print_debug(('message received:  %s' % message),4)
-        pmessage=message.split(":")
-        action=pmessage[0].lower()
+        try:
+          pmessage = yaml.load(x, Loader=yaml.Loader)
+          action = str(pmessage['event'])
+        except:
+          action = 'unknown'
 
         try:
           if action == 'subscribe':
-            sub = pmessage[1].lower()
+            sub = str(pmessage['channel'].lower())
             if sub == 'valuebook':
               if self not in vbs:
                 vbs.append(self)
-                wsemit('subscribed','valuebook',[self])
+                wsemit('subscribe','valuebook','ok',[self])
               else:
                 raise "Already subscribed to Valuebook"
             elif sub == 'orderbook':
               if self not in obs:
                 obs.append(self)
-                wsemit('subscribed','orderbook',[self])
+                wsemit('subscribe','orderbook','ok',[self])
               else:
                 raise "Already subscribed to Orderbook"
+            elif sub == 'balance':
+              try:
+                addr = pmessage['data']
+                if ',' in addr:
+                  addrlist=addr.split(',')
+                  for a in addrlist:
+                    add_address(a,self)
+                else:
+                  add_address(addr,self)
+                  wsemit('subscribe','balance','ok',[self])
+              except Exception as e:
+                 wsemit('subscribe','balance','error: '+str(e),[self])
             else:
-              raise 'unknown command: '+str(sub)
+              wsemit('subscribe',sub,'unknown channel',[self])
+
           elif action == 'unsubscribe':
-            sub = pmessage[1].lower()
+            sub = str(pmessage['channel'].lower())
             if sub == 'valuebook':
               if self in vbs:
                 vbs.remove(self)
-                wsemit('unsubscribed','valuebook',[self])
+                wsemit('unsubscribe','valuebook','ok',[self])
               else:
                 raise "Not subscribed to Valuebook"
             elif sub == 'orderbook':
               if self in obs:
                 obs.remove(self)
-                wsemit('unsubscribed','orderbook',[self])
+                wsemit('unsubscribe','orderbook','ok',[self])
               else:
                 raise "Not subscribed to Orderbook"
+            elif sub == 'balance':
+              try:
+                addr = pmessage['data']
+                if ',' in addr:
+                  addrlist=addr.split(',')
+                  for a in addrlist:
+                    del_address(a,self)
+                else:
+                  del_address(addr,self)
+                wsemit('unsubscribe','balance','ok',[self])
+              except Exception as e:
+                 wsemit('unsubscribe','balance','error: '+str(e),[self])
             else:
-              raise 'unknown command: '+str(sub)
-          elif action == 'address':
-            sub = pmessage[1].lower()
-            data=pmessage[2]
-            if sub == 'add':
-              add_address(data,self)
-            elif sub == 'del':
-              del_address(data,self)
-            elif sub == 'refresh':
-              refresh_address(data,self)
-            else:
-              raise 'unknown command: '+str(sub)
+              wsemit('unsubscribe',sub,'unknown channel',[self])
+
+          elif action == 'ping':
+            wsemit('ping','info','pong',[self])
+
           elif action == 'logout':
             disconnect(self)
           else:
-            raise 'unknown command: '+str(message)
+            wsemit('info','unsupported request',str(message),[self])
         except Exception as e:
-          wsemit('error',str(e))
+          wsemit('error','unknown',str(e),[self])
 
     def on_close(self):
         #print 'connection closed'
@@ -233,8 +255,14 @@ def watchdog_thread():
       except Exception as e:
         print_debug(("error in watchdog:",str(e)),4)
 
-def wsemit(prefix,data,filter=None):
-    msg = {'prefix':prefix, 'data':data}
+def wsemit(event, channel, data, filter=None):
+    tsm = (datetime.datetime.utcnow() - datetime.datetime(1970,1,1)).total_seconds() * 1000.0
+    msg = {
+            'event':event, 
+            'channel':channel, 
+            'data':data,
+            'ts':tsm
+          }
     if filter is None:
       for user in users:
         user.write_message(msg)
@@ -256,15 +284,15 @@ def emitter_thread():
           for session in abs[addr]:
             try:
               if addr in balances:
-                wsemit('address:balance:'+str(addr),balances[addr])
+                wsemit('update',"balance",{'address':str(addr),'balances':balances[addr]},[session])
               else:
                 print_debug((addr,"balance not loaded yet"),4)
             except Exception as e:
               print_debug(("error pushing balance data for",addr,str(e)),4)
         #push valuebook
-        wsemit('valuebook',valuebook,vbs)
+        wsemit('update','valuebook',valuebook,vbs)
         #push orderbook
-        wsemit('orderbook',orderbook,obs)
+        wsemit('update','orderbook',orderbook,obs)
       except Exception as e:
         print_debug(("emitter error:",str(e)),4)
 
@@ -284,7 +312,7 @@ def balance_connect(session):
         watchdog = Thread(target=watchdog_thread)
         watchdog.daemon = True
         watchdog.start()
-    wsemit('session:connected',session.id,[session])
+    wsemit('info','session',{'status':'connected','id':str(session.id)},[session])
 
 def endSession(session):
   try:
@@ -340,8 +368,8 @@ def add_address(address,session):
       rSet("omniwallet:balances:addresses"+str(config.REDIS_ADDRSPACE),json.dumps(addresses))
       #speed up initial data load
       balance_data=get_balancedata(address)
-      wsemit('address:'+address, 'subscribed', [session])
-      wsemit('address:balance:'+address, balance_data, [session])
+      wsemit('subscribe','balance',{'address':address,'status':'ok'}, [session])
+      wsemit('update','balance',{'address':address, 'balance':balance_data}, [session])
     try:
       abs[address].append(session)
     except:
@@ -366,9 +394,9 @@ def del_address(address,session):
       abs[str(address)].remove(session)
     except:
       pass
-    wsemit('address:'+address, 'unsubscribed', [session])
+    wsemit('unsubscribe','balance',{'address':address, 'status':'ok'}, [session])
   else:
-    wsemit('address:'+address, 'not subscibed', [session])
+    wsemit('unsubscribe','balance',{'address':address, 'status':'not subscibed'}, [session])
   if len(session.addresses)==0:
     if session in vbs:
       vbs.remove(session)
@@ -380,7 +408,7 @@ def refresh_address(address,session):
   address=str(address)
   if address in addresses:
     balance_data=get_balancedata(address)
-    wsemit('address:balance:'+address,balance_data,[session])
+    wsemit('update','balance',{'address':address,'balance':balance_data},[session])
   else:
     add_address(message)
 

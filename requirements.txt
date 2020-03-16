@@ -16,3 +16,4 @@ ecdsa==0.13.3
 gevent==1.2.2
 #Flask-SocketIO==4.2.1
 tornado==5.1.1
+PyYAML==5.3
