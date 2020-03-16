@@ -26,7 +26,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         print_debug(('message received:  %s' % message),4)
         try:
-          pmessage = yaml.load(x, Loader=yaml.Loader)
+          pmessage = yaml.load(message, Loader=yaml.Loader)
           action = str(pmessage['event'])
         except:
           action = 'unknown'
@@ -39,13 +39,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 vbs.append(self)
                 wsemit('subscribe','valuebook','ok',[self])
               else:
-                raise "Already subscribed to Valuebook"
+                wsemit('subscribe','valuebook','already subscribed',[self])
             elif sub == 'orderbook':
               if self not in obs:
                 obs.append(self)
                 wsemit('subscribe','orderbook','ok',[self])
               else:
-                raise "Already subscribed to Orderbook"
+                wsemit('subscribe','orderbook','already subscribed',[self])
             elif sub == 'balance':
               try:
                 addr = pmessage['data']
@@ -68,13 +68,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 vbs.remove(self)
                 wsemit('unsubscribe','valuebook','ok',[self])
               else:
-                raise "Not subscribed to Valuebook"
+                wsemit('subscribe','valuebook','not subscribed',[self])
             elif sub == 'orderbook':
               if self in obs:
                 obs.remove(self)
                 wsemit('unsubscribe','orderbook','ok',[self])
               else:
-                raise "Not subscribed to Orderbook"
+                wsemit('subscribe','orderbook','not subscribed',[self])
             elif sub == 'balance':
               try:
                 addr = pmessage['data']

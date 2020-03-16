@@ -64,13 +64,13 @@ def getOrderbook(lasttrade=0, lastpending=0):
           data.pop('status')
           data2 = get_orders_by_market_raw(ps,pd)
           data2.pop('status')
-          if len(data['orderbook'])>0 or len(data['cancel'])>0:
+          if len(data['orderbook'])>0 or len(data['cancels'])>0:
             try:
               book[pd][ps]=data
             except KeyError:
               book[pd]={ps: data}
 
-          if len(data2['orderbook'])>0 or len(data2['cancel'])>0:
+          if len(data2['orderbook'])>0 or len(data2['cancels'])>0:
             try:
               book[ps][pd]=data2
             except KeyError:
