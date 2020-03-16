@@ -82,8 +82,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 wsemit('subscribe','valuebook','not subscribed',[self])
             elif sub == 'orderbook':
               unsubscribe_orderbook(self,pmessage)
-              if len(self.obp) == 0:
-                obs.remove(self)
             elif sub == 'balance':
               try:
                 addr = pmessage['data']
@@ -438,7 +436,7 @@ def unsubscribe_orderbook(session,pmessage={}):
       pid1 = pair[0]
       pid2 = pair[1]
       try:
-        obs[pid1][pid2].remove(self)
+        obs[pid1][pid2].remove(session)
         wsemit('unsubscribe','orderbook',{'status':'ok','pair':pair},[session])
       except:
         wsemit('unsubscribe','orderbook',{'status':'error','pair':pair,'error':'not subscribed'},[session])
@@ -449,7 +447,7 @@ def unsubscribe_orderbook(session,pmessage={}):
       pid1 = pair[0]
       pid2 = pair[1]
       try:
-        obs[pid1][pid2].remove(self)
+        obs[pid1][pid2].remove(session)
         wsemit('unsubscribe','orderbook',{'status':'ok','pair':pair},[session])
       except:
         pass
