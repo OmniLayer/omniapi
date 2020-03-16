@@ -41,11 +41,22 @@ class WSHandler(tornado.websocket.WebSocketHandler):
               else:
                 wsemit('subscribe','valuebook','already subscribed',[self])
             elif sub == 'orderbook':
-              if self not in obs:
-                obs.append(self)
-                wsemit('subscribe','orderbook','ok',[self])
+              if 'pid1' in pmessage and 'pid2' in pmessage:
+                try:
+                  pair=[int(pmessage['pid1']),int(pmessage['pid2']}]
+                  pair.sort()
+                  self.obp.append(pair)
+                  pid1 = pair[0]
+                  pid2 = pair[1]
+                  try:
+                    obs[pid1][pid2].append(self)
+                  except:
+                    obs[pid1]={pid2:[self]}
+                  wsemit('subscribe','orderbook',{'status':'ok','pair':pair},[self])
+                except Exception as e:
+                  wsemit('subscribe','orderbook',{'status':'error','pair':pair,'error':str(e)},[self])
               else:
-                wsemit('subscribe','orderbook','already subscribed',[self])
+                wsemit('subscribe','orderbook',{'status':'error','error':'missing property id key: pid1 or pid2'},[self])
             elif sub == 'balance':
               try:
                 addr = pmessage['data']
@@ -70,11 +81,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
               else:
                 wsemit('subscribe','valuebook','not subscribed',[self])
             elif sub == 'orderbook':
-              if self in obs:
+              unsubscribe_orderbook(self,pmessage)
+              if len(self.obp) == 0:
                 obs.remove(self)
-                wsemit('unsubscribe','orderbook','ok',[self])
-              else:
-                wsemit('subscribe','orderbook','not subscribed',[self])
             elif sub == 'balance':
               try:
                 addr = pmessage['data']
@@ -132,7 +141,7 @@ valuebook = {}
 users = []
 abs = {} #addressbook subscribers { '<address>':[users]}
 vbs = [] #valuebook subscribers
-obs = [] #orderbook subscribers
+obs = {} #orderbook subscribers { [pid1]: {[pid2]: [users]} }
 
 def get_real_address(session):
   ret=session.request.remote_ip
@@ -174,21 +183,13 @@ def update_orderbook():
     while True:
       time.sleep(10)
       print_debug(("updating orderbook"),4)
-      book=rGet("omniwallet:omnidex:book")
-      if book != None:
-        lasttrade = rGet("omniwallet:omnidex:lasttrade")
-        lastpending = rGet("omniwallet:omnidex:lastpending")
-        print_debug(("Loading orderbook from redis"),4)
-        orderbook=json.loads(book)
-        print_debug(("Orderbook Lasttrade:",str(lasttrade),"Book length is:",str(len(orderbook))),4)
-      else:
-        ret=getOrderbook(lasttrade, lastpending)
-        print_debug(("Checking for new orderbook updates, last:",str(lasttrade)),4)
-        if ret['updated']:
-          orderbook=ret['book']
-          print_debug(("Orderbook updated. Lasttrade:",str(lasttrade),"Newtrade:",str(ret['lasttrade']),"Book length is:",str(len(orderbook))),4)
-          lasttrade=ret['lasttrade']
-          lastpending=ret['lastpending']
+      ret=getOrderbook(lasttrade, lastpending)
+      print_debug(("Checking for new orderbook updates, last:",str(lasttrade)),4)
+      if ret['updated']:
+        orderbook=ret['book']
+        print_debug(("Orderbook updated. Lasttrade:",str(lasttrade),"Newtrade:",str(ret['lasttrade']),"Book length is:",str(len(orderbook))),4)
+        lasttrade=ret['lasttrade']
+        lastpending=ret['lastpending']
   except Exception as e:
     print_debug(("error updating orderbook:",str(e)),4)
 
@@ -265,10 +266,16 @@ def wsemit(event, channel, data, filter=None):
           }
     if filter is None:
       for user in users:
-        user.write_message(msg)
+        try:
+          user.write_message(msg)
+        except:
+          print_debug(("client disconnect"),5)
     else:
       for user in filter:
-        user.write_message(msg)
+        try:
+          user.write_message(msg)
+        except:
+          print_debug(("client disconnect"),5)
 
 def emitter_thread():
     #Send data for the connected clients
@@ -292,7 +299,15 @@ def emitter_thread():
         #push valuebook
         wsemit('update','valuebook',valuebook,vbs)
         #push orderbook
-        wsemit('update','orderbook',orderbook,obs)
+        for pid1 in obs.keys():
+          for pid2 in obs[pid1]:
+            for session in obs[pid1][pid2]:
+              try:
+                obdata = orderbook[pid1][pid2]
+                msg = {pid1:{pid2:obdata}}
+                wsemit('update','orderbook',msg,[session])
+              except:
+                pass
       except Exception as e:
         print_debug(("emitter error:",str(e)),4)
 
@@ -301,6 +316,7 @@ def balance_connect(session):
     global watchdog, clients, maxclients
     session.id = str(uuid.uuid4())
     session.addresses=[]
+    session.obp=[]
     users.append(session)
     print_debug(('Client connected',session.id),4)
 
@@ -337,7 +353,8 @@ def endSession(session):
     pass
   try:
     #remove any orderbook subscribtions
-    obs.remove(session)
+    #obs.remove(session)
+    unsubscribe_orderbook(session)
   except:
     pass
 
@@ -411,6 +428,33 @@ def refresh_address(address,session):
     wsemit('update','balance',{'address':address,'balance':balance_data},[session])
   else:
     add_address(message)
+
+def unsubscribe_orderbook(session,pmessage={}):
+  if 'pid1' in pmessage and 'pid2' in pmessage:
+    try:
+      pair=[int(pmessage['pid1']),int(pmessage['pid2']}]
+      pair.sort()
+      session.obp.remove(pair)
+      pid1 = pair[0]
+      pid2 = pair[1]
+      try:
+        obs[pid1][pid2].remove(self)
+        wsemit('unsubscribe','orderbook',{'status':'ok','pair':pair},[session])
+      except:
+        wsemit('unsubscribe','orderbook',{'status':'error','pair':pair,'error':'not subscribed'},[session])
+    except Exception as e:
+      wsemit('unsubscribe','orderbook',{'status':'error','error':str(e)},[session])
+  else:
+    for pair in session.obp:
+      pid1 = pair[0]
+      pid2 = pair[1]
+      try:
+        obs[pid1][pid2].remove(self)
+        wsemit('unsubscribe','orderbook',{'status':'ok','pair':pair},[session])
+      except:
+        pass
+    session.obp=[]
+
 
 if __name__ == '__main__':
     http_server = tornado.httpserver.HTTPServer(application)
