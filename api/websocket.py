@@ -43,7 +43,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif sub == 'orderbook':
               if 'pid1' in pmessage and 'pid2' in pmessage:
                 try:
-                  pair=[int(pmessage['pid1']),int(pmessage['pid2']]
+                  pair=[int(pmessage['pid1']),int(pmessage['pid2'])]
                   pair.sort()
                   self.obp.append(pair)
                   pid1 = pair[0]
@@ -432,7 +432,7 @@ def refresh_address(address,session):
 def unsubscribe_orderbook(session,pmessage={}):
   if 'pid1' in pmessage and 'pid2' in pmessage:
     try:
-      pair=[int(pmessage['pid1']),int(pmessage['pid2']]
+      pair=[int(pmessage['pid1']),int(pmessage['pid2'])]
       pair.sort()
       session.obp.remove(pair)
       pid1 = pair[0]
