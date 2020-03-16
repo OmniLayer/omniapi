@@ -416,9 +416,10 @@ if __name__ == '__main__':
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(1091)
     myIP = socket.gethostbyname(socket.gethostname())
-    print_debug(('*** Websocket Server Started at %s***' % myIP),4)
+    print_debug(('*** Websocket Server Started on %s***' % myIP),4)
     try:
       tornado.ioloop.IOLoop.instance().start()
     except (KeyboardInterrupt, SystemExit):
+      print_debug(('*** Websocket Server Stopping on %s***' % myIP),4)
       tornado.ioloop.IOLoop.instance().stop()
       sys.exit()
