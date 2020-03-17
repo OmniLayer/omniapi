@@ -95,6 +95,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 else:
                   del_address(addr,self)
                 wsemit('unsubscribe','balance',{'status':'ok'},[self])
+              except KeyError:
+                for a in self.addresses:
+                  del_address(a,self)
+                wsemit('unsubscribe','balance',{'status':'ok'},[self])
               except Exception as e:
                  wsemit('unsubscribe','balance',{'status':'error', 'error':str(e)},[self])
             else:
