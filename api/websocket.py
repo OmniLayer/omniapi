@@ -37,9 +37,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             if sub == 'valuebook':
               if self not in vbs:
                 vbs.append(self)
-                wsemit('subscribe','valuebook','ok',[self])
+                wsemit('subscribe','valuebook',{'status':'ok'},[self])
               else:
-                wsemit('subscribe','valuebook','already subscribed',[self])
+                wsemit('subscribe','valuebook',{'status':'already subscribed'},[self])
             elif sub == 'orderbook':
               if 'pid1' in pmessage and 'pid2' in pmessage:
                 try:
@@ -69,20 +69,20 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     add_address(a,self)
                 else:
                   add_address(addr,self)
-                  wsemit('subscribe','balance','ok',[self])
+                  wsemit('subscribe','balance',{'status':'ok'},[self])
               except Exception as e:
-                 wsemit('subscribe','balance','error: '+str(e),[self])
+                 wsemit('subscribe','balance',{'status':'error', 'error':str(e)},[self])
             else:
-              wsemit('subscribe',sub,'unknown channel',[self])
+              wsemit('subscribe',sub,{'status':'unknown channel'},[self])
 
           elif action == 'unsubscribe':
             sub = str(pmessage['channel'].lower())
             if sub == 'valuebook':
               if self in vbs:
                 vbs.remove(self)
-                wsemit('unsubscribe','valuebook','ok',[self])
+                wsemit('unsubscribe','valuebook',{'status':'ok'},[self])
               else:
-                wsemit('subscribe','valuebook','not subscribed',[self])
+                wsemit('subscribe','valuebook',{'status':'not subscribed'},[self])
             elif sub == 'orderbook':
               unsubscribe_orderbook(self,pmessage)
             elif sub == 'balance':
@@ -94,21 +94,21 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     del_address(a,self)
                 else:
                   del_address(addr,self)
-                wsemit('unsubscribe','balance','ok',[self])
+                wsemit('unsubscribe','balance',{'status':'ok'},[self])
               except Exception as e:
-                 wsemit('unsubscribe','balance','error: '+str(e),[self])
+                 wsemit('unsubscribe','balance',{'status':'error', 'error':str(e)},[self])
             else:
-              wsemit('unsubscribe',sub,'unknown channel',[self])
+              wsemit('unsubscribe',sub,{'status':'unknown channel'},[self])
 
           elif action == 'ping':
-            wsemit('ping','info','pong',[self])
+            wsemit('ping','info',{'status':'ok','data':'pong'},[self])
 
           elif action == 'logout':
             disconnect(self)
           else:
-            wsemit('info','unsupported request',str(message),[self])
+            wsemit('info','unsupported request',{'status':'error', 'error':str(message)},[self])
         except Exception as e:
-          wsemit('error','unknown',str(e),[self])
+          wsemit('info','unknown',{'status':'error','error':str(e)},[self])
 
     def on_close(self):
         #print 'connection closed'
@@ -262,7 +262,7 @@ def wsemit(event, channel, data, filter=None):
     msg = {
             'event':event, 
             'channel':channel, 
-            'data':data,
+            'response':data,
             'ts':tsm
           }
     if filter is None:
@@ -298,7 +298,7 @@ def emitter_thread():
             except Exception as e:
               print_debug(("error pushing balance data for",addr,str(e)),4)
         #push valuebook
-        wsemit('update','valuebook',valuebook,vbs)
+        wsemit('update','valuebook',{'data':valuebook},vbs)
         #push orderbook
         for pid1 in obs.keys():
           for pid2 in obs[pid1]:
@@ -306,7 +306,7 @@ def emitter_thread():
               try:
                 obdata = orderbook[pid1][pid2]
                 msg = {pid1:{pid2:obdata}}
-                wsemit('update','orderbook',msg,[session])
+                wsemit('update','orderbook',{'data':msg},[session])
               except:
                 pass
       except Exception as e:
