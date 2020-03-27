@@ -34,11 +34,12 @@ def generate_tx(tx_type):
 
     print_debug(("Form ",request.form),4)
 
-    #might add tx 00, 53, etc later;
     if tx_type == 50:
         expected_fields+=['ecosystem', 'property_type', 'previous_property_id', 'property_category', 'property_subcategory', 'property_name', 'property_url', 'property_data', 'number_properties']
     elif tx_type == 51:
         expected_fields+=['ecosystem', 'property_type', 'previous_property_id', 'property_category', 'property_subcategory', 'property_name', 'property_url', 'property_data', 'currency_identifier_desired', 'number_properties', 'deadline', 'earlybird_bonus', 'percentage_for_issuer']
+    elif tx_type == 53:
+        expected_fields+=['property_id']
     elif tx_type == 54:
         expected_fields+=['ecosystem', 'property_type', 'previous_property_id', 'property_category', 'property_subcategory', 'property_name', 'property_url', 'property_data']
     elif tx_type == 0:
