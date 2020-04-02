@@ -139,3 +139,35 @@ def commits():
     lExpire(ckey,3600)
 
   return jsonify(json_response)
+
+
+@app.route('/featureactivations')
+@ratelimit(limit=10, per=60)
+def featureactivations():
+  rev=raw_revision()
+  lb=rev['last_block']
+
+  ckey="info:stats:featureactivations:"+str(lb)
+  try:
+    json_response = json.loads(lGet(ckey))
+    print_debug(("cache looked success",ckey),7)
+  except:
+    print_debug(("cache looked failed",ckey),7)
+    ROWS=dbSelect("select fa.featureid, fa.featurename, fa.activationblock, fa.minimumversion, fa.pending, tx.txhash "
+                  "from featureactivations fa, transactions tx where fa.lasttxdbserialnum = tx.txdbserialnum order by fa.featureid")
+
+    response=[]
+    for f in ROWS:
+      response.append({
+        'featureid': int(f[0]),
+        'featurename': f[1],
+        'activationblock': int(f[2]),
+        'minimumversion': int(f[3]),
+        'pending': f[4],
+        'txhash': f[5]
+      })
+    json_response = {'activations': response}
+    #cache 60 min
+    lSet(ckey,json.dumps(json_response))
+    lExpire(ckey,3600)
+  return jsonify(json_response)
