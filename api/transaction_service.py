@@ -173,7 +173,9 @@ def getaddresshistraw(address,page):
     except:
       page=1
 
-    pcount=getaddresstxcount(address)
+    atc=getaddresstxcount(address)
+    pcount=atc['pages']
+    txcount=atc['txcount']
     adjpage=page
     adjpage-=1
     if adjpage<0:
@@ -191,30 +193,6 @@ def getaddresshistraw(address,page):
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-
-      #raw=getrawpending()
-      #try:
-      #  if address in raw['index']:
-      #    pending=raw['index'][address]
-      #    count=len(pending)
-
-      #    if count > 0:
-      #      max=offset+10
-      #      if max > count:
-      #        max = count
-
-      #      for x in range(offset,max):
-      #        toadd.append(pending[x])
-
-      #      limit-=len(toadd)
-      #      offset -= count
-      #      if offset < 0:
-      #        offset = 0
-      #      if limit < 0:
-      #        limit = 0
-      #except Exception as e:
-      #  print_debug(("getaddresshistraw pending inject failed",e),2)
-      #  pass
 
       ROWS=[]
       if limit > 0:
@@ -238,7 +216,7 @@ def getaddresshistraw(address,page):
         pass
 
     cachetxs(txlist)
-    response = { 'address': address, 'transactions': txlist , 'pages': pcount, 'current_page': page }
+    response = { 'address': address, 'transactions': txlist , 'pages': pcount, 'current_page': page , 'txcount': txcount }
 
     return response
 
@@ -326,11 +304,11 @@ def getaddresstxcount(address,limit=10):
     lSet(ckey,count)
     lExpire(ckey,180)
 
-  ret=(count/limit)
+  pages=(count/limit)
   if (count % limit > 0):
-    ret+=1
+    pages+=1
 
-  return ret
+  return {'pages':pages,'txcount':count}
 
 
 #@app.route('/general/')
