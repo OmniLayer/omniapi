@@ -7,7 +7,7 @@ import random
 
 
 def send_form_response(response_dict):
-    expected_fields=['from_address', 'to_address', 'amount', 'currency', 'fee']
+    expected_fields=['from_address', 'to_address', 'amount', 'fee']
     # if marker is True, send dust to marker (for payments of sells)
     for field in expected_fields:
         if not response_dict.has_key(field):
@@ -16,6 +16,9 @@ def send_form_response(response_dict):
         if len(response_dict[field]) != 1:
             info('Multiple values for field '+field)
             return (None, 'Multiple values for field '+field)
+
+    if 'currency' in response_dict and (response_dict['currency'] not in ['BTC','btc',0,'0']):
+        return (None, "Endpoint does not support that currency")
 
     if 'testnet' in response_dict and ( response_dict['testnet'][0] in ['true', 'True'] ):
         testnet =True
@@ -47,20 +50,6 @@ def send_form_response(response_dict):
     btc_fee=response_dict['fee'][0]
     if float(btc_fee)<0 or float( btc_fee )>max_currency_value:
         return (None, 'Invalid fee: ' + str( btc_fee ) + ', max: ' + str( max_currency_value ))
-    currency=response_dict['currency'][0]
-    if currency=='OMNI':
-        currency_id=1
-    else:
-        if currency=='T-OMNI':
-            currency_id=2
-        else:
-            if currency=='BTC':
-                currency_id=0
-            else:
-                if currency[:2] == 'SP':
-                    currency_id=int(currency[2:])
-                else:
-                    return (None, 'Invalid currency')
 
     marker_addr=None
     try:
@@ -93,7 +82,7 @@ def send_form_response(response_dict):
 
     try:
       if pubkey != None:
-          tx_to_sign_dict=prepare_send_tx_for_signing( pubkey, to_addr, marker_addr, currency_id, amount, to_satoshi(btc_fee), magicbyte)
+          tx_to_sign_dict=prepare_send_tx_for_signing( pubkey, to_addr, marker_addr, amount, to_satoshi(btc_fee), magicbyte)
       else:
           # hack to show error on page
           tx_to_sign_dict['sourceScript']=response_status
@@ -107,9 +96,9 @@ def send_form_response(response_dict):
 
 
 # simple send and bitcoin send (with or without marker)
-def prepare_send_tx_for_signing(from_address, to_address, marker_address, currency_id, amount, btc_fee=500000, magicbyte=0):
-    print_debug('*** send.py tx for signing: from_address, to_address, marker_address, currency_id, amount, btc_fee, magicbyte',4)
-    print_debug((from_address, to_address, marker_address, currency_id, amount, btc_fee, magicbyte),4)
+def prepare_send_tx_for_signing(from_address, to_address, marker_address, amount, btc_fee=500000, magicbyte=0):
+    print_debug('*** send.py tx for signing: from_address, to_address, marker_address, amount, btc_fee, magicbyte',4)
+    print_debug((from_address, to_address, marker_address, amount, btc_fee, magicbyte),4)
 
     # consider a more general func that covers also sell offer and sell accept
 
@@ -128,15 +117,12 @@ def prepare_send_tx_for_signing(from_address, to_address, marker_address, curren
     satoshi_amount=int( amount )
     fee=int( btc_fee )
 
-    # differ bitcoin send and other currencies
-    if currency_id == 0: # bitcoin
-        # normal bitcoin send
-        required_value=satoshi_amount
-        # if marker is needed, allocate dust for the marker
-        if marker_address != None:
-            required_value+=1*dust_limit
-    else:
-        raise Exception({ "status": "NOT OK", "error": "This Endpoint for BTC transactions only" })
+    # normal bitcoin send
+    required_value=satoshi_amount
+    # if marker is needed, allocate dust for the marker
+    if marker_address != None:
+        required_value+=1*dust_limit
+
     #------------------------------------------- New utxo calls
     fee_total_satoshi=required_value+fee
     dirty_txes = bc_getutxo( from_address, fee_total_satoshi )
@@ -165,57 +151,15 @@ def prepare_send_tx_for_signing(from_address, to_address, marker_address, curren
         info('Error not enough BTC to generate tx - negative change')
         raise Exception('This address must have enough BTC for miner fees and protocol transaction fees')
 
-    if currency_id == 0: # bitcoin
-        # create a normal bitcoin transaction (not mastercoin)
-        # dust to marker if required
-        # amount to to_address
-        # change to change
-
-        if marker_address != None:
-            inputs_outputs+=' -o '+marker_address+':'+str(dust_limit)
-            outs.append(marker_address+':'+str(dust_limit))
-        inputs_outputs+=' -o '+to_address+':'+str(satoshi_amount)
-        outs.append(to_address+':'+str(satoshi_amount))
-
-    else:
-        # create multisig tx
-        # simple send - multisig
-        # dust to exodus
-        # dust to to_address
-        # double dust to rawscript "1 [ change_address_pub ] [ dataHex_obfuscated ] 2 checkmultisig"
-        # change to change
-
-        dataSequenceNum=1
-        dataHex = '{:02x}'.format(0) + '{:02x}'.format(dataSequenceNum) + \
-                '{:08x}'.format(tx_type) + '{:08x}'.format(currency_id) + \
-                '{:016x}'.format(satoshi_amount) + '{:06x}'.format(0)
-        dataBytes = dataHex.decode('hex_codec')
-        dataAddress = hash_160_to_bc_address(dataBytes[1:21])
-
-        # create the BIP11 magic
-        change_address_compressed_pub=get_compressed_pubkey_format( change_address_pub )
-        obfus_str=get_sha256(from_address)[:62]
-        padded_dataHex=dataHex[2:]+''.zfill(len(change_address_compressed_pub)-len(dataHex))[2:]
-        dataHex_obfuscated=get_string_xor(padded_dataHex,obfus_str).zfill(62)
-        random_byte=hex(random.randrange(0,255)).strip('0x').zfill(2)
-        hacked_dataHex_obfuscated='02'+dataHex_obfuscated+random_byte
-        info('plain dataHex: --'+padded_dataHex+'--')
-        info('obfus dataHex: '+hacked_dataHex_obfuscated)
-        valid_dataHex_obfuscated=get_nearby_valid_pubkey(hacked_dataHex_obfuscated)
-        info('valid dataHex: '+valid_dataHex_obfuscated)
-        script_str='1 [ '+change_address_pub+' ] [ '+valid_dataHex_obfuscated+' ] 2 checkmultisig'
-        info('change address is '+changeAddress)
-        info('too_address is '+to_address)
-        info('total inputs value is '+str(inputs_total_value))
-        info('fee is '+str(fee))
-        info('dust limit is '+str(dust_limit))
-        info('BIP11 script is '+script_str)
-        dataScript=rawscript(script_str)
-
-        inputs_outputs+=' -o '+exodus_address+':'+str(dust_limit) + \
-                        ' -o '+to_address+':'+str(dust_limit) + \
-                        ' -o '+dataScript+':'+str(2*dust_limit)
-
+    # create a normal bitcoin transaction (not mastercoin)
+    # dust to marker if required
+    # amount to to_address
+    # change to change
+    if marker_address != None:
+        inputs_outputs+=' -o '+marker_address+':'+str(dust_limit)
+        outs.append(marker_address+':'+str(dust_limit))
+    inputs_outputs+=' -o '+to_address+':'+str(satoshi_amount)
+    outs.append(to_address+':'+str(satoshi_amount))
 
     if change_value >= dust_limit:
         inputs_outputs+=' -o '+changeAddress+':'+str(change_value)
