@@ -296,7 +296,7 @@ def emitter_thread():
           for session in abs[addr]:
             try:
               if addr in balances:
-                wsemit('update',"balance",{'address':str(addr),'balances':balances[addr]},[session])
+                wsemit('update',"balance",{'address':str(addr),'balance':balances[addr]},[session])
               else:
                 print_debug((addr,"balance not loaded yet"),4)
             except Exception as e:
