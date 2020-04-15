@@ -44,18 +44,19 @@ class WSHandler(tornado.websocket.WebSocketHandler):
               if 'pid1' in pmessage and 'pid2' in pmessage:
                 try:
                   pair=[int(pmessage['pid1']),int(pmessage['pid2'])]
-                  pair.sort()
-                  self.obp.append(pair)
-                  pid1 = pair[0]
-                  pid2 = pair[1]
-                  try:
-                    obs[pid1][pid2].append(self)
-                  except:
+                  toAdd=[sorted(pair),sorted(pair,reverse=True)]
+                  for pair in toAdd:
+                    self.obp.append(pair)
+                    pid1 = pair[0]
+                    pid2 = pair[1]
                     try:
-                      obs[pid1][pid2]=[self]
+                      obs[pid1][pid2].append(self)
                     except:
-                      obs[pid1]={pid2:[self]}
-                  wsemit('subscribe','orderbook',{'status':'ok','pair':pair},[self])
+                      try:
+                        obs[pid1][pid2]=[self]
+                      except:
+                        obs[pid1]={pid2:[self]}
+                  wsemit('subscribe','orderbook',{'status':'ok','pair': sorted(pair)},[self])
                 except Exception as e:
                   wsemit('subscribe','orderbook',{'status':'error','pair':pair,'error':str(e)},[self])
               else:
@@ -312,6 +313,8 @@ def emitter_thread():
                 wsemit('update','orderbook',{'data':msg},[session])
               except:
                 pass
+        #Heartbeat
+        wsemit('info','session','hb')
       except Exception as e:
         print_debug(("emitter error:",str(e)),4)
 
@@ -437,15 +440,16 @@ def unsubscribe_orderbook(session,pmessage={}):
   if 'pid1' in pmessage and 'pid2' in pmessage:
     try:
       pair=[int(pmessage['pid1']),int(pmessage['pid2'])]
-      pair.sort()
-      session.obp.remove(pair)
-      pid1 = pair[0]
-      pid2 = pair[1]
-      try:
-        obs[pid1][pid2].remove(session)
-        wsemit('unsubscribe','orderbook',{'status':'ok','pair':pair},[session])
-      except:
-        wsemit('unsubscribe','orderbook',{'status':'error','pair':pair,'error':'not subscribed'},[session])
+      toRemove=[sorted(pair),sorted(pair,reverse=True)]
+      for pair in toRemove:
+        session.obp.remove(pair)
+        pid1 = pair[0]
+        pid2 = pair[1]
+        try:
+          obs[pid1][pid2].remove(session)
+          wsemit('unsubscribe','orderbook',{'status':'ok','pair':pair},[session])
+        except:
+          wsemit('unsubscribe','orderbook',{'status':'error','pair':pair,'error':'not subscribed'},[session])
     except Exception as e:
       wsemit('unsubscribe','orderbook',{'status':'error','error':str(e)},[session])
   else:
