@@ -174,7 +174,7 @@ class OmniTransaction:
         if self.tx_type == 51:
             return getissuancecrowdsalePayload(self.rawdata['ecosystem'],self.rawdata['property_type'],self.rawdata['previous_property_id'],self.rawdata['property_category'],self.rawdata['property_subcategory'],self.rawdata['property_name'],self.rawdata['property_url'],self.rawdata['property_data'],self.rawdata['currency_identifier_desired'],self.rawdata['number_properties'], self.rawdata['deadline'], self.rawdata['earlybird_bonus'], self.rawdata['percentage_for_issuer'])['result']
         if self.tx_type == 53:
-            return getclosecrowdsalePayload(self.rawdata['property_id'])['result']
+            return getclosecrowdsalePayload(self.rawdata['currency_identifier'])['result']
         if self.tx_type == 54:
             return getissuancemanagedPayload(self.rawdata['ecosystem'],self.rawdata['property_type'],self.rawdata['previous_property_id'],self.rawdata['property_category'],self.rawdata['property_subcategory'],self.rawdata['property_name'],self.rawdata['property_url'],self.rawdata['property_data'])['result']
         if self.tx_type == 55:

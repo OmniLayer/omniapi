@@ -3,6 +3,7 @@ import os, sys, tempfile, json
 import glob,time
 from common import *
 from decimal import *
+import re
 
 #data_dir_root = os.environ.get('DATADIR')
 
