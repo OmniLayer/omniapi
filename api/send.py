@@ -4,6 +4,13 @@ from blockchain_utils import *
 from common import *
 from debug import *
 import random
+import config
+
+try:
+  TESTNET = (config.TESTNET == 1)
+except:
+  TESTNET = False
+
 
 
 def send_form_response(response_dict):
@@ -17,10 +24,13 @@ def send_form_response(response_dict):
             info('Multiple values for field '+field)
             return (None, 'Multiple values for field '+field)
 
+    if "." in response_dict['amount']:
+      return (None, "Invalid Format. Amount should be specified in satoshis with no decimal point")
+
     if 'currency' in response_dict and (response_dict['currency'] not in ['BTC','btc',0,'0']):
         return (None, "Endpoint does not support that currency")
 
-    if 'testnet' in response_dict and ( response_dict['testnet'][0] in ['true', 'True'] ):
+    if TESTNET or ('testnet' in response_dict and ( response_dict['testnet'][0] in ['true', 'True'] )):
         testnet =True
         magicbyte = 111
         exodus_address='mpexoDuSkGGqvqrkrjiFng38QPkJQVFyqv'
@@ -39,11 +49,11 @@ def send_form_response(response_dict):
     print_debug(response_dict,4)
 
     from_addr=response_dict['from_address'][0]
-    if not is_valid_bitcoin_address_or_pubkey(from_addr):
-        return (None, 'From address is neither bitcoin address nor pubkey')
+    #if not is_valid_bitcoin_address_or_pubkey(from_addr):
+    #    return (None, 'From address is neither bitcoin address nor pubkey')
     to_addr=response_dict['to_address'][0]
-    if not is_valid_bitcoin_address(to_addr):
-        return (None, 'To address is not a bitcoin address')
+    #if not is_valid_bitcoin_address(to_addr):
+    #    return (None, 'To address is not a bitcoin address')
     amount=response_dict['amount'][0]
     if float(amount)<0 or float( from_satoshi(amount))>max_currency_value:
         return (None, 'Invalid amount: ' + str( from_satoshi( amount )) + ', max: ' + str( max_currency_value ))
