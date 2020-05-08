@@ -672,16 +672,21 @@ def welcome_email(user_email, wallet, uuid):
     #Encoders.encode_base64(wfile)
     #wfile.add_header('Content-Disposition', 'attachment', filename=uuid+'.json')
     #msg.attach(wfile)
-    smtp = smtplib.SMTP(config.SMTPDOMAIN, config.SMTPPORT)
-    if config.SMTPUSER is not None and config.SMTPPASS is not None:
-      if config.SMTPSTARTTLS:
-        smtp.starttls()
-      smtp.login(config.SMTPUSER, config.SMTPPASS)
-    smtp.sendmail(email_from, user_email, msg.as_string())
-    smtp.close()
+    try:
+      smtp = smtplib.SMTP(config.SMTPDOMAIN, config.SMTPPORT)
+      if config.SMTPUSER is not None and config.SMTPPASS is not None:
+        if config.SMTPSTARTTLS:
+          smtp.starttls()
+        smtp.login(config.SMTPUSER, config.SMTPPASS)
+      smtp.sendmail(email_from, user_email, msg.as_string())
+      smtp.close()
+    except:
+      pass
 
 
 def email_wallet(user_email, wallet, uuid):
+  #decomissioned
+  return None
   if user_email is not None:
     msg = MIMEMultipart('alternative')
     msg['From'] = email_from
