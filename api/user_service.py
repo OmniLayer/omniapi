@@ -189,6 +189,9 @@ def update():
   question=unicode(str(request.form['question'])[:64],errors='replace') if 'question' in request.form else None
   answer=unicode(str(request.form['answer'])[:32],errors='replace') if 'answer' in request.form else None
 
+  location=str(request.form['location']) if 'location' in request.form else None
+  consent=str(request.form['consent']) if 'consent' in request.form else None
+
   if config.LOCALDEVBYPASSDB:
     session_challenge = session + "_challenge"
     session_pubkey = session + "_public_key"
@@ -252,6 +255,8 @@ def update():
       ret=write_wallet(uuid, wallet, email)
     else:
       ret=write_wallet(uuid, wallet)
+  elif None not in [location,consent]:
+    set_setting(uuid,'geo',{'consent':consent,'location':location})
   elif None not in [token,action]:
     ret=update_mfa(uuid,token,action,secret)
     if ret and action == 'add':
@@ -343,10 +348,19 @@ def login():
       except Exception as e:
         print_debug(("DEBUG: USER_SERVICE: LOGIN: couldn't load user setting 'ASQ', error:",e),8)
 
+  consent=None
+  location=None
+  geo=get_setting(uuid,'geo')
+  if geo not in ['None',None]:
+    consent=geo['consent']
+    location=geo['location']
+
   response = {
       'wallet': wallet_data,
       'mfa': mfa,
-      'asq':question
+      'asq':question,
+      'location':location,
+      'consent':consent
   }
 
   return jsonify(response)
