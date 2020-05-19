@@ -124,7 +124,7 @@ def getaddresshistpage(page=0):
 
 
 @app.route('/address', methods=['POST'])
-@ratelimit(limit=5, per=30)
+@ratelimit(limit=10, per=30)
 def getaddresshist():
     try:
         address = str(re.sub(r'\W+', '', request.form['addr'] ) ) #check alphanumeric
@@ -600,13 +600,13 @@ def getblockhash(blocknumber):
 
 
 @app.route('/blocks/')
-@ratelimit(limit=5, per=10)
+@ratelimit(limit=10, per=10)
 def getblockslisthelper():
   return getblockslist()
 
 
 @app.route('/blocks/<lastblock>', methods=['GET','POST'])
-@ratelimit(limit=5, per=10)
+@ratelimit(limit=10, per=10)
 def getblockslist(lastblock=0):
   return jsonify(getblockslistraw(lastblock))
 
