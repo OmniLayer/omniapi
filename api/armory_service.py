@@ -4,6 +4,7 @@ from decimal import Decimal
 #from flask import Flask, request, jsonify, abort, json, make_response
 from flask_rate_limit import *
 from rpcclient import *
+import config
 
 sys.path.append("/usr/local/lib/armory/")
 from armoryengine.ALL import *
@@ -11,11 +12,24 @@ from armoryengine.ALL import *
 app = Flask(__name__)
 app.debug = True
 
+try:
+  TESTNET = (config.TESTNET == 1)
+except:
+  TESTNET = False
+
 @app.route('/getunsigned', methods=['POST'])
 @ratelimit(limit=15, per=60)
 def generate_unsigned():
-    unsigned_hex = request.form['unsigned_hex']
-    pubkey = request.form['pubkey']
+    try:
+      unsigned_hex = request.form['unsigned_hex']
+    except:
+      return jsonify({'error':'required field "unsigned_hex" not in form'})
+
+    try:
+      pubkey = request.form['pubkey']
+    except:
+      return jsonify({'error':'required field "pubkey" not in form'})
+
     #ripemd160 = hashlib.new('ripemd160')
     #ripemd160.update(hashlib.sha256(hex_to_binary(pubkey)).digest())
     #pubKeyHash = binary_to_hex(ripemd160.digest())
@@ -23,9 +37,14 @@ def generate_unsigned():
         tnet_ = request.form['testnet']
     except KeyError, e:
         tnet_ = 0
+
+    if tnet_ or TESTNET:
+      tnet = 'fabfb5da'
+    else:
+      tnet = 'f9beb4d9'
+
     #Translate raw txn
     decoded_tx = decoderawtransaction(unsigned_hex)['result']
-    tnet = 'fabfb5da' if tnet_ else 'f9beb4d9'
 
     keys = [{ 'dersighex': '', 'pubkeyhex': pubkey, 'wltlochex': '' }]
 
