@@ -8,12 +8,14 @@ import re
 #data_dir_root = os.environ.get('DATADIR')
 
 def offers_response(response_dict):
-    expected_fields=['type','currencyType']
+    expected_fields=['type']
     for field in expected_fields:
-        if not response_dict.has_key(field):
-            return (None, 'No field '+field+' in response dict '+str(response_dict))
-        if len(response_dict[field]) != 1:
-            return (None, 'Multiple values for field '+field)
+      if not response_dict.has_key(field):
+        return (None, 'No field '+field+' in response dict '+str(response_dict))
+      if len(response_dict[field]) != 1:
+        return (None, 'Multiple values for field '+field)
+
+    type = response_dict['type'][0].upper()
 
     filterActive = True
     if 'onlyActive' in response_dict:
@@ -23,12 +25,19 @@ def offers_response(response_dict):
       except:
         return (None, 'Query field "onlyActive" accepts value true or false')
 
-    if response_dict['type'][0].upper() == "TIME":
-        time = int(response_dict['time'][0]) if 'time' in response_dict else 86400
-        data = filterOffersByTime( response_dict['currencyType'][0] , time ,filterActive )
+    if type == "TIME":
+      expected_fields=['currencyType']
+      for field in expected_fields:
+        if not response_dict.has_key(field):
+          return (None, 'No field '+field+' in response dict '+str(response_dict))
+        if len(response_dict[field]) != 1:
+          return (None, 'Multiple values for field '+field)
+
+      time = int(response_dict['time'][0]) if 'time' in response_dict else 86400
+      data = filterOffersByTime( response_dict['currencyType'][0] , time ,filterActive )
     else:
-        address_arr = json.loads(response_dict['address'][0])
-        data = filterOffers(address_arr, filterActive) if type( address_arr ) == type( [] ) else { 'ERR': 'Address field must be a list or array type' }
+      address_arr = json.loads(response_dict['address'][0])
+      data = filterOffers(address_arr, filterActive) if type( address_arr ) == type( [] ) else { 'ERR': 'Address field must be a list or array type' }
 
     response_status='OK'
     response='{"status":"'+response_status+'", "data":'+ str(json.dumps(data)) +'}'
