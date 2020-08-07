@@ -63,7 +63,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 wsemit('subscribe','orderbook',{'status':'error','error':'missing property id key: pid1 or pid2'},[self])
             elif sub == 'balance':
               try:
-                addr = pmessage['data']
+                addr = pmessage['data'].replace('"','')
                 if ',' in addr:
                   addrlist=addr.split(',')
                   for a in addrlist:
@@ -147,6 +147,15 @@ users = []
 abs = {} #addressbook subscribers { '<address>':[users]}
 vbs = [] #valuebook subscribers
 obs = {} #orderbook subscribers { [pid1]: {[pid2]: [users]} }
+
+#check for testnet setup
+try:
+ if config.TESTNET == 1:
+   TESTNET = True
+ else:
+   TESTNET = False
+except:
+  TESTNET = False
 
 def get_real_address(session):
   ret=session.request.remote_ip
@@ -382,7 +391,8 @@ def disconnect(session):
 def add_address(address,session):
   global addresses, maxaddresses
   address=str(address)
-  if config.TESTNET == 1:
+
+  if TESTNET:
     if address[0] in ['m','n','2']:
       pass
     else:
@@ -394,6 +404,7 @@ def add_address(address,session):
     else:
       wsemit('subscribe','balance',{'address':address,'status':'invalid address'}, [session])
       return False
+
   if address not in session.addresses:
     session.addresses.append(address)
     if address in addresses and addresses[address] > 0:
@@ -447,7 +458,7 @@ def refresh_address(address,session):
     balance_data=get_balancedata(address)
     wsemit('update','balance',{'address':address,'balance':balance_data},[session])
   else:
-    add_address(message)
+    add_address(address,[session])
 
 def unsubscribe_orderbook(session,pmessage={}):
   if 'pid1' in pmessage and 'pid2' in pmessage:
