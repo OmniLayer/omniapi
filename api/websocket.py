@@ -69,8 +69,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                   for a in addrlist:
                     add_address(a,self)
                 else:
-                  add_address(addr,self)
-                  wsemit('subscribe','balance',{'status':'ok'},[self])
+                  if add_address(addr,self):
+                    wsemit('subscribe','balance',{'status':'ok'},[self])
               except Exception as e:
                  wsemit('subscribe','balance',{'status':'error', 'error':str(e)},[self])
             else:
@@ -381,8 +381,19 @@ def disconnect(session):
 #@socketio.on("address:add", namespace='/balance')
 def add_address(address,session):
   global addresses, maxaddresses
-
   address=str(address)
+  if config.TESTNET == 1:
+    if address[0] in ['m','n','2']:
+      pass
+    else:
+      wsemit('subscribe','balance',{'address':address,'status':'invalid address'}, [session])
+      return False
+  else:
+    if address[0] in ['1','3','b']:
+      pass
+    else:
+      wsemit('subscribe','balance',{'address':address,'status':'invalid address'}, [session])
+      return False
   if address not in session.addresses:
     session.addresses.append(address)
     if address in addresses and addresses[address] > 0:
@@ -399,9 +410,11 @@ def add_address(address,session):
     except:
       abs[address] = [session]
   if session not in vbs:
+    #add session to valuebook
     vbs.append(session)
   if len(addresses) > maxaddresses:
     maxaddresses=len(addresses)
+  return True
 
 
 def del_address(address,session):
