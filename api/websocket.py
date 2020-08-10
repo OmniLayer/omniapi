@@ -351,7 +351,7 @@ def balance_connect(session):
     wsemit('info','session',{'status':'connected','id':str(session.id)},[session])
 
 def endSession(session):
-  global addresses, abs, vbs, 
+  global addresses, abs, vbs
 
   try:
     for address in session.addresses:
