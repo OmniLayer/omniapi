@@ -168,6 +168,8 @@ def get_real_address(session):
   return ret
 
 def update_balances():
+  global addresses, balances
+
   try:
     while True:
       time.sleep(10)
@@ -191,6 +193,8 @@ def update_balances():
     print_debug(("error updating balances:",str(e)),4)
 
 def update_orderbook():
+  global orderbook, lasttrade, lastpending
+
   try:
     while True:
       time.sleep(10)
@@ -206,6 +210,8 @@ def update_orderbook():
     print_debug(("error updating orderbook:",str(e)),4)
 
 def update_valuebook():
+  global valuebook
+
   try:
     pmaxid=0
     while True:
@@ -239,6 +245,8 @@ def update_valuebook():
     print_debug(("error updating valuebook:",str(e)),4)
 
 def watchdog_thread():
+    global emitter, btrhead, vthread, othread
+
     while True:
       try:
         time.sleep(10)
@@ -324,6 +332,8 @@ def emitter_thread():
 
 #@socketio.on('connect', namespace='/balance')
 def balance_connect(session):
+    global users, clients, maxclients, watchdog
+
     session.id = str(uuid.uuid4())
     session.addresses=[]
     session.obp=[]
@@ -341,6 +351,8 @@ def balance_connect(session):
     wsemit('info','session',{'status':'connected','id':str(session.id)},[session])
 
 def endSession(session):
+  global addresses, abs, vbs, 
+
   try:
     for address in session.addresses:
       if addresses[address] == 1:
@@ -370,6 +382,8 @@ def endSession(session):
 
 #@socketio.on('disconnect', namespace='/balance')
 def disconnect(session):
+    global clients, users
+
     print_debug(('Client disconnected',session.id),4)
     clients -=1
     #make sure we don't screw up the counter if reloading mid connections
@@ -381,6 +395,8 @@ def disconnect(session):
 
 #@socketio.on("address:add", namespace='/balance')
 def add_address(address,session):
+  global addresses, abs, vbs, maxaddresses
+ 
   address=str(address)
 
   if TESTNET:
@@ -420,6 +436,8 @@ def add_address(address,session):
 
 
 def del_address(address,session):
+  global addresses, abs, vbs
+
   address=str(address)
   if address in session.addresses:
     session.addresses.remove(address)
@@ -448,6 +466,8 @@ def refresh_address(address,session):
     add_address(address,[session])
 
 def unsubscribe_orderbook(session,pmessage={}):
+  global obs
+
   if 'pid1' in pmessage and 'pid2' in pmessage:
     try:
       pair=[int(pmessage['pid1']),int(pmessage['pid2'])]
