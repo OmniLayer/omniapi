@@ -245,7 +245,7 @@ def update_valuebook():
     print_debug(("error updating valuebook:",str(e)),4)
 
 def watchdog_thread():
-    global emitter, btrhead, vthread, othread
+    global emitter, bthread, vthread, othread
 
     while True:
       try:
