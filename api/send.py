@@ -3,6 +3,7 @@ import os, sys
 from blockchain_utils import *
 from common import *
 from debug import *
+from decimal import Decimal
 import random
 import config
 
