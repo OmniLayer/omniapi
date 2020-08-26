@@ -5,10 +5,11 @@ from property_service import getpropertyraw
 from cacher import *
 from common import *
 from validator import isvalid
+from config import TESTNET
 
 def get_balancedata(address):
     addr = re.sub(r'\W+', '', address) #check alphanumeric
-    if isvalid(addr):
+    if isvalid(addr) or config.TESTNET==1:
       btcdata = bc_getbalance(addr)
       return getBalanceData(address,btcdata)
     else:
