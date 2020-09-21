@@ -1,4 +1,5 @@
 from hashlib import sha256
+import config
 
 BTC_B58Chars = b'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
@@ -7,18 +8,25 @@ if bytes == str:  # python2
 else:  # python3
     bseq = bytes
 
+try:
+  TESTNET = (config.TESTNET == 1)
+except:
+  TESTNET = False
+
 
 def isvalid(address):
+    ret = False
     try:
-      if int(address[0]) in [1,3]:
+      if str(address[0]) in ['1','3']:
         try:
-          return b58decode_check(address) != None
+          ret = (b58decode_check(address) != None)
         except:
-          return False
-      else:
-        return False
+          pass
+      elif TESTNET and str(address[0]) in ['m','n','2']:
+        ret = (b58decode_check(address) != None)
     except:
-      return False
+      pass
+    return ret
 
 def scrub_input(v):
     if isinstance(v, str) and not isinstance(v, bytes):
