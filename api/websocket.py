@@ -235,9 +235,10 @@ def update_valuebook():
             else:
               symbol="SP"+str(pid2)
           elif p1=='Fiat' and p2=='Bitcoin':
-            symbol="BTC"
-            if pid1>0 or pid2>0:
-              symbol=symbol+str(name)
+            #symbol="BTC"
+            #if pid1>0 or pid2>0:
+            #  symbol=symbol+str(name)
+            symbol="BTC"+str(name)
           else:
             symbol=name+str(pid2)
           valuebook[symbol]={"price":rate,"symbol":symbol,"timestamp":tstamp, "source":source}
