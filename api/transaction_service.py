@@ -48,7 +48,7 @@ def estimatefees(addr):
 
     amount=ccb+mfee+amountBTC
 
-    balance=bc_getbalance(address,True)
+    balance=bc_getbalance(address)
     if 'bal' in balance and balance['bal']>0:
       unspent=bc_getutxo(addr,amount)
       if 'utxos' in unspent:

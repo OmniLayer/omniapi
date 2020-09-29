@@ -198,3 +198,55 @@ def createrawtx_reference(destination, rawtx=None):
 def createrawtx_change(rawtx, previnputs, destination, fee):
     return host.call("omni_createrawtx_change", rawtx, previnputs, destination, str(fee))
  
+
+#bitcore calls
+
+def getaddresstxids(address):
+    #Returns the txids for an address(es)
+    if isinstance(address,list):
+      payload = {"addresses": address}
+    else:
+      payload = {"addresses": [address]}
+    return host.call("getaddresstxids", payload)
+
+def getaddressdeltas(address):
+    #Returns all changes for an address
+    if isinstance(address,list):
+      payload = {"addresses": address}
+    else:
+      payload = {"addresses": [address]}
+    return host.call("getaddressdeltas", payload)
+
+
+def getaddressbalance(address):
+    #Returns the balance for an address(es)
+    if isinstance(address,list):
+      payload = {"addresses": address}
+    else:
+      payload = {"addresses": [address]}
+    return host.call("getaddressbalance", payload)
+
+def getaddressutxos(address):
+    #Returns all unspent outputs for an address
+    if isinstance(address,list):
+      payload = {"addresses": address}
+    else:
+      payload = {"addresses": [address]}
+    return host.call("getaddressutxos", payload)
+
+def getaddressmempool(address):
+    #Returns all mempool deltas for an address
+    if isinstance(address,list):
+      payload = {"addresses": address}
+    else:
+      payload = {"addresses": [address]}
+    return host.call("getaddressmempool", payload)
+
+def getblockhashes(start,end):
+    #Returns array of hashes of blocks within the timestamp range provided
+    return host.call("getblockhashes", start, end)
+
+def getspentinfo(txid,index):
+    #Returns the txid and index where an output is spent
+    payload = {"txid":txid,"index":index}
+    return host.call("getspentinfo", payload)

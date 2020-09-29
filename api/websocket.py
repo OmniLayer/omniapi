@@ -15,6 +15,7 @@ from balancehelper import *
 from omnidex import getOrderbook
 from values_service import getValueBook
 from cacher import *
+from validator import *
 import config
 
 
@@ -400,18 +401,11 @@ def add_address(address,session):
  
   address=str(address)
 
-  if TESTNET:
-    if address[0] in ['m','n','2']:
-      pass
-    else:
-      wsemit('subscribe','balance',{'address':address,'status':'invalid address'}, [session])
-      return False
+  if isvalid(address):
+    pass
   else:
-    if address[0] in ['1','3','b']:
-      pass
-    else:
-      wsemit('subscribe','balance',{'address':address,'status':'invalid address'}, [session])
-      return False
+    wsemit('subscribe','balance',{'address':address,'status':'invalid address'}, [session])
+    return False
 
   if address not in session.addresses:
     session.addresses.append(address)

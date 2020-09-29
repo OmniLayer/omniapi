@@ -2,7 +2,7 @@ import simplejson
 import requests
 #import decimal
 import json, re
-from rpcclient import gettxout
+from rpcclient import *
 from cacher import *
 from debug import *
 from common import *
@@ -20,6 +20,102 @@ except:
   TESTNET = False
 
 def bc_getutxo(address, ramount):
+  avail=0
+  try:
+    r=getaddressutxos(address)
+    if r['error'] == None:
+      retval=[]
+      response = r['result']
+      unspents = response['unspent_outputs']
+      for tx in sorted(unspents, key = lambda i: i['satoshis'],reverse=True):
+        txUsed=gettxout(tx['txid'],tx['outputIndex'])['result']
+        isUsed = txUsed==None
+        if not isUsed:
+          coinbaseHold = (txUsed['coinbase'] and txUsed['confirmations'] < 100)
+          multisigSkip = ("scriptPubKey" in txUsed and txUsed['scriptPubKey']['type'] == "multisig")
+          if not coinbaseHold and txUsed['confirmations'] > 0 and not multisigSkip:
+            avail += tx['satoshis']
+            retval.append([ tx['txid'], tx['outputIndex'], tx['satoshis'] ])
+            if avail >= ramount:
+              return {"avail": avail, "utxos": retval, "error": "none"}
+      return {"avail": avail, "error": "Low balance error"}
+    else:
+      return {"avail": avail, "error": r['error']}
+  except Exception as e:
+    return {"avail": avail, "error": e.message}
+
+def bc_getpubkey(address):
+  pubkey = ""
+  ckey="omniwallet:pubkey:address:"+str(address)
+  try:
+    pubkey=rGet(ckey)
+    pubkey=str(pubkey)
+    if pubkey in [None, ""]:
+      raise "error loading pubkey"
+  except:
+    r=getaddressdeltas(address)
+    if r['error']==None:
+      txlist=r['result']
+      for tx in txlist:
+        if tx['satoshis']<0:
+          try:
+            #found spending tx
+            rawtx=getrawtransaction(tx['txid'])
+            pubkey = str(rawtx['result']['vin'][tx['index']]['scriptSig']['asm'].split(' ')[1])
+            break
+          except:
+            #problem parsing tx try next one
+            pass
+  if pubkey not in [None, ""]:
+    #cache pubkey for a month, it doesn't change
+    rSet(ckey,pubkey)
+    rExpire(ckey,2628000)
+  return pubkey
+
+def bc_getbalance(address):
+  rev=raw_revision()
+  cblock=rev['last_block']
+  ckey="omniwallet:balances:address:"+str(address)+":"+str(cblock)
+  try:
+    balance=rGet(ckey)
+    balance=json.loads(balance)
+    if balance['error']:
+      raise LookupError("Not cached")
+    pending = getPending(address)
+    balance['pendingpos'] = pending['pos']
+    balance['pendingneg'] = pending['neg']
+  except Exception as e:
+    r=getaddressbalance(address)
+    if r['error'] == None:
+      resp = r['result']
+      bal = resp['balance']
+      pending = getPending(address)
+      balance = {'bal': bal, 'pendingpos': pending['pos'], 'pendingneg': pending['neg'], 'error': None}
+    else:
+      balance = {'bal': 0, 'pendingpos': 0, 'pendingneg': 0, 'error': r['error']}
+    #cache btc balances for block
+    rSet(ckey,json.dumps(balance))
+    rExpire(ckey,expTime)
+  return balance
+
+def getPending(address):
+  r = getaddressmempool(address)
+  pos = 0
+  neg = 0
+  if r['error'] == None:
+    mempool = r['result']
+    for entry in mempool:
+      sat = entry['satoshis']
+      if sat > 0:
+        pos += sat
+      else:
+        neg -= sat
+  return {'pos':pos, 'neg':neg}
+
+
+###Deprecated, external dependancies
+
+def bc_getutxo_old(address, ramount):
   try:
     if TESTNET:
       r = requests.get('https://testnet.blockchain.info/unspent?active='+address)
@@ -125,8 +221,7 @@ def bc_getutxo_blockcypher(address, ramount):
     else: 
       return {"error": "Connection error", "code": e.message}
 
-
-def bc_getpubkey(address):
+def bc_getpubkey_old(address):
   try:
     r = requests.get('https://blockchain.info/q/pubkeyaddr/'+address, timeout=2)
 
@@ -137,7 +232,7 @@ def bc_getpubkey(address):
   except:
     return "error"
 
-def bc_getbalance(address, override=False):
+def bc_getbalance_old(address, override=False):
   if not override:
     return {'bal':'Please use external api', 'error':'Please use external api'}
 
@@ -206,7 +301,7 @@ def bc_getbalance_blockchain(address):
     print_debug(("Exception getting balance blockchain", e),4)
     return {"bal": 0 , "error": "Couldn't get balance"}
 
-def bc_getbulkbalance(addresses, override=False):
+def bc_getbulkbalance_old(addresses, override=False):
   if not override:
     return {}
 
