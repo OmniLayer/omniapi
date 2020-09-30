@@ -1,18 +1,20 @@
-import requests, getpass
+import requests
 import time, json
+import os
 
 class RPCHost():
     def __init__(self):
-        USER=getpass.getuser()
         self._session = requests.Session()
         try:
-            with open('/home/'+USER+'/.bitcoin/bitcoin.conf') as fp:
+            with open( os.getenv("HOME") +'/.bitcoin/bitcoin.conf') as fp:
                 RPCPORT="8332"
                 RPCHOST="localhost"
                 RPCSSL=False
                 for line in fp:
                     #print line
-                    if line.split('=')[0] == "rpcuser":
+                    if line.split('=')[0] == "testnet" and line.split('=')[1] == "1":
+                        RPCPORT="18332"
+                    elif line.split('=')[0] == "rpcuser":
                         RPCUSER=line.split('=')[1].strip()
                     elif line.split('=')[0] == "rpcpassword":
                         RPCPASS=line.split('=')[1].strip()
@@ -46,7 +48,7 @@ class RPCHost():
                     raise Exception('Failed to connect for remote procedure call.')
                 hadFailedConnections = True
                 print("Couldn't connect for remote procedure call, will sleep for ten seconds and then try again ({} more tries)".format(tries))
-                time.sleep(1)
+                time.sleep(10)
             else:
                 if hadConnectionFailures:
                     print('Connected for remote procedure call after retry.')
@@ -67,10 +69,10 @@ host=RPCHost()
 #Bitcoin Generic RPC calls
 def getinfo():
     try:
-      #support omnicore v0.6+
+      #support omnicore v0.6
       return host.call("getblockchaininfo")
     except:
-      #support omnicore up to v0.5
+      #support omnicore v0.5
       return host.call("getinfo")
 
 def getrawtransaction(txid):
@@ -102,14 +104,23 @@ def omni_decodetransaction(rawtx):
 
 def estimateFee(blocks=4):
     try:
+      #support omnicore v0.6+
       return host.call("estimatesmartfee", blocks)
     except:
+      #support omnicore up to v0.5
       return host.call("estimatefee", blocks)
 
 def gettxout(txid,vout,unconfirmed=True):
     return host.call("gettxout",txid,vout,unconfirmed)
 
 ## Omni Specific RPC calls
+
+def omni_getactivations():
+    return host.call("omni_getactivations")
+
+def omni_getcurrentconsensushash():
+    return host.call("omni_getcurrentconsensushash")
+
 def getbalance_MP(addr, propertyid):
     return host.call("getbalance_MP", addr, propertyid)
 
@@ -146,14 +157,17 @@ def getdivisible_MP(propertyid):
 def getgrants_MP(propertyid):
     return host.call("getgrants_MP", propertyid)
 
-#def gettradessince_MP():
-#    return host.call("gettradessince_MP")
-
 def gettrade(txhash):
     return host.call("omni_gettrade", txhash)
 
 def getsto_MP(txid):
     return host.call("getsto_MP", txid , "*")
+
+def omni_listpendingtransactions():
+    return host.call("omni_listpendingtransactions")
+
+def omni_getpayload(txid):
+    return host.call("omni_getpayload",txid)
 
 def getsimplesendPayload(propertyid, amount):
     return host.call("omni_createpayload_simplesend", int(propertyid), amount)
@@ -198,7 +212,6 @@ def createrawtx_reference(destination, rawtx=None):
 def createrawtx_change(rawtx, previnputs, destination, fee):
     return host.call("omni_createrawtx_change", rawtx, previnputs, destination, str(fee))
  
-
 #bitcore calls
 
 def getaddresstxids(address):
