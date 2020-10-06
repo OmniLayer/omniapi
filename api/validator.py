@@ -16,13 +16,14 @@ except:
 
 def isvalid(address):
     ret = False
+
+    if TESTNET:
+      checkset = ['m','n','2']
+    else:
+      checkset = ['1','3']
+
     try:
-      if str(address[0]) in ['1','3']:
-        try:
-          ret = (b58decode_check(address) != None)
-        except:
-          pass
-      elif TESTNET and str(address[0]) in ['m','n','2']:
+      if str(address[0]) in checkset:
         ret = (b58decode_check(address) != None)
     except:
       pass

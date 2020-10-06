@@ -9,18 +9,24 @@ from config import TESTNET
 
 def get_balancedata(address):
     addr = re.sub(r'\W+', '', address) #check alphanumeric
-    if isvalid(addr) or config.TESTNET==1:
-      btcdata = bc_getbalance(addr)
-      return getBalanceData(address,btcdata)
-    else:
-      return {'balance':'Error, invalid address'}
+    ret = {'bal': 0, 'pendingpos': 0, 'pendingneg': 0, 'error': 'invalid address'}
+    try:
+      if isvalid(addr):
+        btcdata = bc_getbalance(addr)
+        return getBalanceData(address,btcdata)
+    except Exception as e:
+      ret = {'bal': 0, 'pendingpos': 0, 'pendingneg': 0, 'error':str(address)+" "+str(e.message)}
+    return ret
 
 def get_bulkbalancedata(addresses):
     retval = {}
     for address in addresses:
-      btcdata=bc_getbalance(address)
-      balance_data=getBalanceData(address,btcdata)
-      retval[address]=balance_data
+      try:
+        btcdata=bc_getbalance(address)
+        balance_data=getBalanceData(address,btcdata)
+        retval[address]=balance_data
+      except Exception as e:
+        print_debug(('get_bulkbalancedata error for address',address,e),4)
     return retval
 
 
@@ -34,8 +40,8 @@ def getBalanceData(address,btcdata):
     btcbal = btcdata['bal']
     btcpp = btcdata['pendingpos']
     btcpn = btcdata['pendingneg']
-    err = btcdata['error']
-    if err != None or btcbal == '':
+    btc_bal_err_msg = btcdata['error']
+    if btc_bal_err_msg != None or btcbal == '':
       btc_bal = str(0)
       btc_pp = str(0)
       btc_pn = str(0)
@@ -62,7 +68,7 @@ def getBalanceData(address,btcdata):
           brow['pendingpos']=btc_pp
           brow['pendingneg']=btc_pn
           brow['error']=btc_bal_err
-          brow['errormsg']=btcdata['error']
+          brow['errormsg']=btc_bal_err_msg
     except:
       print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("""select
@@ -112,7 +118,7 @@ def getBalanceData(address,btcdata):
           res['pendingpos']=btc_pp
           res['pendingneg']=btc_pn
           res['error']=btc_bal_err
-          res['errormsg']=btcdata['error']
+          res['errormsg']=btc_bal_err_msg
         else:
           #get regular balance from db 
           #if balrow[4] < 0 and not balrow[6] > 0:
@@ -134,7 +140,8 @@ def getBalanceData(address,btcdata):
                         'pendingpos' : btc_pp,
                         'pendingneg' : btc_pn,
                         'propertyinfo' : getpropertyraw(0),
-                        'error' : False
+                        'error' : btc_bal_err,
+                        'errormsg' : btc_bal_err_msg
                       }
         balance_data['balance'].append(btc_balance)
       #cache result for 1 min

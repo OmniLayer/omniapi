@@ -85,14 +85,18 @@ def bc_getbalance(address):
     balance['pendingpos'] = pending['pos']
     balance['pendingneg'] = pending['neg']
   except Exception as e:
-    r=getaddressbalance(address)
-    if r['error'] == None:
-      resp = r['result']
-      bal = resp['balance']
-      pending = getPending(address)
-      balance = {'bal': bal, 'pendingpos': pending['pos'], 'pendingneg': pending['neg'], 'error': None}
-    else:
-      balance = {'bal': 0, 'pendingpos': 0, 'pendingneg': 0, 'error': r['error']}
+    balance = {'bal': 0, 'pendingpos': 0, 'pendingneg': 0, 'error': 'undefined'}
+    try:
+      r=getaddressbalance(address)
+      if r['error'] == None:
+        resp = r['result']
+        bal = resp['balance']
+        pending = getPending(address)
+        balance = {'bal': bal, 'pendingpos': pending['pos'], 'pendingneg': pending['neg'], 'error': None}
+      else:
+        balance['error'] = r['error']
+    except Exception as e:
+      balance['error'] = str(e.message)
     #cache btc balances for block
     rSet(ckey,json.dumps(balance))
     rExpire(ckey,expTime)
