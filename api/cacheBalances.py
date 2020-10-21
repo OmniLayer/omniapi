@@ -9,8 +9,8 @@ def printmsg(msg):
 def updateBalancesCache():
   while True:
     printmsg("Checking for balance updates")
-    for space in rKeys("omniwallet:balances:addresses*"):
-      try:
+    try:
+      for space in rKeys("omniwallet:balances:addresses*"):
         addresses=rGet(space)
         if addresses != None:
           addresses = json.loads(addresses)
@@ -19,8 +19,10 @@ def updateBalancesCache():
           rSet("omniwallet:balances:balbook"+str(space[29:]),json.dumps(balances))
           #expire balance data after 10 minutes (prevent stale data in case we crash)
           rExpire("omniwallet:balances:balbook"+str(space[29:]),600)
-      except Exception as e:
-        printmsg("error updating balances: "+str(space)+' '+str(e))
+    except Exception as e:
+      printmsg("error updating balances: "+str(space)+' '+str(e))
+      #abort any previous txs and close connection so it can be reopened
+      dbRollback()
     #dbCommit()
     time.sleep(30)
 

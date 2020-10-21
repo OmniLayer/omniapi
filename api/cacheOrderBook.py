@@ -1,4 +1,4 @@
-from omnidex import getOrderbook
+'from omnidex import getOrderbook
 from sqltools import *
 from cacher import *
 import json, time, datetime, sys
@@ -29,6 +29,9 @@ def updateOrderbookCache():
       #dbCommit()
     except Exception as e:
       printmsg("Error updating orderbook cache "+str(e))
+      #abort any previous txs and close connection so it can be reopened
+      dbRollback()
+
 
 def main():
   updateOrderbookCache()
