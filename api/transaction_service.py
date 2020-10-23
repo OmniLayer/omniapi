@@ -311,6 +311,42 @@ def getaddresstxcount(address,limit=10):
   return {'pages':pages,'txcount':count}
 
 
+@app.route('/recentab/')
+@ratelimit(limit=10, per=10)
+def getrecentclassab():
+    rev=raw_revision()
+    cblock=rev['last_block']
+    ckey="data:tx:recentab:"+str(cblock)
+    try:
+      response=json.loads(lGet(ckey))
+      print_debug(("cache looked success",ckey),7)
+    except:
+      print_debug(("cache looked failed",ckey),7)
+
+      limit = 50
+      ROWS=dbSelect("select txj.txdata from txjson txj,transactions tx where txj.protocol = 'Omni' and (tx.txclass = 1 or tx.txclass = 2) and txj.txdbserialnum > 0 order by txj.txdbserialnum DESC limit %s;",[limit])
+
+      data = []
+      pnl=getpropnamelist()
+      if len(ROWS) > 0:
+        for d in ROWS:
+          res = addName(d[0],pnl)
+          try:
+            res['confirmations'] = cblock - res['block'] + 1
+          except:
+            pass
+          #if cblock hasn't caught up make sure we don't return negative weirdness
+          if res['confirmations'] < 0:
+            res['confirmations'] = 0
+          data.append(res)
+      response={'note':'Endpoint returns 50 most recent txs only', 'transactions':data}
+      #cache pages for 1 hour
+      lSet(ckey,json.dumps(response))
+      lExpire(ckey,3600)
+      cachetxs(data)
+    return jsonify(response)
+
+
 #@app.route('/general/')
 #@ratelimit(limit=10, per=10)
 def getrecenttx():
