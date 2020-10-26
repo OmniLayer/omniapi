@@ -324,7 +324,7 @@ def getrecentclassab():
       print_debug(("cache looked failed",ckey),7)
 
       limit = 50
-      ROWS=dbSelect("select txj.txdata from txjson txj,transactions tx where txj.protocol = 'Omni' and (tx.txclass = 1 or tx.txclass = 2) and txj.txdbserialnum > 0 order by txj.txdbserialnum DESC limit %s;",[limit])
+      ROWS=dbSelect("select txj.txdata from txjson txj,transactions tx where tx.txdbserialnum = txj.txdbserialnum and txj.protocol = 'Omni' and (tx.txclass = 1 or tx.txclass = 2) and txj.txdbserialnum > 0 order by txj.txdbserialnum DESC limit %s;",[limit])
 
       data = []
       pnl=getpropnamelist()
