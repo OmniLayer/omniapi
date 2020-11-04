@@ -25,8 +25,7 @@ def bc_getutxo(address, ramount):
     r=getaddressutxos(address)
     if r['error'] == None:
       retval=[]
-      response = r['result']
-      unspents = response['unspent_outputs']
+      unspents = r['result']
       for tx in sorted(unspents, key = lambda i: i['satoshis'],reverse=True):
         txUsed=gettxout(tx['txid'],tx['outputIndex'])['result']
         isUsed = txUsed==None
