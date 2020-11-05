@@ -398,7 +398,7 @@ def disconnect(session):
 #@socketio.on("address:add", namespace='/balance')
 def add_address(address,session):
   global addresses, abs, vbs, maxaddresses
- 
+
   address=str(address)
 
   if isvalid(address):
@@ -413,18 +413,20 @@ def add_address(address,session):
       addresses[address] += 1
     else:
       addresses[address] = 1
-      rSet("omniwallet:balances:addresses"+str(config.REDIS_ADDRSPACE),json.dumps(addresses))
-      #speed up initial data load
-      balance_data=get_balancedata(address)
-      wsemit('subscribe','balance',{'address':address,'status':'ok'}, [session])
-      wsemit('update','balance',{'address':address, 'balance':balance_data}, [session])
+
+    rSet("omniwallet:balances:addresses"+str(config.REDIS_ADDRSPACE),json.dumps(addresses))
+    #speed up initial data load
+    balance_data=get_balancedata(address)
+    wsemit('subscribe','balance',{'address':address,'status':'ok'}, [session])
+    wsemit('update','balance',{'address':address, 'balance':balance_data}, [session])
+
     try:
       abs[address].append(session)
     except:
       abs[address] = [session]
-  if session not in vbs:
-    #add session to valuebook
-    vbs.append(session)
+  #if session not in vbs:
+  #  #add session to valuebook
+  #  vbs.append(session)
   if len(addresses) > maxaddresses:
     maxaddresses=len(addresses)
   return True

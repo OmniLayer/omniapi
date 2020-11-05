@@ -15,7 +15,7 @@ def offers_response(response_dict):
       if len(response_dict[field]) != 1:
         return (None, 'Multiple values for field '+field)
 
-    type = response_dict['type'][0].upper()
+    qType = response_dict['type'][0].upper()
 
     filterActive = True
     if 'onlyActive' in response_dict:
@@ -25,7 +25,7 @@ def offers_response(response_dict):
       except:
         return (None, 'Query field "onlyActive" accepts value true or false')
 
-    if type == "TIME":
+    if qType == "TIME":
       expected_fields=['currencyType']
       for field in expected_fields:
         if not response_dict.has_key(field):
