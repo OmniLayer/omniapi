@@ -150,25 +150,29 @@ class OmniTransaction:
                      "t.txblocknumber,t.txseqinblock,txj.txdbserialnum,txj.protocol,txj.txdata "
                      "from activeoffers ao, transactions t, txjson txj where t.txhash=%s "
                      "and ao.createtxdbserialnum=t.txdbserialnum and ao.createtxdbserialnum=txj.txdbserialnum", [txhash] )
- 
+
             # sanity check
             if len(ROWS) == 0:
-               error('no sell offer found for tx '+self.rawdata['tx_hash'])
+               #error('no sell offer found for tx '+self.rawdata['tx_hash'])
+               return {'error':True, 'msg': 'no sell offer found for tx '+self.rawdata['tx_hash']}
             row = ROWS[0]
- 
+
             try:
                 rawdata = json.loads(row[-1])
             except TypeError:
                 rawdata = row[-1]
- 
+
             self.rawdata['transaction_to']=rawdata['sendingaddress']
             formatted_fee_required=str(row[3])
- 
+
             # fee is max between min_btc_fee and required_fee
             required_fee=int( formatted_fee_required )
             satoshi_min_fee=int( Decimal(self.fee) * Decimal(1e8) )
-            self.fee= '%.8f' % ( Decimal(max(satoshi_min_fee,required_fee)) / Decimal(1e8) )
-            return getdexacceptPayload(rawdata['propertyid'], self.rawdata['amount'])['result']
+            #self.fee= '%.8f' % ( Decimal(max(satoshi_min_fee,required_fee)) / Decimal(1e8) )
+            if satoshi_min_fee < require_fee:
+              return  {'error':True, 'msg': 'Supplied fee' + str(self.fee) + 'is less than Sellers required fee:'+str(Decimal(required_fee)/Decimal(1e8)) }
+            else:
+              return getdexacceptPayload(rawdata['propertyid'], self.rawdata['amount'])['result']
         if self.tx_type == 50:
             return getissuancefixedPayload(self.rawdata['ecosystem'],self.rawdata['property_type'],self.rawdata['previous_property_id'],self.rawdata['property_category'],self.rawdata['property_subcategory'],self.rawdata['property_name'],self.rawdata['property_url'],self.rawdata['property_data'],self.rawdata['number_properties'])['result']
         if self.tx_type == 51:
