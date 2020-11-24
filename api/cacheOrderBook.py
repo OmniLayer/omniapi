@@ -1,4 +1,4 @@
-'from omnidex import getOrderbook
+from omnidex import getOrderbook
 from sqltools import *
 from cacher import *
 import json, time, datetime, sys
