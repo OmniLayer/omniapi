@@ -60,16 +60,21 @@ def getOrderbook(lasttrade=0, lastpending=0):
           if 0 in [pd,ps]:
             #skip dex 1.0 sales
             continue
-          data = get_orders_by_market(pd,ps)
-          data2 = get_orders_by_market(ps,pd)
-          try:
-            book[pd][ps]=data
-          except KeyError:
-            book[pd]={ps: data}
-          try:
-            book[ps][pd]=data2
-          except KeyError:
-            book[ps]={pd: data2}
+          data = get_orders_by_market_raw(pd,ps)
+          data.pop('status')
+          data2 = get_orders_by_market_raw(ps,pd)
+          data2.pop('status')
+          if len(data['orderbook'])>0 or len(data['cancels'])>0:
+            try:
+              book[pd][ps]=data
+            except KeyError:
+              book[pd]={ps: data}
+
+          if len(data2['orderbook'])>0 or len(data2['cancels'])>0:
+            try:
+              book[ps][pd]=data2
+            except KeyError:
+              book[ps]={pd: data2}
         updated=True
 
     ret={"updated":updated ,"book":book, "lasttrade":trade, "lastpending":pending}
@@ -95,6 +100,45 @@ def getDesignatingCurrencies():
       filter = request.form['filter'] in ['True','true',True]
     except:
       filter = True
+
+    try:
+      if 'version' in request.form and request.form['version'] in ['1',1]:
+        ret=getDesignatingCurrenciesOmniExchange(ecosystem,filter)
+      else:
+        ret=getDesignatingCurrenciesOmniDex(ecosystem,filter)
+    except Exception as e:
+      print e
+      ret=getDesignatingCurrenciesOmniDex(ecosystem,filter)
+
+    return jsonify(ret)
+
+def getDesignatingCurrenciesOmniExchange(ecosystem,filter):
+    print "getDesignatingCurrenciesOmniExchange",ecosystem,filter
+
+    designating_currencies = dbSelect("select sp.propertyid, sp.propertyname, sp.propertytype from smartproperties sp where sp.protocol='Omni' and "
+                                      "sp.propertyid in (select distinct(propertyidselling) from activeoffers where offerstate='active' and propertyiddesired=0 and "
+                                      "CASE WHEN %s='Production' THEN "
+                                      "propertyidselling > 0 and propertyidselling < 2147483648 and propertyidselling !=2 "
+                                      "ELSE propertyidselling > 2147483650 or propertyidselling=2 END)",[ecosystem])
+
+    designating_currencies.sort(key = lambda x: x[0])
+
+    if filter:
+      listfilter=dbSelect("select propertyid from smartproperties where (flags->>'scam')::boolean or (flags->>'duplicate')::boolean order by propertyid")
+      dc=(x for x in designating_currencies if [x[0]] not in listfilter )
+    else:
+      listfilter=[]
+      dc=designating_currencies
+
+    return {"status" : 200, "currencies": [
+       {
+        "propertyid":currency[0], "propertyname" : currency[1], "propertytype" : currency[2], "displayname" : str(currency[1])+" #"+str(currency[0])
+       } for currency in dc],
+        "filter": [id for pid in listfilter for id in pid] }
+
+
+def getDesignatingCurrenciesOmniDex(ecosystem,filter):
+    print "getDesignatingCurrenciesOmniDex",ecosystem,filter
 
     ckey="data:omnidex:designating_currencies:"+str(ecosystem)+":"+str(filter)
 
@@ -138,7 +182,7 @@ def getDesignatingCurrencies():
       lSet(ckey,json.dumps(response))
       lExpire(ckey,600)
 
-    return jsonify(response)
+    return response
 
 
 @app.route('/<int:denominator>')

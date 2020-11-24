@@ -47,6 +47,8 @@ WEBSOCKET_CORS=""
 CFID = None
 CFKEY = None
 
+#Testnet
+TESTNET=0
 
 def apiLookup(id):
   try:

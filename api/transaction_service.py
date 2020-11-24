@@ -48,7 +48,7 @@ def estimatefees(addr):
 
     amount=ccb+mfee+amountBTC
 
-    balance=bc_getbalance(address,True)
+    balance=bc_getbalance(address)
     if 'bal' in balance and balance['bal']>0:
       unspent=bc_getutxo(addr,amount)
       if 'utxos' in unspent:
@@ -857,7 +857,7 @@ def gettransaction_OLD(hash_id):
 
     if txType not in [-22,21,25,26,27,28]: #Dex purchases don't have these fields
       ret['currencyId'] = txJson['propertyid']
-      ret['currency_str'] = 'Omni' if txJson['propertyid'] == 1 else 'Test Omni' if txJson['propertyid'] == 2 else "Smart Property"
+      ret['currency_str'] = getName(txJson['propertyid'])
       ret['invalid'] = not txValid
       ret['amount'] = str(txJson['amount'])
       ret['formatted_amount'] = txJson['amount']
@@ -980,6 +980,19 @@ def gettransaction_OLD(hash_id):
         ret['issuertokens'] = txJson['issuertokens']
 
     return json.dumps([ ret ] , sort_keys=True, indent=4) #only send back mapped schema
+
+def getName(propertyid):
+  if int(propertyid) == 1:
+    name = 'Omni Token #1'
+  elif int(propertyid) == 2:
+   name = 'Test Omni Token #2'
+  else:
+    try:
+      ROWS=dbSelect("select propertyname from smartproperties where protocol='Omni' and propertyid=%s",[int(propertyid)])
+      name = ROWS[0][0]+" #"+str(propertyid)
+    except:
+      name = "#"+str(propertyid)
+  return name
 
 
 

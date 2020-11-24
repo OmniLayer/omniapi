@@ -77,12 +77,16 @@ def dbCommit():
         sys.exit(1)
 
 def dbRollback():
-    if con:
-       con.rollback()
-       con.close()
-       return 1
-    else:
-       return 0
+    try:
+      if con:
+         con.rollback()
+         con.close()
+         return 1
+      else:
+         return 0
+    except psycopg2.InterfaceError, e:
+      print 'Connection closed, nothing to rollback', e
+      return 0
 
 def decimal_default(obj):
     if isinstance(obj, decimal.Decimal):

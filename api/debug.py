@@ -13,6 +13,7 @@ def print_debug( msg, verbose):
       msg=temp
     omsg=str(datetime.datetime.now())+": "+str(msg)
     print omsg
+    sys.stdout.flush()
     #log_file(omsg)
 
 def log_file( msg ):

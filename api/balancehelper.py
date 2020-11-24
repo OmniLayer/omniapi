@@ -5,32 +5,28 @@ from property_service import getpropertyraw
 from cacher import *
 from common import *
 from validator import isvalid
+from config import TESTNET
 
 def get_balancedata(address):
     addr = re.sub(r'\W+', '', address) #check alphanumeric
-    if isvalid(addr):
-      btcdata = bc_getbalance(addr)
-      return getBalanceData(address,btcdata)
-    else:
-      return {'balance':'Error, invalid address'}
+    ret = {'bal': 0, 'pendingpos': 0, 'pendingneg': 0, 'error': 'invalid address'}
+    try:
+      if isvalid(addr):
+        btcdata = bc_getbalance(addr)
+        return getBalanceData(address,btcdata)
+    except Exception as e:
+      ret = {'bal': 0, 'pendingpos': 0, 'pendingneg': 0, 'error':str(address)+" "+str(e.message)}
+    return ret
 
 def get_bulkbalancedata(addresses):
-    btclist=bc_getbulkbalance(addresses)
     retval = {}
     for address in addresses:
       try:
-        if address in btclist:
-          out = btclist[address]
-          err = None
-        else:
-          out = ''
-          err = "Please use external api"
-      except TypeError:
-        out = ''
-        err = "Missing"
-      btcdata={'bal':out,'error':err}
-      balance_data=getBalanceData(address,btcdata)
-      retval[address]=balance_data
+        btcdata=bc_getbalance(address)
+        balance_data=getBalanceData(address,btcdata)
+        retval[address]=balance_data
+      except Exception as e:
+        print_debug(('get_bulkbalancedata error for address',address,e),4)
     return retval
 
 
@@ -39,27 +35,40 @@ def getBalanceData(address,btcdata):
     rev=raw_revision()
     cblock=rev['last_block']
     ckey="data:baldata:"+str(addr)+":"+str(cblock)
+
+    #load btc data
+    btcbal = btcdata['bal']
+    btcpp = btcdata['pendingpos']
+    btcpn = btcdata['pendingneg']
+    btc_bal_err_msg = btcdata['error']
+    if btc_bal_err_msg != None or btcbal == '':
+      btc_bal = str(0)
+      btc_pp = str(0)
+      btc_pn = str(0)
+      btc_bal_err = True
+    else:
+      try:
+        btc_bal = str(btcbal)
+        btc_pp = str(btcpp)
+        btc_pn = str(btcpn)
+        btc_bal_err = False
+      except ValueError:
+        btc_bal = str(0)
+        btc_pp = str(0)
+        btc_pn = str(0)
+        btc_bal_err = True
+
     try:
       #check cache
       balance_data = json.loads(lGet(ckey))
       print_debug(("cache looked success",ckey),7)
-      out = btcdata['bal']
-      err = btcdata['error']     
-      if err != None or out == '':
-        btc_bal = str(long(0))
-        btc_bal_err = True
-      else:
-        try:
-          btc_bal = str(long( out ))
-          btc_bal_err = False
-        except ValueError:
-          btc_bal = str(long(0))
-          btc_bal_err = True
-      for brow in  balance_data['balance']:
+      for brow in balance_data['balance']:
         if brow['id']==0:
           brow['value']=btc_bal
+          brow['pendingpos']=btc_pp
+          brow['pendingneg']=btc_pn
           brow['error']=btc_bal_err
-          brow['errormsg']=btcdata['error']
+          brow['errormsg']=btc_bal_err_msg
     except:
       print_debug(("cache looked failed",ckey),7)
       ROWS=dbSelect("""select
@@ -90,8 +99,6 @@ def getBalanceData(address,btcdata):
                      on f1.propertyid=sp.propertyid and (sp.protocol='Omni' or sp.protocol='Bitcoin')
                      order by f1.propertyid""",(addr,addr))
       balance_data = { 'balance': [] }
-      out = btcdata['bal']
-      err = btcdata['error']
       for balrow in ROWS:
         cID = str(int(balrow[0])) #currency id
         sym_t = ('BTC' if cID == '0' else ('OMNI' if cID == '1' else ('T-OMNI' if cID == '2' else 'SP' + cID) ) ) #symbol template
@@ -107,22 +114,11 @@ def getBalanceData(address,btcdata):
         res['reserved'] = str(long(balrow[5]))
         res['frozen'] = str(long(balrow[6]))
         if cID == '0':
-          #get btc balance from bc api's
-          if err != None or out == '':
-            #btc_balance[ 'value' ] = str(long(-555))
-            res[ 'value' ] = str(long(0))
-            res[ 'error' ] = True
-            res[ 'errormsg' ] = btcdata['error']
-          else:
-            try:
-              #if balrow[4] < 0:
-              #  res['value'] = str(long( out ) + long(balrow[4]))
-              #else:
-              res['value'] = str(long( out ))
-            except ValueError:
-              #btc_balance[ 'value' ] = str(long(-555))
-              res[ 'value' ] = str(long(0))
-              res[ 'error' ] = True
+          res['value']=btc_bal
+          res['pendingpos']=btc_pp
+          res['pendingneg']=btc_pn
+          res['error']=btc_bal_err
+          res['errormsg']=btc_bal_err_msg
         else:
           #get regular balance from db 
           #if balrow[4] < 0 and not balrow[6] > 0:
@@ -130,31 +126,23 @@ def getBalanceData(address,btcdata):
           #  res['value'] = str(long(balrow[2]+balrow[4]))
           #else:
           res['value'] = str(long(balrow[2]))
-        #res['reserved_balance'] = ('%.8f' % float(balrow[5])).rstrip('0').rstrip('.')
         balance_data['balance'].append(res)
       #check if we got BTC data from DB, if not trigger manually add
       addbtc=True
       for x in balance_data['balance']:
-        if "BTC" in x['symbol']:
+        if x['id'] == 0:
           addbtc=False
       if addbtc:
-        btc_balance = { 'symbol': 'BTC', 'divisible': True, 'id' : '0', 'error' : False }
-        if err != None or out == '':
-          #btc_balance[ 'value' ] = str(long(-555))
-          btc_balance[ 'value' ] = str(long(0))
-          btc_balance[ 'error' ] = True
-        else:
-          try:
-            #btc_balance[ 'value' ] = str(long( json.loads( out )[0][ 'paid' ]))
-            #btc_balance[ 'value' ] = str(long( json.loads( out )['data']['balance']*1e8 ))
-            btc_balance[ 'value' ] = str(long( out ))
-          except ValueError:
-            #btc_balance[ 'value' ] = str(long(-555))
-            btc_balance[ 'value' ] = str(long(0))
-            btc_balance[ 'error' ] = True
-        btc_balance['pendingpos'] = str(long(0))
-        btc_balance['pendingneg'] = str(long(0))
-        btc_balance['propertyinfo'] = getpropertyraw(btc_balance['id'])
+        btc_balance = { 'symbol': 'BTC',
+                        'divisible': True,
+                        'id' : '0',
+                        'value' : btc_bal,
+                        'pendingpos' : btc_pp,
+                        'pendingneg' : btc_pn,
+                        'propertyinfo' : getpropertyraw(0),
+                        'error' : btc_bal_err,
+                        'errormsg' : btc_bal_err_msg
+                      }
         balance_data['balance'].append(btc_balance)
       #cache result for 1 min
       lSet(ckey,json.dumps(balance_data))

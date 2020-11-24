@@ -19,6 +19,7 @@ def decode_handler():
 def getinputs(rawtx):
   retval={'invalid':False, 'inputs':{}}
   for input in rawtx['vin']:
+    try:
       prevtx=getrawtransaction(input['txid'])
       if prevtx['result']['vout'][input['vout']]['scriptPubKey']['type'] not in ['pubkeyhash','scripthash']:
         #Valid Omni tx's only have pubkeyhash and scripthash as inputs
@@ -29,13 +30,19 @@ def getinputs(rawtx):
           retval['inputs'][addr] += inputamount
         else:
           retval['inputs'][addr] = inputamount
+    except:
+      pass
   return retval
   
 
 def decode(rawhex):
 
-  rawBTC = decoderawtransaction(rawhex)['result']
-  inputs = getinputs(rawBTC)['inputs']
+  try:
+    rawBTC = decoderawtransaction(rawhex)['result']
+    inputs = getinputs(rawBTC)['inputs']
+  except:
+    rawBTC = "Can\'t decode BTC TX."
+    inputs = {}
 
   try:
     rawOMNI = omni_decodetransaction(rawhex)

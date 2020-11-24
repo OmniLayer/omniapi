@@ -43,8 +43,12 @@ def search():
       asset=dbSelect("select PropertyID, propertyname,Issuer,flags from smartproperties where (LOWER(PropertyName) like LOWER(%s) or LOWER(issuer) like LOWER(%s)) and protocol='Omni' order by propertyid limit 10",(wq,wq))
       if 25 < len(query) < 45 :
         adrbal=balance_full(query)
+        if 'balance' in adrbal and 'Error' in adrbal['balance']:
+          adrbal = {}
       elif len(query) == 64:
         txj = gettxjson(query)
+        if 'type' in txj and 'Error' in txj['type']:
+          txj = {}
       else:
         pass
     response={ 'status': 200, 'query':query, 'data':{'tx':txj, 'address':adrbal, 'asset':asset} }
