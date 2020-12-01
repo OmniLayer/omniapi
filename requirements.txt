@@ -12,7 +12,7 @@ pyOpenSSL==18.0.0
 simplekv==0.11.7
 recaptcha-client==1.0.6
 pycoin==0.80
-ecdsa==0.13.3
+ecdsa==0.16.1
 gevent==1.2.2
 #Flask-SocketIO==4.2.1
 tornado==5.1.1
