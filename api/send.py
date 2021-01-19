@@ -3,6 +3,7 @@ import os, sys
 from blockchain_utils import *
 from common import *
 from debug import *
+from pending import checkpendingpaymentduplicate
 from decimal import Decimal
 import random
 import config
@@ -98,11 +99,16 @@ def send_form_response(response_dict):
           # hack to show error on page
           tx_to_sign_dict['sourceScript']=response_status
 
-      response='{"status":"'+response_status+'", "transaction":"'+tx_to_sign_dict['transaction']+'", "sourceScript":"'+tx_to_sign_dict['sourceScript']+'"}'
-      print_debug(("Sending unsigned tx to user for signing", response),4)
-      return (response, None)
+      duplicate = checkpendingpaymentduplicate(tx_to_sign_dict['transaction'])
+      if duplicate:
+        print_debug(("Send Error: Potential duplicate between",duplicate,":: AND ::",tx_to_sign_dict['transaction']),2)
+        return (None,"potential duplicate of "+str(duplicate))
+      else:
+        response='{"status":"'+response_status+'", "transaction":"'+tx_to_sign_dict['transaction']+'", "sourceScript":"'+tx_to_sign_dict['sourceScript']+'"}'
+        print_debug(("Sending unsigned tx to user for signing", response),4)
+        return (response, None)
     except Exception as e:
-      print_debug(("error creating unsigned tx", e),2)
+      print_debug(("Send Error: creating unsigned tx", e),2)
       return (None, str(e))
 
 

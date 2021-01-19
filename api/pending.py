@@ -3,8 +3,42 @@ from sqltools import *
 import decimal
 from debug import *
 
-def insertpending(txhex):
+def checkpendingpaymentduplicate(txhex):
+  ret = False
+  try:
+    rawtx = decode(txhex)
+  except Exception,e:
+    print_debug(("Error: ", e, "\n Could not decode unsignedpretx: ", txhex),2)
+    return ret
 
+  if 'BTC' in rawtx:
+    try:
+      inputs=rawtx['inputs']
+      sender = inputs.keys()[0]
+      #unconfirmed sent txs
+      ustx = dbSelect("select txdbserialnum from addressesintxs where address=%s and txdbserialnum<0 and protocol='Bitcoin' and addressrole='sender'",[sender])
+      for txdbserial in ustx:
+        txdbserialnum = txdbserial[0]
+        if ret:
+          break
+        for vout in rawtx['BTC']['vout']:
+          x=0
+          if 'scriptPubKey' in vout:
+            address = vout['scriptPubKey']['addresses'][0]
+            if address == sender:
+              x+=1
+            else:
+              q=dbSelect("select * from addressesintxs where txdbserialnum=%s and address=%s and addressrole='recipient' and protocol='Bitcoin'",(txdbserialnum,address))
+              if len(q)>0:
+                x+=1
+        if len(vout) == x:
+          ret=dbSelect("select txhash from transactions where txdbserialnum=%s",[txdbserialnum])[0][0]
+    except:
+      pass
+
+  return ret
+
+def insertpending(txhex):
   try:
     rawtx = decode(txhex)
   except Exception,e:
@@ -60,7 +94,7 @@ def insertbtc(rawtx):
     dbCommit()
   except Exception,e:
     print_debug(("Error: ", e, "\n Could not add BTC PendingTx: ", rawtx),2)
-    dbRollback()  
+    dbRollback()
 
 def insertomni(rawtx):
   try:
@@ -110,11 +144,11 @@ def insertomni(rawtx):
     else:
       #all other txs deduct from our balance and, where applicable, apply to the reciever
       sendamount=-amount
-      recvamount=amount  
+      recvamount=amount
 
     dbExecute("insert into transactions (txhash,protocol,txdbserialnum,txtype,txversion) values(%s,%s,%s,%s,%s)",
               (txhash,protocol,txdbserialnum,txtype,txversion))
-    
+
     address=sender
     #insert the addressesintxs entry for the sender
     dbExecute("insert into addressesintxs (address,propertyid,protocol,txdbserialnum,addresstxindex,addressrole,balanceavailablecreditdebit,balanceacceptedcreditdebit) "
