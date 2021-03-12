@@ -169,7 +169,7 @@ class OmniTransaction:
             required_fee=int( formatted_fee_required )
             satoshi_min_fee=int( Decimal(self.fee) * Decimal(1e8) )
             #self.fee= '%.8f' % ( Decimal(max(satoshi_min_fee,required_fee)) / Decimal(1e8) )
-            if satoshi_min_fee < require_fee:
+            if satoshi_min_fee < required_fee:
               return  {'error':True, 'msg': 'Supplied fee' + str(self.fee) + 'is less than Sellers required fee:'+str(Decimal(required_fee)/Decimal(1e8)) }
             else:
               return getdexacceptPayload(rawdata['propertyid'], self.rawdata['amount'])['result']
