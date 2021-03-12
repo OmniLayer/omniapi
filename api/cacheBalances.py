@@ -28,7 +28,14 @@ def updateBalancesCache():
 
 
 def main():
-  updateBalancesCache()
+  while True:
+    try:
+      try:
+        updateBalancesCache()
+      except Exception as e:
+        printmsg("error running updateBalancesCache: "+str(e))
+    except:
+      pass
 
 
 if __name__ == "__main__":main() ## with if

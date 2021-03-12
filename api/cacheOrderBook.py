@@ -34,7 +34,15 @@ def updateOrderbookCache():
 
 
 def main():
-  updateOrderbookCache()
+  while True:
+    try:
+      try:
+        updateOrderbookCache()
+      except Exception as e:
+        printmsg("error running updateOrderbookCache: "+str(e))
+    except:
+      pass
+
 
 
 if __name__ == "__main__":main() ## with if
