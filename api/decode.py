@@ -33,7 +33,7 @@ def getinputs(rawtx):
     except:
       pass
   return retval
-  
+
 
 def decode(rawhex):
 

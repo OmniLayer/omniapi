@@ -36,6 +36,11 @@ def updateCFFirewall():
   for entry in redis.keys(pSpace+"*"):
     try:
       ip=entry.split('/')[2]
+      try:
+        if "," in ip:
+          ip = ip.split(",")[1]
+      except:
+        pass
       #check if address is already blocked
       if len( redis.keys(bSpace+str(ip)+"*") ) == 0:
         response=cffblock(ip)
