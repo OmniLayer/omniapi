@@ -277,9 +277,13 @@ def gethistory(property_id):
       print_debug(("cache looked success",ckey),7)
     except:
       print_debug(("cache looked failed",ckey),7)
-      total=dbSelect(total_query,[property_id])[0][0]
-      lSet(ckey,total)
-      lExpire(ckey,600)
+      try:
+        total=dbSelect(total_query,[property_id])[0][0]
+      except:
+        total=0
+
+    lSet(ckey,total)
+    lExpire(ckey,600)
 
     ckey="data:property:history:txdata:"+str(property_id)+":"+str(page)
     try:
