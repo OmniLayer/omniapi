@@ -7,10 +7,6 @@ API Services for Omni
 Follow nginx instructions to install nginx mainline branch 1.13.8 or greater
  - When done reference etc/nginx/sites-available/README for additional instructions
 
-Follow instructions to make/install armory engine (https://github.com/goatpig/BitcoinArmory/blob/master/linuxbuild/Linux_build_notes.md)
- - (You may need to include/install the following additional tools: `sudo apt-get install autotools-dev autoconf libtool`)
-Ensure "make install" installs armory into /usr/local/lib/armory 
-
 Install python pip and the python packages from pip
  - sudo apt install python-pip
  - sudo pip install -r requirements.txt
