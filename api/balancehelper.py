@@ -130,7 +130,7 @@ def getBalanceData(address,btcdata):
       #check if we got BTC data from DB, if not trigger manually add
       addbtc=True
       for x in balance_data['balance']:
-        if x['id'] == 0:
+        if x['id'] in [0,'0']:
           addbtc=False
       if addbtc:
         btc_balance = { 'symbol': 'BTC',
