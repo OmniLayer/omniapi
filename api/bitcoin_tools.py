@@ -1,8 +1,5 @@
-#import hashlib
-#import re
 from pycoin import encoding
 from pybitcointools import pubtoaddr
-#from ecdsa import curves, ecdsa
 
 __b58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 __b58base = len(__b58chars)
