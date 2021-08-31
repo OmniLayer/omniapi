@@ -74,9 +74,16 @@ def rawlist():
     print_debug(("cache looked success",ckey),7)
   except:
     print_debug(("cache looked failed",ckey),7)
-    ROWS= dbSelect("select PropertyData from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
+    ROWS= dbSelect("select PropertyData,flags from smartproperties where Protocol != 'Fiat' ORDER BY PropertyName,PropertyID")
 
-    data=[prop[0] for prop in ROWS]
+    def merge_two_dicts(x,y):
+      z = x.copy()   # start with keys and values of x
+      z.update(y)    # modifies z with keys and values of y
+      return z
+
+    #data=[prop[0] for prop in ROWS]
+    #include flags in property data returned
+    data=[merge_two_dicts(prop[0],{'flags':prop[1]}) for prop in ROWS]
 
     response = {
                 'status' : 'OK',
@@ -129,7 +136,7 @@ def rawecolist(value):
   properties = rawlist()['properties']
 
   pdata=[]
-  for data in properties:    
+  for data in properties:
     if value==2 and (data['propertyid']==2 or data['propertyid']>2147483650):
       pdata.append(data)
     elif value==1 and (data['propertyid']==1 or (data['propertyid']>2 and data['propertyid']<2147483648)):
