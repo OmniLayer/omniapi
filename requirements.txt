@@ -5,7 +5,7 @@ bitcoin-python==0.3
 psycopg2==2.7.3.2
 requests==2.20.0
 simplejson==3.13.2
-redis==2.10.6
+redis==4.4.4
 pyotp==2.2.6
 pycryptodome==3.7.0
 pyOpenSSL==18.0.0
