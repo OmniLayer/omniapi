@@ -1,5 +1,5 @@
 uWSGI==2.0.15
-Flask==1.1.1
+Flask==2.3.2
 pybitcointools==1.1.15
 bitcoin-python==0.3
 psycopg2==2.7.3.2
