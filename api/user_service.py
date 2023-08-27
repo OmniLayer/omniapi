@@ -582,7 +582,7 @@ def exists(uuid):
 
 def validate_token_hash(tokenid,rhash,uuid):
   try:
-    token_key = config.tokenLookup(tokenid)
+    token_key = config.apiLookup(tokenid)
     valid_token_hash = ws.hashlib.sha256(token_key + uuid).hexdigest() == rhash
   except:
     valid_token_hash=False

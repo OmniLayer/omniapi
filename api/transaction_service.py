@@ -680,7 +680,7 @@ def getblockslistraw(lastblock=0):
           value['details'][pid]['flags']=pnl[str(pid)]['flags']
       except:
         pass
-      ret={'block':bnum, 'timestamp':r[1], 'omni_tx_count':r[2], 'block_hash':r[3], 'value':value}
+      ret={'block':bnum, 'timestamp':int(r[1]), 'omni_tx_count':r[2], 'block_hash':r[3], 'value':value}
       response['blocks'].append(ret)
     #cache block list for 6 hours
     lSet(ckey,json.dumps(response))
