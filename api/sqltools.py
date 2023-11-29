@@ -1,12 +1,10 @@
 import psycopg2, psycopg2.extras
 import sys
-import getpass
 
 def sql_connect():
     global con
-    USER=getpass.getuser()
     try:
-      with open('/home/'+USER+'/.omni/sql.conf') as fp:
+      with open('/root/.omni/sql.conf') as fp:
         DBPORT="5432"
         for line in fp:
           #print line

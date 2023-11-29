@@ -1,15 +1,14 @@
 import requests
 import time, json
-import os
 
 class RPCHost():
     def __init__(self):
         self._session = requests.Session()
+        RPCSSL=False
+        RPCPORT="8332"
+        RPCHOST="localhost"
         try:
-            with open( os.getenv("HOME") +'/.bitcoin/bitcoin.conf') as fp:
-                RPCPORT="8332"
-                RPCHOST="localhost"
-                RPCSSL=False
+            with open('/root/.omnixep/bitcoin.conf') as fp:
                 for line in fp:
                     #print line
                     if line.split('=')[0] == "testnet" and line.split('=')[1] == "1":
@@ -28,8 +27,9 @@ class RPCHost():
                         else:
                             RPCSSL=False
         except IOError as e:
-            response='{"error": "Unable to load bitcoin config file. Please Notify Site Administrator"}'
-            return response
+            print('{"error": "Unable to load bitcoin config file. Please Notify Site Administrator"}')
+            print 'Error %s' % e
+            return None
         if RPCSSL:
             self._url = "https://"+RPCUSER+":"+RPCPASS+"@"+RPCHOST+":"+RPCPORT
         else:
